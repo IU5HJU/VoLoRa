@@ -470,6 +470,7 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
   bool wasUp = false, wasWifi = false;
   static WifiConfig lan;  // pagina di gestione sulla rete di casa, a Wi-Fi connesso
   bool lanStarted = false;
+  int32_t lastLoggedSession = -1;
   uint8_t dgram[lcr::kNodeMaxDatagram];
   size_t dgramLen = 0;
   for (;;) {
@@ -499,6 +500,14 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
       }
     }
     if (lan.loop()) restartNow(ui);
+    {  // una riga sulla seriale per ogni stazione che transita (come "RX fine" della scheda normale)
+      const lcr::NodeCore::Heard& h = core.heard();
+      if (h.valid && h.callsign[0] && h.session != lastLoggedSession) {
+        lastLoggedSession = h.session;
+        Serial.printf("[nodo] transito %lu: %s RSSI %d dBm SNR %s%.1f dB\n", static_cast<unsigned long>(h.transits), h.callsign, h.rssiDbm, h.snrValid ? "" : "n.d. ",
+                      h.snrValid ? static_cast<double>(h.snrDb) : 0.0);
+      }
+    }
     if (now - lastLogMs >= 30000) {  // una riga ogni 30 s per le prove
       lastLogMs = now;
       const lcr::NodeCore::Stats& s = core.stats();
@@ -512,16 +521,33 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
 
     if (now - lastDispMs >= kDisplayMs) {
       lastDispMs = now;
-      char l2[24], l3[24], l4[24], l5[24];
+      char l2[24], l3[24], l4[40], l5[48];
       if (wifi) snprintf(l2, sizeof(l2), "WiFi %s", WiFi.localIP().toString().c_str());
       else snprintf(l2, sizeof(l2), "WiFi: connessione...");
       // REF = reflector (o l'altro nodo): "REF ok nome" in 21 caratteri al massimo; un nome piu' lungo di 14 caratteri e' tagliato e finisce con '~'
       if (strlen(settings.peerIp) > 14) snprintf(l3, sizeof(l3), "REF %s %.13s~", up ? "ok" : "NO", settings.peerIp);
       else snprintf(l3, sizeof(l3), "REF %s %s", up ? "ok" : "NO", settings.peerIp);
       snprintf(l4, sizeof(l4), "R>N %lu  N>R %lu", static_cast<unsigned long>(core.stats().toNet), static_cast<unsigned long>(core.stats().transmitted));
-      if (!mayTransmit) snprintf(l5, sizeof(l5), "N0CALL: non trasmette");
-      else snprintf(l5, sizeof(l5), "Coda %u persi %lu", static_cast<unsigned>(core.queue().size()), static_cast<unsigned long>(core.queue().dropped()));
-      ui.showLines("NODO INTERNET", l2, l3, l4, l5);
+      if (core.queue().size() > 0 || core.queue().dropped() > 0)  // coda e pacchetti persi solo se ce ne sono: la riga 5 e' per l'ultima stazione
+        snprintf(l4, sizeof(l4), "R>N %lu N>R %lu C%u P%lu", static_cast<unsigned long>(core.stats().toNet), static_cast<unsigned long>(core.stats().transmitted),
+                 static_cast<unsigned>(core.queue().size()), static_cast<unsigned long>(core.queue().dropped()));
+      // Riga 5: l'ultima stazione passata dal nodo, come nella schermata di ricezione (nominativo, RSSI e SNR dell'ultimo pacchetto). "RX" fino a 5 s
+      // dopo l'ultimo pacchetto, poi "Ult". Al massimo 21 caratteri: si prova prima il formato completo, poi sempre piu' corto.
+      const lcr::NodeCore::Heard& hd = core.heard();
+      if (hd.valid) {
+        const char* tag = now - hd.atMs < 5000 ? "RX" : "Ult";
+        const char* call = hd.callsign[0] ? hd.callsign : "?";
+        if (hd.snrValid) {
+          snprintf(l5, sizeof(l5), "%s %s %ddBm %.1fdB", tag, call, hd.rssiDbm, static_cast<double>(hd.snrDb));
+          if (strlen(l5) > 21) snprintf(l5, sizeof(l5), "%s %s %d %.1fdB", tag, call, hd.rssiDbm, static_cast<double>(hd.snrDb));
+          if (strlen(l5) > 21) snprintf(l5, sizeof(l5), "%s %s %d %.0fdB", tag, call, hd.rssiDbm, static_cast<double>(hd.snrDb));
+        } else {
+          snprintf(l5, sizeof(l5), "%s %s %ddBm", tag, call, hd.rssiDbm);
+        }
+      } else {
+        snprintf(l5, sizeof(l5), "Radio: nessuno");
+      }
+      ui.showLines(mayTransmit ? "NODO INTERNET" : "NODO N0CALL: no TX", l2, l3, l4, l5);
     }
     if (usb.poll()) restartNow(ui);
     delay(1);

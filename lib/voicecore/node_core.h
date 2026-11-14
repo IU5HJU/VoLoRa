@@ -42,6 +42,19 @@ class NodeCore {
     uint32_t beaconDeferred = 0;  // identificativo dovuto ma rimandato (canale occupato o attivita' recente)
   };
 
+  // L'ultima stazione che e' transitata dal nodo (ricevuta in radio e mandata all'altro nodo): nominativo (nei pacchetti START e END), RSSI e SNR
+  // dell'ultimo pacchetto, come nella schermata di ricezione normale. 'transits' conta le sessioni (le trasmissioni) passate dal nodo.
+  struct Heard {
+    bool valid = false;
+    char callsign[kMaxCallsign + 1] = {0};  // vuoto finche' non e' arrivato un pacchetto con il nominativo
+    uint16_t session = 0;
+    int rssiDbm = 0;
+    float snrDb = 0;
+    bool snrValid = false;
+    uint32_t atMs = 0;
+    uint32_t transits = 0;
+  };
+
   static constexpr uint32_t kBeaconFirstMs = 15000;  // primo identificativo dopo l'avvio
   static constexpr uint32_t kQuietMs = 3000;         // niente identificativo se si e' ricevuto o trasmesso negli ultimi 3 s (voce in corso)
 
@@ -68,6 +81,7 @@ class NodeCore {
   const NodeLink& link() const { return link_; }
   const TxQueue& queue() const { return queue_; }
   const Stats& stats() const { return stats_; }
+  const Heard& heard() const { return heard_; }
   const Repeater& repeater() const { return rep_; }
 
  private:
@@ -84,6 +98,7 @@ class NodeCore {
   TxQueue queue_;
   uint8_t voiceMode_;
   Stats stats_;
+  Heard heard_;
   char callsign_[kMaxCallsign + 1] = {0};
   uint32_t beaconIntervalMs_ = 0;
   uint32_t freqKhz_ = 0;

@@ -146,6 +146,20 @@ static void testVoiceAcrossTheNet() {
   CHECK(r.a.air.sent[0] == 0);  // il nodo A non ha trasmesso niente (la voce era sua)
 }
 
+static void testHeardStation() {
+  Rig r;
+  r.run(3000);
+  CHECK(!r.a.core->heard().valid);
+  injectToA(r, makeMessage(0x2222, 20, "IU5HJU"));
+  r.run(1000);
+  const NodeCore::Heard& h = r.a.core->heard();
+  CHECK(h.valid && strcmp(h.callsign, "IU5HJU") == 0 && h.rssiDbm == -90 && h.session == 0x2222 && h.transits == 1);
+  injectToA(r, makeMessage(0x3333, 12, "IZ5ABC"));
+  r.run(1000);
+  CHECK(strcmp(r.a.core->heard().callsign, "IZ5ABC") == 0 && r.a.core->heard().transits == 2);
+  CHECK(!r.b.core->heard().valid);  // B non ha ricevuto niente in radio: il suo transito e' dall'altra parte
+}
+
 static void testOtherDirectionAndText() {
   Rig r;
   r.run(3000);
@@ -457,6 +471,7 @@ static void testMorseId() {
 int main() {
   testLinkComesUp();
   testVoiceAcrossTheNet();
+  testHeardStation();
   testOtherDirectionAndText();
   testNoLoops();
   testLinkDownAndRecovery();

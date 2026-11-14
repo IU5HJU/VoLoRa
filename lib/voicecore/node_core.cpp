@@ -146,6 +146,20 @@ void NodeCore::tick(uint32_t nowMs, bool mayTransmit) {
     if (k) {
       net_.sendDatagram(dg, k);
       stats_.toNet++;
+      if (!heard_.valid || heard_.session != p.session) {  // una nuova trasmissione passa dal nodo
+        heard_.valid = true;
+        heard_.session = p.session;
+        heard_.callsign[0] = 0;
+        heard_.transits++;
+      }
+      if (p.callsign[0]) {
+        strncpy(heard_.callsign, p.callsign, kMaxCallsign);
+        heard_.callsign[kMaxCallsign] = 0;
+      }
+      heard_.rssiDbm = rssi;
+      heard_.snrValid = radio_.hasSnr();
+      heard_.snrDb = heard_.snrValid ? radio_.lastSnr() : 0.0f;
+      heard_.atMs = nowMs;
     }
   }
 
