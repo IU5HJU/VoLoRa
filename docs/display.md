@@ -65,6 +65,20 @@ Vol 7/10   (Batt=4.12V)       ultima riga: volume a sinistra, batteria a destra
 
 Gli avvisi 6, 7, 8 e 11 restano a schermo circa 1,5-2 secondi; l'esito della prova (17-19) 15 secondi, senza volume e batteria. Due bip acuti a prova perfetta, un bip grave se ci sono state perdite. Ogni trasmissione e ricezione termina anche con un bip.
 
+## Schermata del nodo Internet (14/11/2026)
+
+In modo nodo la scheda non ha menu né lettera del profilo: cinque righe fisse, ognuna al massimo 21 caratteri (le più lunghe sono tagliate, mai a capo).
+
+| Riga | Contenuto |
+|---|---|
+| 1 | `NODO INTERNET` (con N0CALL: `NODO N0CALL: no TX`) |
+| 2 | `WiFi 192.168.x.y` oppure `WiFi: connessione...` |
+| 3 | `REF ok iu5hju.ddns.n~` / `REF NO ...`: stato del collegamento con il reflector o con l'altro nodo e il suo nome (oltre 14 caratteri tagliato, con `~`) |
+| 4 | `R>N 12  N>R 9`: pacchetti dalla radio alla rete e dalla rete alla radio; con coda o pacchetti persi diversi da zero si aggiungono `C` e `P` |
+| 5 | l'ultima stazione transitata: `RX IU5HJU -85dBm 7.5dB` (fino a 5 s dopo l'ultimo pacchetto, poi `Ult`), `Radio: nessuno` se non è ancora passato niente |
+
+Nei primi 3 minuti dopo l'accensione la schermata è quella del Wi-Fi di configurazione (rete, password, indirizzo e conto alla rovescia); se il nodo non è pronto dice cosa manca. Vedi [banco-nodo.md](banco-nodo.md). Le immagini del mockup non includono questa schermata.
+
 ## Batteria (in basso a destra)
 
 Formato `(Batt=4.12V)`, come nel firmware LoRa APRS iGate di Guzman. Larghezza fissa di 12 caratteri (72 pixel): non tocca "Vol" a sinistra, nemmeno con "Vol 10/10".
