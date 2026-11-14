@@ -1,0 +1,17 @@
+> CFG GET
+CFG callsign=N0CALL freq=433.900 freqmsg=433.900 freqrange=433.900 power=10 volume=5 micfloor=-60 profile=std board=tbeam reboot=0 test=0 pos=off qth=none gps=off role=node freqout=433.900
+> CFG VERSION
+CFG VERSION fw=4e3cbf4 board=tbeam proto=2 radio=SX1278
+> CFG GET NODE
+CFG NODE ssid=IU5HJU_mobile pass=set ip=iu5hju.ddns.net port=5400 listen=5400 id=2 peerid=1000 key=set
+> CFG GET MC
+CFG MC freqmc=433.175 ssid=99 window=300
+> CFG GET IDINT
+CFG IDINT=10
+> CFG GET IDMORSE
+CFG IDMORSE=on
+> CFG GET SHIFT
+CFG SHIFT=0
+> CFG GET MONITOR
+CFG MONITOR=off
+[nodo] radio->rete 0, rete->radio 0 (trasmessi 0), persi coda 0, firma errata 0, ripetuti 0, scartati collegamento giu' 0, id 12 (Morse 0), heap 116852
