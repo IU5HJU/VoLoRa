@@ -10,7 +10,7 @@ automatico del codice in `src/ui.cpp`. Sul display reale i colori dipendono dal 
 
 - **Lettera del profilo:** in alto a destra, su ogni schermata, una lettera grande (bianca su nero, 10×9 punti) indica il profilo in uso: **S** Standard, **R** Range, **M** Messaggio. La riga del nominativo è stata accorciata (`IU5HJU 433.475MHz`) per farle posto.
 - **Menu (11/11/2026):** i tre profili si chiamano **Modo Standard**, **Modo Range** e **Modo Messaggio** (dal 12/11/2026; prima Standard, Messaggio e Qualità: la "à" di "Qualità" era il carattere CP437 del font dell'OLED, provato sulla scheda l'11/11/2026).
-- **Menu (14/11/2026):** sette voci: Standard, Range, Messaggio, Invia testo, MeshCom, **MeshCom ascolto** (solo ascolto per il tempo di `MCWINDOW`, senza inviare) e Wi-Fi.
+- **Menu (14/11/2026, schermata 26 del mockup):** sette voci: Standard, Range, Messaggio, Invia testo, MeshCom, **MeshCom ascolto** (solo ascolto per il tempo di `MCWINDOW`, senza inviare) e Wi-Fi.
 - **MeshCom (11/11/2026):** durante l'escursione sulle reti di testo la lettera in alto a destra è **T**, compare la frequenza della rete e lo schermo a riposo dice "MESHCOM" con il conto alla rovescia dell'ascolto; il menu ha sei voci (scorre: se ne vedono cinque, la scelta resta visibile) e la voce MeshCom apre due scelte (testo, poi destinatario). [meshcom-testo.md](meshcom-testo.md).
 - **Menu a bordo:** quattro voci (Standard, Range, Messaggio, Wi-Fi; dall'11/11 cinque, con "Invia testo"), una per riga; la scelta in negativo e il profilo in uso con `*`.
 - **Schermata Wi-Fi** (voce "Wi-Fi" del menu): in alto il nome della rete `VoLoRa-XXXX`, poi `Password:` e la **password in carattere doppio e in grassetto** (8 cifre), in basso `http://192.168.4.1` e `VOL lungo = esci`. Con questa schermata la scheda non trasmette e non riceve.
@@ -18,7 +18,7 @@ automatico del codice in `src/ui.cpp`. Sul display reale i colori dipendono dal 
 - **Modo Sysop (12/11/2026):** con `CFG SET SYSOPMODE ON` la voce "Invia testo" diventa "Comandi Sysop" e apre l'elenco dei comandi al ripetitore ("COMANDI SYSOP 3/10", PTT = altro, volume breve = invia). Durante l'invio la schermata dice "COMANDO" / "Trasmetto il comando"; la risposta del ripetitore compare per 4 s come avviso ("RIP: SPENTO", "RIP: ATTIVO 10dBm", "RIP: OK", "RIPETI IL COMANDO"). Vedi [studio-ripetitore.md](studio-ripetitore.md).
 - **Messaggi (11/11/2026):** a ricezione conclusa compare una **grande icona** (altoparlante = voce, busta = testo), "MESSAGGIO RICEVUTO" e "Premi PTT: ascolta" (o "leggi"); il PTT breve apre il messaggio. Il testo si legge a pagine di 6 righe (volume breve = pagina successiva). Il menu ha ora **cinque voci** (Standard, Range, Messaggio, **Invia testo**, Wi-Fi), senza titolo; "Invia testo" apre la scelta dei testi ("INVIA TESTO 2/5", "PTT=altro VOL=invia"). Dettagli in [modo-messaggio.md](modo-messaggio.md).
 - **Messaggio:** durante l'invio e la ricezione compare la percentuale (1-100%) con una barra di avanzamento.
-- L'immagine `images/display.png` è rigenerata dallo script (14/11/2026, 25 schermate, con `N0CALL` al posto dei nominativi di esempio e la frequenza predefinita 433.475 MHz) ma **non** mostra ancora le novità successive: le schermate della **prova di potenza** (in corso con la potenza, esito `MIN … dBm`, `NON PULITA`, `NESSUNA`) e i passi della prova sono descritti nel testo qui sopra.
+- L'immagine `images/display.png` è rigenerata dallo script (14/11/2026, 31 schermate: ora con nominativo e lettera del profilo in alto, menu, MeshCom, nodo Internet e Wi-Fi del nodo, con `N0CALL` al posto dei nominativi di esempio e la frequenza predefinita 433.475 MHz) ma **non** mostra ancora le novità successive: le schermate della **prova di potenza** (in corso con la potenza, esito `MIN … dBm`, `NON PULITA`, `NESSUNA`) e i passi della prova sono descritti nel testo qui sopra.
 
 ## Struttura di una schermata
 
@@ -75,9 +75,9 @@ In modo nodo la scheda non ha menu né lettera del profilo: cinque righe fisse, 
 | 2 | `WiFi 192.168.x.y` oppure `WiFi: connessione...` |
 | 3 | `REF ok iu5hju.ddns.n~` / `REF NO ...`: stato del collegamento con il reflector o con l'altro nodo e il suo nome (oltre 14 caratteri tagliato, con `~`) |
 | 4 | `R>N 12  N>R 9`: pacchetti dalla radio alla rete e dalla rete alla radio; con coda o pacchetti persi diversi da zero si aggiungono `C` e `P` |
-| 5 | l'ultima stazione transitata: `RX IU5HJU -85dBm 7.5dB` (fino a 5 s dopo l'ultimo pacchetto, poi `Ult`), `Radio: nessuno` se non è ancora passato niente |
+| 5 | l'ultima stazione transitata: `RX IU5HJU -85 7.5dB` (fino a 5 s dopo l'ultimo pacchetto, poi `Ult`), `Radio: nessuno` se non è ancora passato niente |
 
-Nei primi 3 minuti dopo l'accensione la schermata è quella del Wi-Fi di configurazione (rete, password, indirizzo e conto alla rovescia); se il nodo non è pronto dice cosa manca. Vedi [banco-nodo.md](banco-nodo.md). Le immagini del mockup non includono questa schermata.
+Nei primi 3 minuti dopo l'accensione la schermata è quella del Wi-Fi di configurazione (rete, password, indirizzo e conto alla rovescia); se il nodo non è pronto dice cosa manca. Vedi [banco-nodo.md](banco-nodo.md). Nel mockup sono le schermate 28-31.
 
 ## Batteria (in basso a destra)
 

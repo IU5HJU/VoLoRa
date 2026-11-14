@@ -89,6 +89,26 @@ class Oled:
                 self.px[y][x + i] = True
 
 
+BADGES = {
+    "S": [".XXXXXXXX.", "XXXXXXXXXX", "XX........", "XXXXXXXX..", ".XXXXXXXX.", "..XXXXXXXX", "........XX", "XXXXXXXXXX", ".XXXXXXXX."],
+    "M": ["XX......XX", "XXX....XXX", "XXXX..XXXX", "XX.XXXX.XX", "XX..XX..XX", "XX......XX", "XX......XX", "XX......XX", "XX......XX"],
+    "R": ["XXXXXXXX..", "XXXXXXXXX.", "XX.....XXX", "XX.....XXX", "XXXXXXXXX.", "XXXXXXXX..", "XX..XXX...", "XX...XXX..", "XX....XXXX"],
+    "T": ["XXXXXXXXXX", "XXXXXXXXXX", "....XX....", "....XX....", "....XX....", "....XX....", "....XX....", "....XX....", "....XX...."],
+}
+
+
+def header(o, callsign=CALLSIGN, freq=FREQ, badge="S"):
+    """Come l'inizio di UiNotifier::draw(): nominativo e frequenza, lettera del profilo (S/R/M, T in MeshCom) e riga di separazione."""
+    o.set_size(1)
+    o.set_cursor(0, 0)
+    o.write(f"{callsign} {freq}MHz")
+    for y, row in enumerate(BADGES[badge]):
+        for x, ch in enumerate(row):
+            if ch == "X":
+                o.px[y][118 + x] = True
+    o.hline(0, 10, 128)
+
+
 def big_text(o, y, text):
     """Come bigText() di src/ui.cpp: testo 2 fino a 10 caratteri, altrimenti testo 1 (niente a capo)."""
     fits = len(text) <= 10
@@ -113,16 +133,13 @@ def show_message(font, line1, line2=None, callsign=CALLSIGN):
 
 
 def draw_screen(font, state="idle", rx_call="", rssi=0, snr=0.0, tx_seconds=0, notice=None,
-                last=None, volume=7, callsign=CALLSIGN, battery=4.12, test_mode=False):
+                last=None, volume=7, callsign=CALLSIGN, battery=4.12, test_mode=False, mesh_sec=0):
     """Come UiNotifier::draw(). last = (nominativo, persi, recuperati) oppure None."""
     o = Oled(font)
-    o.set_size(1)
-    o.set_cursor(0, 0)
-    o.write(f"{callsign}  {FREQ} MHz")
-    o.hline(0, 10, 128)
+    header(o, callsign, "433.175" if mesh_sec else FREQ, "T" if mesh_sec else "S")
 
     if state == "idle":
-        big = "PROVA ON" if test_mode else "ASCOLTO"
+        big = "MESHCOM" if mesh_sec else ("PROVA ON" if test_mode else "ASCOLTO")
     elif state == "rx":
         big = f"RX {rx_call}"
     else:
@@ -137,6 +154,10 @@ def draw_screen(font, state="idle", rx_call="", rssi=0, snr=0.0, tx_seconds=0, n
         o.write(f"Prova {tx_seconds}/12 s" if test_mode else f"Trasmissione {tx_seconds}/30 s")
     elif state == "rx":
         o.write(f"RSSI {rssi}  SNR {snr:.1f}")
+    elif mesh_sec:
+        o.write(f"Ascolto {mesh_sec // 60}:{mesh_sec % 60:02d}")
+        o.set_cursor(0, 47)
+        o.write("VOL lungo = esci")
     elif last:
         o.write(f"Ultimo {last[0] or '-'}")
         o.set_cursor(0, 47)  # come src/ui.cpp
@@ -164,10 +185,7 @@ def draw_test_report(font, frames_ok, lost, bad, recovered, rssi, snr, call, rem
     """Come UiNotifier::drawTestReport(): esito della prova di collegamento (15 s)."""
     pct = 0 if frames_out == 0 else min(100, (100 * frames_ok + frames_out // 2) // frames_out)
     o = Oled(font)
-    o.set_size(1)
-    o.set_cursor(0, 0)
-    o.write(f"{callsign}  {FREQ} MHz")
-    o.hline(0, 10, 128)
+    header(o)
     o.set_size(2)
     o.set_cursor(0, 16)
     o.write(f"PROVA {pct}%")
@@ -181,6 +199,56 @@ def draw_test_report(font, frames_ok, lost, bad, recovered, rssi, snr, call, rem
     o.write(f"ok {frames_ok} pers {lost} dan {bad}")  # max 21 caratteri
     o.set_cursor(0, 56)
     o.write(f"rec {recovered} {rssi}dBm {snr}dB")
+    return o
+
+
+def draw_menu(font, labels, selected, current, callsign=CALLSIGN):
+    """Come UiNotifier::drawMenu(): cinque righe da 9 punti, la finestra scorre e la voce scelta resta visibile."""
+    o = Oled(font)
+    header(o, callsign)
+    rows = 5
+    first = selected - (rows - 1) if selected >= rows else 0
+    for i in range(first, min(len(labels), first + rows)):
+        y = 12 + (i - first) * 9
+        sel = i == selected
+        if sel:
+            o.fill_rect(0, y - 1, 128, 9)
+            o.inverse = True
+        o.set_cursor(2, y)
+        o.write(f"{'*' if i == current else ' '} {labels[i]}")
+        o.inverse = False
+    o.set_cursor(0, 57)
+    o.write("PTT=avanti  VOL=ok")
+    return o
+
+
+def show_wifi(font, ssid, password, footer):
+    """Come UiNotifier::showWifi(): password in carattere doppio e in grassetto."""
+    o = Oled(font)
+    o.set_size(1)
+    o.set_cursor(0, 0)
+    o.write(f"WiFi {ssid}")
+    o.set_cursor(0, 12)
+    o.write("Password:")
+    o.set_size(2)
+    for dx in range(2):
+        o.set_cursor(dx, 24)
+        o.write(password)
+    o.set_size(1)
+    o.set_cursor(0, 46)
+    o.write("http://192.168.4.1")
+    o.set_cursor(0, 56)
+    o.write(footer[:21])
+    return o
+
+
+def show_lines(font, lines):
+    """Come UiNotifier::showLines(): fino a cinque righe di testo piccolo, una ogni 12 punti, tagliate a 21 caratteri."""
+    o = Oled(font)
+    o.set_size(1)
+    for i, t in enumerate(lines):
+        o.set_cursor(0, i * 12)
+        o.write(t[:21])
     return o
 
 
@@ -236,6 +304,18 @@ def screens(font):
          show_message(font, "PROVA TONI", "fase 1: senza radio")),
         ("25  Verifica audio con la radio", "Gli stessi tre toni mentre la scheda trasmette in continuo: si controlla se la radio disturba microfono e amplificatore.",
          show_message(font, "PROVA TONI", "fase 2: con radio TX")),
+        ("26  Menu (sette voci)", "Volume lungo: la finestra scorre e la voce scelta (qui \"MeshCom ascolto\") resta visibile; * = modo in uso (Range).",
+         draw_menu(font, ["Modo Standard", "Modo Range", "Modo Messaggio", "Invia testo", "MeshCom", "MeshCom ascolto", "Wi-Fi"], 5, 1)),
+        ("27  MeshCom: ascolto", "Dopo \"MeshCom ascolto\" (o un testo inviato): lettera T, frequenza della rete di testo, conto alla rovescia di MCWINDOW.",
+         draw_screen(font, mesh_sec=272)),
+        ("28  Nodo: Wi-Fi all'avvio", "Primi 3 minuti del nodo: rete, password (qui di esempio), pagina e conto alla rovescia. Con un client collegato si prolunga.",
+         show_wifi(font, "VoLoRa-4F2A", "48213907", "il nodo parte in 2:45")),
+        ("29  Nodo non pronto", "Manca un'impostazione: la stessa schermata Wi-Fi, senza scadenza, dice cosa manca.",
+         show_wifi(font, "VoLoRa-4F2A", "48213907", "manca NODEKEY")),
+        ("30  Nodo Internet", "Titolo, Wi-Fi, REF (reflector o altro nodo: ok/NO e nome), contatori radio-rete, ultima stazione transitata con RSSI e SNR.",
+         show_lines(font, ["NODO INTERNET", "WiFi 192.168.1.50", "REF ok iu5hju.ddns.n~", "R>N 12  N>R 9", "RX N0CALL -85 7.5dB"])),
+        ("31  Nodo: N0CALL, collegamento giu'", "Con N0CALL il nodo non trasmette; REF NO = nessun collegamento; nessuna stazione ancora passata.",
+         show_lines(font, ["NODO N0CALL: no TX", "WiFi: connessione...", "REF NO 192.168.1.51", "R>N 0  N>R 0", "Radio: nessuno"])),
     ]
 
 
