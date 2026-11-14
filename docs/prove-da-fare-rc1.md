@@ -1,0 +1,45 @@
+# Prove da fare prima di pubblicare la rc.1
+
+Scaletta delle prove su schede ancora mancanti (stato al 14/11/2026, firmware `dev` dal commit `9056f3b` in poi; la riga d'avvio dice `firmware <commit>`). Per ogni prova: **cosa fare**, **cosa deve succedere** e **cosa riportare**. Gli esiti vanno in [prove.md](prove.md); le note di rilascio ([v0.1.0-rc.1.md](note-rilascio/v0.1.0-rc.1.md)) si correggono di conseguenza. Il tag lo crea chi pubblica, a mano.
+
+**Per tutte le prove:** aggiorna dalla pagina di installazione (ricarica con Ctrl+Shift+R, versione `dev`) lasciando **vuota** la casella "Erase device"; prima e dopo l'aggiornamento copia `CFG GET`, `CFG VERSION` e la riga `[avvio] impostazioni: ...`. Antenna collegata prima dell'USB. Registri della seriale salvati su file (pulsante "Salva su file" della pagina).
+
+## A. Schede singole (a banco, 15 minuti l'una)
+
+| # | Prova | Cosa deve succedere | Da riportare |
+|---|---|---|---|
+| A1 | **Aggiornamento senza perdere le impostazioni** su una **T-Beam SX1278** e una **T-Beam SX1262** (sulla T3 è già provato) | dopo l'avvio `impostazioni: lette dalla memoria` e `CFG GET` uguale a prima | `CFG GET` prima e dopo, riga `[avvio]`, se compariva la casella "Erase device" |
+| A2 | **Prova dei toni** nel profilo Messaggio sulla **T-Beam SX1262**: `CFG TEST AUDIO` | arriva fino a `CFG AUDIO rf pkts=...` e `CFG AUDIO fine` **senza riavvio** (prima: `task_wdt`, `abort`) | l'intero blocco `CFG AUDIO ...` |
+| A3 | **Posizione dal browser** sul sito: scheda collegata, QTH vuoto | compare l'avviso, il pulsante "Usa la posizione del browser" chiede il permesso e riempie i campi a **4 decimali**; i valori restano nei campi finché non premi Salva | schermata, precisione scritta sotto, se dopo Salva `CFG GET` mostra il QTH |
+| A4 | **MeshCom ascolto**: menu → "MeshCom ascolto" | conto alla rovescia per `MCWINDOW` (di base 5 minuti), la lettera in alto è **T**, a fine tempo la scheda rientra da sola; con un altro dispositivo MeshCom che manda un testo a te o a un tuo gruppo, il testo arriva in casella | durata reale, se il testo è arrivato, riga `[meshcom] fine escursione ...` |
+
+## B. Due schede (in casa, poi in movimento)
+
+| # | Prova | Cosa deve succedere | Da riportare |
+|---|---|---|---|
+| B1 | **Prova di potenza con la distanza**: su **tutte e due** `CFG SET POS ON` e una posizione (`CFG SET QTH lat,lon` o GPS con fix); prova accesa su entrambe (tre pressioni brevi del PTT), PTT su una | l'esito sul display di **entrambe** dice `MIN n dBm` e, nell'ultima riga, `100% a MIN  X.Xkm` | foto dei due display, distanza reale, riga `PROVA POTENZA ...` della seriale |
+| B2 | Come B1 con `POS OFF` su una | sull'altra scheda niente km (`(frame 100% a MIN)`) | foto |
+| B3 | **Uscita dalla prova con tre pressioni brevi**: (a) a scheda ferma, (b) mentre l'altra trasmette, (c) a prova di potenza in corso | in tutti e tre i casi la prova si spegne (`PROVA SPENTA`) | quante pressioni sono servite, se in un caso non ha funzionato |
+| B4 | **T-Beam SX1262 ↔ SX1278 vicine** (stessa stanza, potenza 2): profili **Standard**, **Range** e **Messaggio**, nei **due versi** (a Standard e Range lontano non si sentivano) | voce intelligibile in entrambi i versi, `frame persi` e `RSSI`/`SNR` sul display | per ogni profilo e verso: ok o no, RSSI, SNR, frame persi |
+| B5 | **Registrazioni con frame persi dal microfono** (T3): 10 messaggi di fila nel profilo Messaggio | `frame persi dal microfono 0` (il 14/11 una registrazione ne ha avuti 18) | quante registrazioni con perdite e quanti frame |
+| B6 | **MeshCom fra due schede**: ripetere la prova già riferita registrando il seriale | `[meshcom]` con i frame ricevuti | registro, distanza |
+
+## C. Nodo Internet e reflector
+
+| # | Prova | Cosa deve succedere | Da riportare |
+|---|---|---|---|
+| C1 | **Scheda nuova nel ruolo nodo**: da `CFG SET ROLE NODE` senza altre impostazioni | il display dice `NON PRONTO` e cosa manca; la rete `VoLoRa-XXXX` è aperta senza scadenza; dal telefono (`http://192.168.4.1`) si impostano Wi-Fi di casa, reflector, `NODEID`, `NODEKEY`; salvando la scheda riparte | foto dei display, cosa è andato storto |
+| C2 | **Finestra di 3 minuti** su un nodo già configurato | all'accensione compare la schermata Wi-Fi con il conto alla rovescia; se un telefono è collegato la finestra si prolunga; allo scadere il nodo parte e si collega | durata reale, se il nodo si è collegato dopo |
+| C3 | **Gestione dalla rete di casa**: dal computer `http://<indirizzo>/` (e `http://volora-XXXX.local/`) | chiede utente `volora` e la password; poi la pagina di configurazione funziona; dopo tre password sbagliate niente accesso | indirizzo, se `.local` funziona, un `CFG SET` cambiato dalla pagina |
+| C4 | **Ultima stazione transitata**: una scheda trasmette in radio verso il nodo | ultima riga `RX <nominativo> RSSI SNR`, dopo 5 s `Ult ...`; sulla seriale `[nodo] transito N` | foto, riga seriale |
+| C5 | **Voce attraverso il reflector** fra due schede (nodi diversi) | la voce passa e si capisce; nella pagina del reflector compare "IP del Nodo" pubblico di ciascuna | durata, ritardo, IP visto |
+
+## D. Ripetitore (da banco)
+
+Seguire [banco-ripetitore.md](banco-ripetitore.md): D1 collegamento RX-TX a quattro fili e identificativo in testo e in Morse FM; D2 **shift** con un ripetitore vero (frequenza di ascolto e di trasmissione); D3 comandi sysop firmati. Riportare per ogni passo cosa si vede sul display e sulla seriale.
+
+## Dopo le prove
+
+1. Annotare gli esiti in [prove.md](prove.md) (data, schede, commit, valori) e togliere dalle note della rc.1 le voci provate dalla sezione "Cosa NON è ancora stato provato".
+2. Se emerge un difetto, correggere e ripetere **la prova che lo ha trovato** sul firmware nuovo.
+3. Rigenerare le immagini del mockup del display ([display.md](display.md), serve il file font di Adafruit_GFX) e controllare la checklist in [versioni.md](versioni.md).

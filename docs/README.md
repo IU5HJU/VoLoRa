@@ -23,6 +23,7 @@
 | [codec2.md](codec2.md) | Modi del Codec2: costo in CPU e memoria, tempo in aria, ascolto comparativo (`codec_compare`) |
 | [sdr.md](sdr.md) | Ricevere e decodificare le trasmissioni con un SDR (NESDR / RTL-SDR, GNU Radio, `lcr_decode`) |
 | [prove.md](prove.md) | Registro delle prove sulle schede e aiuto per la diagnosi (registri integrali in [prove-log/](prove-log/2026-11-14-tbeam-sx1262-ricezione-messaggio.txt)) |
+| [prove-da-fare-rc1.md](prove-da-fare-rc1.md) | **Scaletta delle prove su schede ancora mancanti** prima di pubblicare la rc.1, con cosa deve succedere e cosa riportare |
 | [roadmap.md](roadmap.md) | Decisioni e prossimi lavori |
 | [ripetitore.md](ripetitore.md) | **Riepilogo del ripetitore**: com'è fatto, collegamento a quattro fili, configurazione, funzioni, cosa è provato e cosa no |
 | [banco-ripetitore.md](banco-ripetitore.md) | Prova a banco del ripetitore con due T3: cablaggio, seriale, display, altoparlante |
