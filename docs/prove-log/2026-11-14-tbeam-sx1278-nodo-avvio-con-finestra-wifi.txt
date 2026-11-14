@@ -1,0 +1,32 @@
+(estratto: nominativo di un altro radioamatore sostituito con N0CALL, password della scheda e indirizzo IP pubblico di una stazione omessi; le righe CFG GET dei testi e dei destinatari MeshCom sono omesse)
+
+> CFG REBOOT
+CFG OK reboot
+rst:0xc (SW_CPU_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+[avvio] scheda T-Beam V1.2, firmware 4e3cbf4
+[avvio] impostazioni: lette dalla memoria
+[pmu] AXP2101 ok
+[pmu] batteria presente, 4090 mV, 100 %, USB si, carica no
+[gps] spento (CFG SET GPS ON per accenderlo)
+[avvio] display OLED trovato all'indirizzo 0x3C
+[avvio] dispositivi I2C trovati: 0x34 0x3C
+[nodo] ruolo node (antenna collegata?)
+[wifi] punto di accesso VoLoRa-7CF0, indirizzo 192.168.4.1
+[nodo] configurazione dal Wi-Fi: rete VoLoRa-7CF0, password <omessa>, pagina http://192.168.4.1 (per qualche minuto, poi parte il nodo)
+> CFG GET
+CFG callsign=N0CALL freq=433.900 freqmsg=433.900 freqrange=433.900 power=10 volume=5 micfloor=-60 profile=std board=tbeam reboot=0 test=0 pos=off qth=none gps=off role=node freqout=433.900
+> CFG VERSION
+CFG VERSION fw=4e3cbf4 board=tbeam proto=2 radio=SX1278
+> CFG GET NODE
+CFG NODE ssid=IU5HJU_AP pass=set ip=iu5hju.ddns.net port=5400 listen=5400 id=2 peerid=1000 key=set
+[nodo] finestra di configurazione Wi-Fi chiusa
+[nodo] id 2, rete "IU5HJU_AP", altro nodo iu5hju.ddns.net:5400 (id 1000), ascolto sulla porta 5400, radio 433.900 MHz profilo Standard
+[nodo] identificativo ogni 10 min, poi in Morse (il primo dopo 15 s)
+[nodo] memoria libera: 116552 byte (blocco piu' grande 57332)
+[nodo] radio->rete 0, rete->radio 0 (trasmessi 0), persi coda 0, firma errata 0, ripetuti 0, scartati collegamento giu' 0, id 1 (Morse 0), heap 116552
+[nodo] Wi-Fi 192.168.1.50
+[wifi] pagina di gestione sulla rete di casa: http://192.168.1.50/ (utente volora)
+[nodo] gestione dalla rete di casa: http://192.168.1.50/ oppure http://volora-7cf0.local/ (utente volora, password <omessa>)
+[rete] iu5hju.ddns.net = <indirizzo pubblico>
+[nodo] collegamento con l'altro nodo attivo
+[rete] indirizzo pubblico: <indirizzo pubblico>
