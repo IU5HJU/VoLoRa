@@ -391,3 +391,8 @@ Le tre perdite recuperate dalla parità a -28 dBm (prova del 4 novembre) hanno u
 - **Non provato:** la trasmissione dalla T-Beam SX1262 verso una SX1278; la voce Standard o Range fra le due; la distanza non è registrata.
 - **Dal lato della T3**, nella stessa sessione: una registrazione di 4,0 s ha riportato `frame persi dal microfono 18` (le altre 0). Non è chiaro se c'entri con questo collegamento: da tenere d'occhio.
 
+### 14/11/2026, casa, IU5HJU (aggiornamento senza perdere le impostazioni: T-Beam)
+
+- Dopo la prova sulla T3 (sopra), l'operatore riferisce che **le impostazioni sono rimaste anche dopo l'aggiornamento del firmware sulle due T-Beam**, quella con radio **SX1278** e quella con radio **SX1262**, aggiornate dalla pagina con la casella "Erase device" vuota.
+- **Limiti:** riferito a voce, **senza registri** (non ci sono `CFG GET` prima e dopo né la riga `[avvio] impostazioni:`), e non si sa da quale firmware di partenza. Partendo da versioni molto vecchie non è provato.
+

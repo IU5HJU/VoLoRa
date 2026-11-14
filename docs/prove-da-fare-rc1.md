@@ -8,7 +8,7 @@ Scaletta delle prove su schede ancora mancanti (stato al 14/11/2026, firmware `d
 
 | # | Prova | Cosa deve succedere | Da riportare |
 |---|---|---|---|
-| A1 | **Aggiornamento senza perdere le impostazioni** su una **T-Beam SX1278** e una **T-Beam SX1262** (sulla T3 è già provato) | dopo l'avvio `impostazioni: lette dalla memoria` e `CFG GET` uguale a prima | `CFG GET` prima e dopo, riga `[avvio]`, se compariva la casella "Erase device" |
+| A1 | ~~Aggiornamento senza perdere le impostazioni~~ **fatto il 14/11/2026** su T3 (registri) e, riferito dall'operatore, su T-Beam SX1278 e SX1262: se si vuole un registro per le T-Beam, ripetere con `CFG GET` prima e dopo | dopo l'avvio `impostazioni: lette dalla memoria` e `CFG GET` uguale a prima | `CFG GET` prima e dopo, riga `[avvio]`, se compariva la casella "Erase device" |
 | A2 | **Prova dei toni** nel profilo Messaggio sulla **T-Beam SX1262**: `CFG TEST AUDIO` | arriva fino a `CFG AUDIO rf pkts=...` e `CFG AUDIO fine` **senza riavvio** (prima: `task_wdt`, `abort`) | l'intero blocco `CFG AUDIO ...` |
 | A3 | **Posizione dal browser** sul sito: scheda collegata, QTH vuoto | compare l'avviso, il pulsante "Usa la posizione del browser" chiede il permesso e riempie i campi a **4 decimali**; i valori restano nei campi finché non premi Salva | schermata, precisione scritta sotto, se dopo Salva `CFG GET` mostra il QTH |
 | A4 | **MeshCom ascolto**: menu → "MeshCom ascolto" | conto alla rovescia per `MCWINDOW` (di base 5 minuti), la lettera in alto è **T**, a fine tempo la scheda rientra da sola; con un altro dispositivo MeshCom che manda un testo a te o a un tuo gruppo, il testo arriva in casella | durata reale, se il testo è arrivato, riga `[meshcom] fine escursione ...` |
