@@ -30,3 +30,20 @@ CFG NODE ssid=IU5HJU_AP pass=set ip=iu5hju.ddns.net port=5400 listen=5400 id=2 p
 [rete] iu5hju.ddns.net = <indirizzo pubblico>
 [nodo] collegamento con l'altro nodo attivo
 [rete] indirizzo pubblico: <indirizzo pubblico>
+[nodo] radio->rete 0, rete->radio 0 (trasmessi 0), persi coda 0, firma errata 0, ripetuti 0, scartati collegamento giu' 0, id 1 (Morse 0), heap 106892
+[nodo] radio->rete 0, rete->radio 0 (trasmessi 0), persi coda 0, firma errata 0, ripetuti 0, scartati collegamento giu' 0, id 1 (Morse 0), heap 106892
+[wifi] richiesta della pagina
+[wifi] comando dalla pagina: CFG GET
+[wifi] comando dalla pagina: CFG GET SYSOP
+[wifi] richiesta non trovata
+[wifi] comando dalla pagina: CFG GET IDINT
+[wifi] comando dalla pagina: CFG GET IDMORSE
+[wifi] comando dalla pagina: CFG GET SHIFT
+[wifi] comando dalla pagina: CFG GET MONITOR
+[wifi] comando dalla pagina: CFG GET TEXT1
+(... CFG GET TEXT2, TEXT3, TEXT4 ...)
+[nodo] radio->rete 0, rete->radio 0 (trasmessi 0), persi coda 0, firma errata 0, ripetuti 0, scartati collegamento giu' 0, id 1 (Morse 0), heap 101272
+[wifi] comando dalla pagina: CFG GET TEXT5
+[wifi] comando dalla pagina: CFG GET MC
+[wifi] comando dalla pagina: CFG GET MCDEST1
+(... CFG GET MCDEST2 ... MCDEST5 ...)
