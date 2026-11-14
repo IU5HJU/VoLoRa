@@ -103,6 +103,9 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   // La pagina legge prima i valori principali, poi MeshCom e i testi (decine di richieste): lo stato "letti" compare alla fine
   await p.waitForFunction(() => /letti/.test(document.getElementById('st').textContent), null, { timeout: 15000 });
   check('stato di lettura', /letti/.test(await p.textContent('#st')));
+  // Il testo iniziale dice che la trasmissione e' disattivata: vale solo per il Wi-Fi della scheda; dalla rete di casa (nodo) no
+  check('testo del Wi-Fi della scheda', /trasmissione è disattivata/.test(await p.textContent('#intro')));
+  check('testo dalla rete di casa', await p.evaluate(() => /rete di casa/.test(introFor('192.168.1.50') || '') && /continua a lavorare/.test(introFor('volora-7cf0.local') || '') && introFor('192.168.4.1') === null));
 
   check('testi letti', (await p.inputValue('#text1')) === '%C QRV su VoLoRa modo %M %F' && (await p.inputValue('#text5')) === '73 e buona giornata');
   await p.fill('#text2', 'Sono QRV su 433.775, chiamami'); await p.fill('#text4', '');

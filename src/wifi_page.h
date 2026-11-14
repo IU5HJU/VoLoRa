@@ -18,7 +18,7 @@ button.sec{background:#e5e7eb;color:#14181f}
 @media(prefers-color-scheme:dark){body{background:#12151a;color:#e8eaed}.hint{color:#aab}button.sec{background:#2b3038;color:#e8eaed}input,select{background:#1d2128;color:#e8eaed;border:1px solid #444}}
 </style></head><body>
 <h1>Configurazione</h1>
-<p class="hint">Scheda collegata al suo Wi-Fi. Finché questa pagina è aperta <strong>la trasmissione è disattivata</strong>. Per uscire riavvia la scheda (pulsante in fondo o pressione lunga del volume).</p>
+<p class="hint" id="intro">Scheda collegata al suo Wi-Fi. Finché questa pagina è aperta <strong>la trasmissione è disattivata</strong>. Per uscire riavvia la scheda (pulsante in fondo o pressione lunga del volume).</p>
 <form id="f" autocomplete="off">
 <label for="callsign">Nominativo</label><input id="callsign" maxlength="8" required>
 <label for="profile">Profilo</label>
@@ -89,6 +89,9 @@ button.sec{background:#e5e7eb;color:#14181f}
 <div id="st"></div>
 <script>
 const $=id=>document.getElementById(id);
+// Dalla rete di casa (nodo Internet) la scheda continua a lavorare: il testo di sopra vale solo per il Wi-Fi della scheda (192.168.4.1)
+function introFor(host){return host==='192.168.4.1'||host==='127.0.0.1'?null:'Scheda collegata alla <strong>rete di casa</strong>: il nodo continua a lavorare mentre configuri. Le modifiche valgono dopo il riavvio (pulsante in fondo); alla ripartenza il Wi-Fi di configurazione resta aperto per 3 minuti, poi il nodo si ricollega.';}
+{const t=introFor(location.hostname);if(t)$('intro').innerHTML=t;}
 function st(t,c){const e=$('st');e.textContent=t;e.className=c||'';}
 async function cmd(l){const r=await fetch('/cfg?c='+encodeURIComponent(l));return (await r.text()).trim();}
 function parse(t){const m={};for(const kv of t.replace(/^CFG /,'').split(' ')){const i=kv.indexOf('=');if(i>0)m[kv.slice(0,i)]=kv.slice(i+1);}return m;}
