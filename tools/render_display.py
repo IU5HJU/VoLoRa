@@ -83,6 +83,64 @@ class Oled:
                 if 0 <= x + xx < W and 0 <= y + yy < H:
                     self.px[y + yy][x + xx] = True
 
+    def pixel(self, x, y):
+        if 0 <= x < W and 0 <= y < H:
+            self.px[y][x] = True
+
+    def draw_rect(self, x, y, w, h):
+        for i in range(w):
+            self.pixel(x + i, y)
+            self.pixel(x + i, y + h - 1)
+        for j in range(h):
+            self.pixel(x, y + j)
+            self.pixel(x + w - 1, y + j)
+
+    def line(self, x0, y0, x1, y1):
+        """Bresenham, come Adafruit_GFX::drawLine."""
+        dx, dy = abs(x1 - x0), abs(y1 - y0)
+        sx, sy = (1 if x0 < x1 else -1), (1 if y0 < y1 else -1)
+        err = dx - dy
+        while True:
+            self.pixel(x0, y0)
+            if x0 == x1 and y0 == y1:
+                break
+            e2 = 2 * err
+            if e2 > -dy:
+                err -= dy
+                x0 += sx
+            if e2 < dx:
+                err += dx
+                y0 += sy
+
+    def fill_triangle(self, x0, y0, x1, y1, x2, y2):
+        def sign(ax, ay, bx, by, cx, cy):
+            return (ax - cx) * (by - cy) - (bx - cx) * (ay - cy)
+        for y in range(min(y0, y1, y2), max(y0, y1, y2) + 1):
+            for x in range(min(x0, x1, x2), max(x0, x1, x2) + 1):
+                d1, d2, d3 = sign(x, y, x0, y0, x1, y1), sign(x, y, x1, y1, x2, y2), sign(x, y, x2, y2, x0, y0)
+                if not ((d1 < 0 or d2 < 0 or d3 < 0) and (d1 > 0 or d2 > 0 or d3 > 0)):
+                    self.pixel(x, y)
+
+    def circle_helper(self, x0, y0, r, corner):
+        """Come Adafruit_GFX::drawCircleHelper (1 alto-sx, 2 alto-dx, 4 basso-dx, 8 basso-sx)."""
+        f, ddx, ddy, x, y = 1 - r, 1, -2 * r, 0, r
+        while x < y:
+            if f >= 0:
+                y -= 1
+                ddy += 2
+                f += ddy
+            x += 1
+            ddx += 2
+            f += ddx
+            if corner & 4:
+                self.pixel(x0 + x, y0 + y); self.pixel(x0 + y, y0 + x)
+            if corner & 2:
+                self.pixel(x0 + x, y0 - y); self.pixel(x0 + y, y0 - x)
+            if corner & 8:
+                self.pixel(x0 - y, y0 + x); self.pixel(x0 - x, y0 + y)
+            if corner & 1:
+                self.pixel(x0 - y, y0 - x); self.pixel(x0 - x, y0 - y)
+
     def hline(self, x, y, w):
         for i in range(w):
             if 0 <= x + i < W and 0 <= y < H:
@@ -252,6 +310,169 @@ def show_lines(font, lines):
     return o
 
 
+def footer(o, volume=7, battery=4.12):
+    o.set_size(1)
+    o.set_cursor(0, 56)
+    o.write(f"Vol {volume}/10")
+    txt = f"(Batt={battery:.2f}V)"
+    o.set_cursor(W - 6 * len(txt), 56)
+    o.write(txt)
+
+
+def draw_main(font, big, line38=None, line47=None, badge="S", freq=FREQ, bar=None):
+    """Schermata principale come UiNotifier::draw() con il testo grande e le righe a y 38 e 47; bar = percentuale della barra di avanzamento."""
+    o = Oled(font)
+    header(o, CALLSIGN, freq, badge)
+    big_text(o, 16, big)
+    o.set_size(1)
+    if line38:
+        o.set_cursor(0, 38)
+        o.write(line38)
+    if bar is not None:
+        o.draw_rect(0, 47, 128, 7)
+        o.fill_rect(2, 49, (124 * bar) // 100, 3)
+    elif line47:
+        o.set_cursor(0, 47)
+        o.write(line47)
+    footer(o)
+    return o
+
+
+def draw_sweep(font, running=False, dbm=14, step=3, answered=True, aborted=False, min_perfect=-1, min_answered=-1, remote_call=None, dist=None):
+    """Come UiNotifier::drawSweep(): prova di potenza, sotto l'intestazione."""
+    o = Oled(font)
+    header(o)
+    o.set_size(1)
+    o.set_cursor(0, 16)
+    if running:
+        o.write("PROVA DI POTENZA")
+    elif remote_call:
+        o.write(f"POTENZA da {remote_call}")
+    else:
+        o.write("POTENZA: interrotta" if aborted else "POTENZA: finita")
+    o.set_size(2)
+    o.set_cursor(0, 28)
+    if running:
+        o.write(f"{dbm} dBm")
+    elif min_perfect >= 0:
+        o.write(f"MIN {min_perfect} dBm")
+    else:
+        o.write("NON PULITA" if min_answered >= 0 else "NESSUNA")
+    o.set_size(1)
+    o.set_cursor(0, 47)
+    if running:
+        o.write(f"passo {step}: {'risposta' if answered else 'nessuna'}")
+        o.set_cursor(0, 56)
+        o.write("PTT = ferma")
+    else:
+        if min_perfect >= 0:
+            l1 = f"sente fino a {min_answered} dBm"
+            l2 = f"100% a MIN  {dist}" if dist else "(frame 100% a MIN)"
+        elif min_answered >= 0:
+            l1 = f"risponde a {min_answered} dBm"
+            l2 = f"frame persi {dist}" if dist else "ma con frame persi"
+        else:
+            l1, l2 = "nessuna risposta", "l'altra e' in prova?"
+        o.write(l1)
+        o.set_cursor(0, 56)
+        o.write(l2)
+    return o
+
+
+def envelope(o, x, y):
+    o.draw_rect(x, y, 44, 28)
+    o.draw_rect(x + 1, y + 1, 42, 26)
+    for k in range(2):
+        o.line(x + 1, y + 1 + k, x + 22, y + 15 + k)
+        o.line(x + 42, y + 1 + k, x + 22, y + 15 + k)
+
+
+def speaker(o, x, y):
+    o.fill_rect(x, y + 10, 10, 12)
+    o.fill_triangle(x + 10, y + 10, x + 24, y, x + 24, y + 31)
+    o.fill_triangle(x + 10, y + 10, x + 10, y + 21, x + 24, y + 31)
+    o.circle_helper(x + 26, y + 16, 8, 0x6)
+    o.circle_helper(x + 26, y + 16, 15, 0x6)
+
+
+def draw_incoming(font, text, call="N0CALL"):
+    """Come UiNotifier::drawIncoming(): messaggio in casella, non ancora aperto."""
+    o = Oled(font)
+    o.set_size(1)
+    o.set_cursor(0, 0)
+    o.write(("SMS da " if text else "Voce da ") + call)
+    if text:
+        envelope(o, 42, 11)
+    else:
+        speaker(o, 40, 10)
+    o.set_cursor(0, 44)
+    o.write("MESSAGGIO RICEVUTO")
+    o.set_cursor(0, 55)
+    o.write("Premi PTT: leggi" if text else "Premi PTT: ascolta")
+    return o
+
+
+def draw_playing(font, call="N0CALL"):
+    o = Oled(font)
+    o.set_size(1)
+    o.set_cursor(0, 0)
+    o.write("Voce da " + call)
+    speaker(o, 40, 10)
+    o.set_cursor(0, 44)
+    o.write("Riproduco messaggio")
+    o.set_cursor(0, 55)
+    o.write("PTT = stop")
+    return o
+
+
+def wrap_lines(text, width=21):
+    """Come UiNotifier::wrapText(): a capo sugli spazi, al massimo 21 caratteri per riga."""
+    lines, cur = [], ""
+    for w in text.split():
+        t = (cur + " " + w).strip()
+        if len(t) > width:
+            lines.append(cur)
+            cur = w
+        else:
+            cur = t
+    if cur:
+        lines.append(cur)
+    return lines
+
+
+def draw_text(font, call, text, page=0):
+    """Come UiNotifier::drawText(): testo aperto, sei righe per pagina."""
+    o = Oled(font)
+    lines = wrap_lines(text)
+    pages = (len(lines) + 5) // 6
+    o.set_size(1)
+    o.set_cursor(0, 0)
+    o.write(f"da {call}  {page + 1}/{pages}  VOL>" if pages > 1 else f"da {call}")
+    o.hline(0, 9, 128)
+    for r in range(6):
+        li = page * 6 + r
+        if li >= len(lines):
+            break
+        o.set_cursor(0, 12 + r * 8)
+        o.write(lines[li])
+    return o
+
+
+def draw_choose(font, title, text, footer_text):
+    """Come UiNotifier::drawPicker()/drawChoice(): titolo, testo a capo e istruzioni."""
+    o = Oled(font)
+    o.set_size(1)
+    o.set_cursor(0, 0)
+    o.write(title)
+    o.hline(0, 9, 128)
+    for r, t in enumerate(wrap_lines(text)[:5]):
+        o.set_cursor(0, 12 + r * 8)
+        o.write(t)
+    o.set_cursor(0, 55)
+    o.write(footer_text)
+    return o
+
+
 def screens(font):
     return [
         ("1  Avvio", "Appena accesa, durante l'inizializzazione.",
@@ -316,6 +537,40 @@ def screens(font):
          show_lines(font, ["NODO INTERNET", "WiFi 192.168.1.50", "REF ok iu5hju.ddns.n~", "R>N 12  N>R 9", "RX N0CALL -85 7.5dB"])),
         ("31  Nodo: N0CALL, collegamento giu'", "Con N0CALL il nodo non trasmette; REF NO = nessun collegamento; nessuna stazione ancora passata.",
          show_lines(font, ["NODO N0CALL: no TX", "WiFi: connessione...", "REF NO 192.168.1.51", "R>N 0  N>R 0", "Radio: nessuno"])),
+        ("32  Prova di potenza in corso", "Chi trasmette: potenza del passo, se l'altra scheda ha risposto, PTT ferma la prova (e tre pressioni brevi la spengono).",
+         draw_sweep(font, running=True, dbm=14, step=3)),
+        ("33  Esito: potenza minima e distanza", "Con la posizione dell'altra scheda (CFG SET POS ON) l'ultima riga dice anche i km. Resta 30 s, su tutte e due le schede.",
+         draw_sweep(font, min_perfect=2, min_answered=2, dist="5.0km")),
+        ("34  Esito senza posizione", "Senza la posizione dell'altra scheda l'ultima riga e' quella di sempre.",
+         draw_sweep(font, min_perfect=9, min_answered=7)),
+        ("35  Esito: non pulita", "L'altra scheda risponde ma con frame persi anche alla massima potenza.",
+         draw_sweep(font, min_answered=11, dist="12.3km")),
+        ("36  Esito: nessuna risposta", "Nessun passo ha avuto risposta: l'altra scheda e' in prova?",
+         draw_sweep(font)),
+        ("37  Esito visto dall'altra scheda", "La scheda che ha ricevuto mostra lo stesso esito, con il nominativo di chi ha trasmesso.",
+         draw_sweep(font, min_perfect=9, min_answered=7, remote_call="N0CALL", dist="5.0km")),
+        ("38  Messaggio vocale in casella", "A ricezione conclusa (profilo Messaggio): altoparlante, chi l'ha mandato; il PTT breve lo apre.",
+         draw_incoming(font, False)),
+        ("39  SMS in casella", "Come sopra per un testo (busta); \"SMS\" suona in Morse.",
+         draw_incoming(font, True)),
+        ("40  Riproduzione del messaggio", "PTT breve sulla schermata 38: ascolto, PTT = stop.",
+         draw_playing(font)),
+        ("41  Testo aperto", "Sei righe per pagina; con piu' pagine il volume breve passa alla successiva.",
+         draw_text(font, "N0CALL", "N0CALL QRV su VoLoRa modo M 433.475 (Inviato da dispositivo VoLoRa) 73 e buona giornata a tutti", 0)),
+        ("42  Invia testo", "Voce di menu \"Invia testo\": PTT = altro testo, volume = invia.",
+         draw_choose(font, "INVIA TESTO 2/5", "Arrivo tra 10 minuti", "PTT=altro  VOL=invia")),
+        ("43  MeshCom: scelta del destinatario", "Dopo il testo (o \"(solo ascolto)\"): PTT = altro, volume = scegli.",
+         draw_choose(font, "MESHCOM A 1/3", "22251", "PTT=altro  VOL=scegli")),
+        ("44  Profilo Messaggio a riposo", "Il PTT registra (fino a 15 s); a ricezione conclusa il messaggio va in casella.",
+         draw_main(font, "MESSAGGIO", "PTT = registra", badge="M")),
+        ("45  Registrazione", "Mentre si tiene premuto il PTT.",
+         draw_main(font, "REGISTRA", "Registro 3/15 s", badge="M")),
+        ("46  Invio del messaggio", "Un secondo dopo il rilascio parte la trasmissione, con la percentuale e la barra.",
+         draw_main(font, "INVIO", "Invio messaggio 40%", badge="M", bar=40)),
+        ("47  Ricezione di un messaggio", "Percentuale e RSSI/SNR (o la distanza, se c'e' la posizione).",
+         draw_main(font, "RX N0CALL", "Ricevo messaggio 40%", "RSSI -92  SNR 7.5", badge="M")),
+        ("48  Invio di un testo", "Trasmissione di un SMS dal menu \"Invia testo\".",
+         draw_main(font, "INVIO SMS", "Trasmetto il testo")),
     ]
 
 
