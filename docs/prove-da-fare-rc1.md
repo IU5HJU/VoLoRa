@@ -4,6 +4,8 @@ Scaletta delle prove su schede ancora mancanti (stato al 14/11/2026, firmware `d
 
 **Per tutte le prove:** aggiorna dalla pagina di installazione (ricarica con Ctrl+Shift+R, versione `dev`) lasciando **vuota** la casella "Erase device"; prima e dopo l'aggiornamento copia `CFG GET`, `CFG VERSION` e la riga `[avvio] impostazioni: ...`. Antenna collegata prima dell'USB. Registri della seriale salvati su file (pulsante "Salva su file" della pagina).
 
+**Prove con la T-Beam SX1262 di un altro radioamatore** (14/11/2026): A1, A2, B1-B6 sono state riportate in un PDF a lui destinato, con per ogni prova se servono il registro e la foto del display (registro obbligatorio per A1, A2, B1, B3-B6; foto obbligatoria per B1, B3, B4, B5). Il PDF non è nel repository; i risultati arriveranno qui in [prove.md](prove.md) senza nominativo di terzi.
+
 ## A. Schede singole (a banco, 15 minuti l'una)
 
 | # | Prova | Cosa deve succedere | Da riportare |
