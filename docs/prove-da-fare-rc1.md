@@ -42,4 +42,4 @@ Seguire [banco-ripetitore.md](banco-ripetitore.md): D1 collegamento RX-TX a quat
 
 1. Annotare gli esiti in [prove.md](prove.md) (data, schede, commit, valori) e togliere dalle note della rc.1 le voci provate dalla sezione "Cosa NON è ancora stato provato".
 2. Se emerge un difetto, correggere e ripetere **la prova che lo ha trovato** sul firmware nuovo.
-3. Rigenerare le immagini del mockup del display ([display.md](display.md), serve il file font di Adafruit_GFX) e controllare la checklist in [versioni.md](versioni.md).
+3. Controllare la checklist in [versioni.md](versioni.md). Il mockup del display è già rigenerato (non contiene le schermate nuove del nodo, descritte a parole in [display.md](display.md)).

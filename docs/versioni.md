@@ -60,7 +60,7 @@ Il tag lo crea chi pubblica, a mano: i documenti non lo creano.
 ## Stato della checklist per la rc.1 (14/11/2026)
 
 1. **`main` verde:** sì, Build #313 (commit `023545d`); `make test` completo passa in CI.
-2. **Documenti allineati:** README, guida rapida, indice, `firmware.md`, `display.md`, `banco-nodo.md`, `prove.md`, `roadmap.md` e note di rilascio riflettono il firmware di quel commit. Restano da rigenerare le immagini del mockup del display e il PDF sul formato del pacchetto (frequenza predefinita).
+2. **Documenti allineati:** README, guida rapida, indice, `firmware.md`, `display.md`, `banco-nodo.md`, `prove.md`, `roadmap.md` e note di rilascio riflettono il firmware di quel commit.  Il mockup del display e il PDF sul formato del pacchetto sono rigenerati (433,475 MHz).
 3. **Note di rilascio:** [v0.1.0-rc.1.md](note-rilascio/v0.1.0-rc.1.md), con l'elenco di ciò che non è provato su scheda.
 4. **Provato su due schede:** la voce a turni, la prova di potenza (5,02 km), la SX1262 in ricezione, l'aggiornamento senza perdere le impostazioni. **Non provate su scheda** le novità del 14/11/2026 elencate nelle note (distanza in km, Wi-Fi del nodo, ultima stazione sul display, "MeshCom ascolto", posizione dal browser, prova dei toni dopo il watchdog).
 
