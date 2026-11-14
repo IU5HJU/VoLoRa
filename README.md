@@ -20,9 +20,10 @@ Funzionamento in breve:
 3. Al rilascio del PTT (massimo 30 s) si invia l'ultimo audio e il segnale di fine turno (OVER).
 4. Tutte le stazioni in ascolto sulla frequenza ricevono e riproducono. Dopo 5-10 s di attesa si risponde.
 
-> **Progetto sperimentale (beta).** La voce passa da una scheda all'altra ed è **provata sulle schede** (T3 e T-Beam,
-> nei tre profili, 10/11/2026: esiti in [docs/prove.md](docs/prove.md)). **Manca ancora la misura sul campo**: distanze
-> lunghe, mezzi in movimento. Possono trasmettere solo radioamatori con il proprio nominativo, sulle frequenze e con le
+> **Progetto sperimentale, in preparazione della prima release candidate (rc.1).** La voce passa da una scheda all'altra ed è
+> **provata sulle schede** (T3 e T-Beam, nei tre profili, 10/11/2026) e **in aria a 5,02 km in movimento** (prova di potenza,
+> 14/11/2026): esiti in [docs/prove.md](docs/prove.md). **Mancano ancora misure sul campo oltre quella distanza** e diverse
+> prove su schede (elenco in [docs/note-rilascio/v0.1.0-rc.1.md](docs/note-rilascio/v0.1.0-rc.1.md)). Possono trasmettere solo radioamatori con il proprio nominativo, sulle frequenze e con le
 > potenze consentite. Il nominativo viaggia in chiaro e i contenuti non sono cifrati.
 
 > **Nuovo? Parti dalla [guida rapida](docs/guida-rapida.md).** Indice della documentazione: [docs/README.md](docs/README.md).
@@ -34,8 +35,8 @@ Sulle stesse schede, dalla beta.2 (09/11/2026) a oggi (14/11/2026):
 - **Testi brevi** (stile SMS, fino a 150 caratteri), **casella dei messaggi**, **MeshCom** (escursione a tempo sulle reti di testo a 433,175 MHz) e **posizione/GPS**: [docs/meshcom-testo.md](docs/meshcom-testo.md), [docs/protocollo.md](docs/protocollo.md).
 - **Ripetitore con due T3** (RX e TX) con identificativo periodico, anche in **Morse a tono in FM** per chi non ha le schede LoRa, e comandi firmati del sysop: [docs/ripetitore.md](docs/ripetitore.md).
 - **Shift** per operare via ripetitore, libero da 0 a 10 MHz in positivo o negativo (come l'offset di una radio): [docs/firmware.md](docs/firmware.md).
-- **Nodo Internet** (due schede su Wi-Fi che si portano i pacchetti, UDP firmato) e **reflector**: un server a cui si collegano nodi e ripetitori **senza aprire porte sul router**, con pagina di amministrazione (password) e pagina pubblica di sola lettura: [docs/reflector.md](docs/reflector.md), [docs/banco-nodo.md](docs/banco-nodo.md).
-- **Prova di potenza** fra due schede: cerca da sola la potenza minima con cui si sentono, e l'esito compare sul display di entrambe: [docs/prova-collegamento.md](docs/prova-collegamento.md).
+- **Nodo Internet** (due schede su Wi-Fi che si portano i pacchetti, UDP firmato) e **reflector**: un server a cui si collegano nodi e ripetitori **senza aprire porte sul router**, con pagina di amministrazione (password) e pagina pubblica di sola lettura, con il Wi-Fi di configurazione all'avvio e la pagina di gestione dalla rete di casa, e sul display l'ultima stazione transitata: [docs/reflector.md](docs/reflector.md), [docs/banco-nodo.md](docs/banco-nodo.md).
+- **Prova di potenza** fra due schede: cerca da sola la potenza minima con cui si sentono, e l'esito compare sul display di entrambe, con la **distanza in km** se la posizione è attiva (`CFG SET POS ON`): [docs/prova-collegamento.md](docs/prova-collegamento.md).
 - **T-Beam con radio SX1262** (la stessa scheda col modulo LoRa diverso dall'SX1278): firmware dedicato, **provato in ricezione di un messaggio da una T3 il 14/11/2026** (Standard e Range non verificati): [docs/tbeam-sx1262.md](docs/tbeam-sx1262.md).
 
 ## Per provare il firmware
