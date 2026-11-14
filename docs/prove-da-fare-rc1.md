@@ -28,9 +28,9 @@ Scaletta delle prove su schede ancora mancanti (stato al 14/11/2026, firmware `d
 
 | # | Prova | Cosa deve succedere | Da riportare |
 |---|---|---|---|
-| C1 | **Scheda nuova nel ruolo nodo**: da `CFG SET ROLE NODE` senza altre impostazioni | il display dice `NON PRONTO` e cosa manca; la rete `VoLoRa-XXXX` è aperta senza scadenza; dal telefono (`http://192.168.4.1`) si impostano Wi-Fi di casa, reflector, `NODEID`, `NODEKEY`; salvando la scheda riparte | foto dei display, cosa è andato storto |
+| C1 | **Scheda nuova nel ruolo nodo**: da `CFG SET ROLE NODE` senza altre impostazioni | il display mostra la schermata Wi-Fi (rete `VoLoRa-XXXX`, password, indirizzo) con in fondo cosa manca (`manca NODEKEY`...), senza scadenza; la seriale dice `non pronto`; dal telefono (`http://192.168.4.1`) si impostano Wi-Fi di casa, reflector, `NODEID`, `NODEKEY`; salvando la scheda riparte | foto dei display, cosa è andato storto |
 | C2 | **Finestra di 3 minuti** su un nodo già configurato | all'accensione compare la schermata Wi-Fi con il conto alla rovescia; se un telefono è collegato la finestra si prolunga; allo scadere il nodo parte e si collega | durata reale, se il nodo si è collegato dopo |
-| C3 | **Gestione dalla rete di casa**: dal computer `http://<indirizzo>/` (e `http://volora-XXXX.local/`) | chiede utente `volora` e la password; poi la pagina di configurazione funziona; dopo tre password sbagliate niente accesso | indirizzo, se `.local` funziona, un `CFG SET` cambiato dalla pagina |
+| C3 | **Gestione dalla rete di casa**: dal computer `http://<indirizzo>/` (e `http://volora-XXXX.local/`) | chiede utente `volora` e la password; con una password sbagliata non si apre; con quella giusta la pagina funziona | indirizzo, se `.local` funziona, un `CFG SET` cambiato dalla pagina |
 | C4 | **Ultima stazione transitata**: una scheda trasmette in radio verso il nodo | ultima riga `RX <nominativo> RSSI SNR`, dopo 5 s `Ult ...`; sulla seriale `[nodo] transito N` | foto, riga seriale |
 | C5 | **Voce attraverso il reflector** fra due schede (nodi diversi) | la voce passa e si capisce; nella pagina del reflector compare "IP del Nodo" pubblico di ciascuna | durata, ritardo, IP visto |
 
