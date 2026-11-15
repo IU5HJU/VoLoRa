@@ -1,83 +1,181 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1150" viewBox="0 0 1700 1150">
 <rect x="0" y="0" width="1700" height="1150" rx="0" fill="#ffffff" stroke="none" stroke-width="0"/>
 <text x="40" y="44" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="28" font-weight="bold" text-anchor="start" fill="#111827">Ripetitore: due T3 collegate con quattro fili</text>
-<text x="40" y="72" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="15" font-weight="normal" text-anchor="start" fill="#4b5563">Le due schede sono T3 normali, gia' cablate (microfono, altoparlante, pulsanti): per il ripetitore si aggiungono solo i quattro fili.</text>
-<rect x="140" y="110" width="420" height="560" rx="18" fill="#1f2937" stroke="#111827" stroke-width="2"/>
-<rect x="290" y="114" width="120" height="26" rx="5" fill="#9ca3af" stroke="none" stroke-width="0"/>
-<text x="350" y="132" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#111827">micro USB</text>
-<text x="350" y="200" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#e5e7eb">LILYGO LoRa32 T3 V1.6.1</text>
-<text x="350" y="236" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="28" font-weight="bold" text-anchor="middle" fill="#ffffff">SCHEDA RX</text>
-<text x="350" y="266" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="middle" fill="#d1d5db">ascolta l'ingresso, manda alla TX</text>
-<text x="350" y="330" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#9ca3af">USB in alto, faccia con le sigle dei pin</text>
-<text x="350" y="354" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#9ca3af">Antenna a 433 MHz sempre collegata</text>
-<text x="350" y="378" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#9ca3af">microSD tolta</text>
-<rect x="1140" y="110" width="420" height="560" rx="18" fill="#1f2937" stroke="#111827" stroke-width="2"/>
-<rect x="1290" y="114" width="120" height="26" rx="5" fill="#9ca3af" stroke="none" stroke-width="0"/>
-<text x="1350" y="132" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#111827">micro USB</text>
-<text x="1350" y="200" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="20" font-weight="bold" text-anchor="middle" fill="#e5e7eb">LILYGO LoRa32 T3 V1.6.1</text>
-<text x="1350" y="236" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="28" font-weight="bold" text-anchor="middle" fill="#ffffff">SCHEDA TX</text>
-<text x="1350" y="266" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="middle" fill="#d1d5db">trasmette l'uscita</text>
-<text x="1350" y="330" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#9ca3af">USB in alto, faccia con le sigle dei pin</text>
-<text x="1350" y="354" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#9ca3af">Antenna a 433 MHz sempre collegata</text>
-<text x="1350" y="378" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#9ca3af">microSD tolta</text>
-<circle cx="560" cy="450" r="8" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
-<text x="544" y="455" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" text-anchor="end" fill="#e5e7eb">5V</text>
-<text x="544" y="472" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#9ca3af">fila sinistra</text>
-<circle cx="1140" cy="450" r="8" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
-<text x="1156" y="455" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" text-anchor="start" fill="#e5e7eb">5V</text>
-<text x="1156" y="472" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#9ca3af">fila sinistra</text>
-<circle cx="560" cy="506" r="8" fill="#111827" stroke="#ffffff" stroke-width="2"/>
-<text x="544" y="511" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" text-anchor="end" fill="#e5e7eb">GND</text>
-<text x="544" y="528" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#9ca3af">fila sinistra</text>
-<circle cx="1140" cy="506" r="8" fill="#111827" stroke="#ffffff" stroke-width="2"/>
-<text x="1156" y="511" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" text-anchor="start" fill="#e5e7eb">GND</text>
-<text x="1156" y="528" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#9ca3af">fila sinistra</text>
-<circle cx="560" cy="562" r="8" fill="#0d9488" stroke="#ffffff" stroke-width="2"/>
-<text x="544" y="567" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" text-anchor="end" fill="#e5e7eb">IO2</text>
-<text x="544" y="584" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#9ca3af">fila destra</text>
-<circle cx="1140" cy="562" r="8" fill="#0d9488" stroke="#ffffff" stroke-width="2"/>
-<text x="1156" y="567" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" text-anchor="start" fill="#e5e7eb">IO2</text>
-<text x="1156" y="584" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#9ca3af">fila destra</text>
-<circle cx="560" cy="618" r="8" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
-<text x="544" y="623" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" text-anchor="end" fill="#e5e7eb">S_VP</text>
-<text x="544" y="640" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#9ca3af">fila destra (IO36)</text>
-<circle cx="1140" cy="618" r="8" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
-<text x="1156" y="623" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="16" font-weight="bold" text-anchor="start" fill="#e5e7eb">S_VP</text>
-<text x="1156" y="640" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="start" fill="#9ca3af">fila destra (IO36)</text>
-<polyline points="560,450 1140,450" fill="none" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
-<polyline points="560,450 1140,450" fill="none" stroke="#dc2626" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
-<polyline points="560,506 1140,506" fill="none" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
-<polyline points="560,506 1140,506" fill="none" stroke="#111827" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
-<polyline points="560,562 640,562 1060,618 1140,618" fill="none" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
-<polyline points="560,562 640,562 1060,618 1140,618" fill="none" stroke="#0d9488" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
-<polyline points="560,618 640,618 1060,562 1140,562" fill="none" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
-<polyline points="560,618 640,618 1060,562 1140,562" fill="none" stroke="#7c3aed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
-<circle cx="560" cy="562" r="8" fill="#0d9488" stroke="#ffffff" stroke-width="2"/>
-<circle cx="1140" cy="562" r="8" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
-<rect x="640" y="156" width="24" height="20" rx="4" fill="#dc2626" stroke="none" stroke-width="0"/>
-<text x="676" y="172" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#111827">5V - 5V</text>
-<text x="860" y="172" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#4b5563">alimentazione (vedi procedura)</text>
-<rect x="640" y="190" width="24" height="20" rx="4" fill="#111827" stroke="none" stroke-width="0"/>
-<text x="676" y="206" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#111827">GND - GND</text>
-<text x="860" y="206" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#4b5563">massa comune</text>
-<rect x="640" y="224" width="24" height="20" rx="4" fill="#0d9488" stroke="none" stroke-width="0"/>
-<text x="676" y="240" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#111827">RX.IO2 -&gt; TX.S_VP</text>
-<text x="860" y="240" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#4b5563">seriale RX -&gt; TX</text>
-<rect x="640" y="258" width="24" height="20" rx="4" fill="#7c3aed" stroke="none" stroke-width="0"/>
-<text x="676" y="274" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#111827">RX.S_VP &lt;- TX.IO2</text>
-<text x="860" y="274" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#4b5563">seriale TX -&gt; RX</text>
-<text x="850" y="340" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="middle" fill="#4b5563">115200 baud, 3,3 V</text>
-<rect x="140" y="700" width="420" height="150" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
-<text x="350" y="730" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#92400e">Altoparlante di monitor (facoltativo, per il sysop)</text>
-<text x="350" y="756" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="normal" text-anchor="middle" fill="#92400e">MAX98357A + altoparlante 8 ohm, come sulla scheda normale:</text>
-<text x="350" y="780" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="normal" text-anchor="middle" fill="#92400e">IO14 BCLK, IO13 LRC, IO4 DIN, IO25 SD, 5V e GND</text>
-<text x="350" y="806" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="normal" text-anchor="middle" fill="#92400e">Pulsante del volume (facoltativo): IO15 e GND</text>
-<text x="350" y="832" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#92400e">Il microfono (IO34), se c'e', resta com'e'</text>
+<text x="40" y="72" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="15" font-weight="normal" text-anchor="start" fill="#4b5563">Le due schede sono T3 normali, gia' cablate (microfono, altoparlante, pulsanti): si aggiungono solo i quattro fili. Pin disegnati dove stanno sul connettore.</text>
+<rect x="120" y="130" width="360" height="750" rx="18" fill="#1f2937" stroke="#111827" stroke-width="2"/>
+<rect x="250" y="134" width="100" height="26" rx="5" fill="#9ca3af" stroke="none" stroke-width="0"/>
+<text x="300" y="152" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#111827">micro USB</text>
+<text x="300" y="326" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#9ca3af">LILYGO LoRa32 T3 V1.6.1</text>
+<text x="300" y="366" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#ffffff">SCHEDA RX</text>
+<text x="300" y="392" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#d1d5db">ascolta l'ingresso, manda alla TX</text>
+<rect x="230" y="440" width="140" height="100" rx="8" fill="#374151" stroke="#4b5563" stroke-width="2"/>
+<text x="300" y="484" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#e5e7eb">Radio SX1278</text>
+<text x="300" y="506" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#d1d5db">ESP32-PICO-D4</text>
+<circle cx="480" cy="200" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="464" y="205" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO25</text>
+<text x="410" y="205" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">ampl. SD</text>
+<circle cx="480" cy="252" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="464" y="257" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO4</text>
+<text x="410" y="257" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">ampl. DIN</text>
+<circle cx="480" cy="304" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="464" y="309" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO0</text>
+<text x="410" y="309" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">PTT</text>
+<circle cx="480" cy="356" r="8" fill="#0d9488" stroke="#ffffff" stroke-width="2"/>
+<text x="464" y="361" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#e5e7eb">IO2</text>
+<circle cx="480" cy="408" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="464" y="413" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO15</text>
+<text x="410" y="413" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">volume</text>
+<circle cx="480" cy="460" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="464" y="465" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO13</text>
+<text x="410" y="465" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">I2S WS</text>
+<circle cx="480" cy="512" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="464" y="517" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO12</text>
+<circle cx="480" cy="564" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="464" y="569" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO14</text>
+<text x="410" y="569" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">I2S BCLK</text>
+<circle cx="480" cy="616" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="464" y="621" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO35</text>
+<circle cx="480" cy="668" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="464" y="673" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO34</text>
+<text x="410" y="673" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">microfono</text>
+<circle cx="480" cy="720" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="464" y="725" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">RST</text>
+<circle cx="480" cy="772" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="464" y="777" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">S_VN</text>
+<circle cx="480" cy="824" r="8" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
+<text x="464" y="829" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#e5e7eb">S_VP</text>
+<circle cx="120" cy="200" r="8" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
+<text x="136" y="205" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#e5e7eb">5V</text>
+<circle cx="120" cy="252" r="8" fill="#111827" stroke="#ffffff" stroke-width="2"/>
+<text x="136" y="257" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#e5e7eb">GND</text>
+<circle cx="120" cy="304" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="136" y="309" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">3.3V</text>
+<circle cx="120" cy="356" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="136" y="361" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">GND</text>
+<circle cx="120" cy="408" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="136" y="413" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">IO26</text>
+<circle cx="120" cy="460" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="136" y="465" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">LoRa1</text>
+<circle cx="120" cy="512" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="136" y="517" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">LoRa2</text>
+<circle cx="120" cy="564" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="136" y="569" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">IO19</text>
+<circle cx="120" cy="616" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="136" y="621" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">IO23</text>
+<circle cx="120" cy="668" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="136" y="673" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">IO22</text>
+<circle cx="120" cy="720" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="136" y="725" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">RXD</text>
+<circle cx="120" cy="772" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="136" y="777" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">TXD</text>
+<circle cx="120" cy="824" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="136" y="829" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">IO21</text>
+<rect x="720" y="130" width="360" height="750" rx="18" fill="#1f2937" stroke="#111827" stroke-width="2"/>
+<rect x="850" y="134" width="100" height="26" rx="5" fill="#9ca3af" stroke="none" stroke-width="0"/>
+<text x="900" y="152" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#111827">micro USB</text>
+<text x="900" y="326" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#9ca3af">LILYGO LoRa32 T3 V1.6.1</text>
+<text x="900" y="366" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#ffffff">SCHEDA TX</text>
+<text x="900" y="392" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="11" font-weight="normal" text-anchor="middle" fill="#d1d5db">trasmette l'uscita</text>
+<rect x="830" y="440" width="140" height="100" rx="8" fill="#374151" stroke="#4b5563" stroke-width="2"/>
+<text x="900" y="484" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#e5e7eb">Radio SX1278</text>
+<text x="900" y="506" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#d1d5db">ESP32-PICO-D4</text>
+<circle cx="1080" cy="200" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="1064" y="205" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO25</text>
+<text x="1010" y="205" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">ampl. SD</text>
+<circle cx="1080" cy="252" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="1064" y="257" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO4</text>
+<text x="1010" y="257" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">ampl. DIN</text>
+<circle cx="1080" cy="304" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="1064" y="309" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO0</text>
+<text x="1010" y="309" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">PTT</text>
+<circle cx="1080" cy="356" r="8" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
+<text x="1064" y="361" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#e5e7eb">IO2</text>
+<circle cx="1080" cy="408" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="1064" y="413" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO15</text>
+<text x="1010" y="413" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">volume</text>
+<circle cx="1080" cy="460" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="1064" y="465" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO13</text>
+<text x="1010" y="465" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">I2S WS</text>
+<circle cx="1080" cy="512" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="1064" y="517" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO12</text>
+<circle cx="1080" cy="564" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="1064" y="569" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO14</text>
+<text x="1010" y="569" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">I2S BCLK</text>
+<circle cx="1080" cy="616" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="1064" y="621" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO35</text>
+<circle cx="1080" cy="668" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="1064" y="673" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">IO34</text>
+<text x="1010" y="673" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="10" font-weight="normal" text-anchor="end" fill="#6b7280">microfono</text>
+<circle cx="1080" cy="720" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="1064" y="725" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">RST</text>
+<circle cx="1080" cy="772" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="1064" y="777" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#9ca3af">S_VN</text>
+<circle cx="1080" cy="824" r="8" fill="#0d9488" stroke="#ffffff" stroke-width="2"/>
+<text x="1064" y="829" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="end" fill="#e5e7eb">S_VP</text>
+<circle cx="720" cy="200" r="8" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
+<text x="736" y="205" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#e5e7eb">5V</text>
+<circle cx="720" cy="252" r="8" fill="#111827" stroke="#ffffff" stroke-width="2"/>
+<text x="736" y="257" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#e5e7eb">GND</text>
+<circle cx="720" cy="304" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="736" y="309" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">3.3V</text>
+<circle cx="720" cy="356" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="736" y="361" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">GND</text>
+<circle cx="720" cy="408" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="736" y="413" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">IO26</text>
+<circle cx="720" cy="460" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="736" y="465" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">LoRa1</text>
+<circle cx="720" cy="512" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="736" y="517" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">LoRa2</text>
+<circle cx="720" cy="564" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="736" y="569" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">IO19</text>
+<circle cx="720" cy="616" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="736" y="621" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">IO23</text>
+<circle cx="720" cy="668" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="736" y="673" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">IO22</text>
+<circle cx="720" cy="720" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="736" y="725" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">RXD</text>
+<circle cx="720" cy="772" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="736" y="777" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">TXD</text>
+<circle cx="720" cy="824" r="6" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="736" y="829" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#9ca3af">IO21</text>
+<polyline points="120,200 80,200 80,100 600,100 600,200 720,200" fill="none" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
+<polyline points="120,200 80,200 80,100 600,100 600,200 720,200" fill="none" stroke="#dc2626" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="120,252 100,252 100,114 630,114 630,252 720,252" fill="none" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
+<polyline points="120,252 100,252 100,114 630,114 630,252 720,252" fill="none" stroke="#111827" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="480,356 520,356 520,904 1110,904 1110,824 1080,824" fill="none" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
+<polyline points="480,356 520,356 520,904 1110,904 1110,824 1080,824" fill="none" stroke="#0d9488" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="480,824 540,824 540,890 1130,890 1130,356 1080,356" fill="none" stroke="#ffffff" stroke-width="12" stroke-linejoin="round"/>
+<polyline points="480,824 540,824 540,890 1130,890 1130,356 1080,356" fill="none" stroke="#7c3aed" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="480" cy="356" r="8" fill="#0d9488" stroke="#ffffff" stroke-width="2"/>
+<circle cx="480" cy="824" r="8" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
+<circle cx="1080" cy="824" r="8" fill="#0d9488" stroke="#ffffff" stroke-width="2"/>
+<circle cx="1080" cy="356" r="8" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
+<text x="1160" y="190" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="18" font-weight="bold" text-anchor="start" fill="#111827">Quattro fili</text>
+<rect x="1160" y="212" width="24" height="20" rx="4" fill="#dc2626" stroke="none" stroke-width="0"/>
+<text x="1196" y="228" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#111827">5V - 5V</text>
+<text x="1196" y="248" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="normal" text-anchor="start" fill="#4b5563">alimentazione (vedi procedura)</text>
+<rect x="1160" y="262" width="24" height="20" rx="4" fill="#111827" stroke="none" stroke-width="0"/>
+<text x="1196" y="278" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#111827">GND - GND</text>
+<text x="1196" y="298" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="normal" text-anchor="start" fill="#4b5563">massa comune</text>
+<rect x="1160" y="312" width="24" height="20" rx="4" fill="#0d9488" stroke="none" stroke-width="0"/>
+<text x="1196" y="328" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#111827">RX.IO2 -&gt; TX.S_VP (IO36)</text>
+<text x="1196" y="348" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="normal" text-anchor="start" fill="#4b5563">seriale RX -&gt; TX</text>
+<rect x="1160" y="362" width="24" height="20" rx="4" fill="#7c3aed" stroke="none" stroke-width="0"/>
+<text x="1196" y="378" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="15" font-weight="bold" text-anchor="start" fill="#111827">RX.S_VP (IO36) &lt;- TX.IO2</text>
+<text x="1196" y="398" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="normal" text-anchor="start" fill="#4b5563">seriale TX -&gt; RX</text>
+<text x="1160" y="440" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#4b5563">115200 baud, 3,3 V</text>
+<rect x="1160" y="480" width="480" height="170" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="2"/>
+<text x="1400" y="510" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="middle" fill="#92400e">Altoparlante di monitor (facoltativo, per il sysop)</text>
+<text x="1400" y="536" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="normal" text-anchor="middle" fill="#92400e">MAX98357A + altoparlante 8 ohm, come sulla scheda normale:</text>
+<text x="1400" y="560" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="normal" text-anchor="middle" fill="#92400e">IO14 BCLK, IO13 LRC, IO4 DIN, IO25 SD, 5V e GND</text>
+<text x="1400" y="586" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="normal" text-anchor="middle" fill="#92400e">Pulsante del volume (facoltativo): IO15 e GND</text>
+<text x="1400" y="612" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="normal" text-anchor="middle" fill="#92400e">PTT (solo T3 normale): IO0 e GND, non serve nel ripetitore</text>
+<text x="1400" y="638" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#92400e">Il microfono (IO34), se c'e', resta com'e'</text>
 <rect x="40" y="916" width="1620" height="196" rx="10" fill="#f9fafb" stroke="#e5e7eb" stroke-width="2"/>
-<text x="60" y="948" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Quattro fili fra le due schede: 5V, GND e la seriale incrociata. RX e TX usano gli stessi due pin, IO2 (TX) e S_VP = IO36 (RX): la T3 e' la stessa, cambia solo il ruolo (CFG SET ROLE).</text>
-<text x="60" y="978" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Nessun pin del cablaggio normale e' toccato (microfono IO34 compreso). S_VP e' solo ingresso senza pull-up interno; IO2 e' il MISO dello slot microSD: microSD sempre tolta.</text>
-<text x="60" y="1008" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Il display di ciascuna scheda mostra lo stato: 'TX ok' sulla RX e 'RX ok' sulla TX indicano che la seriale funziona. Fili corti e lontani dall'antenna.</text>
-<text x="60" y="1038" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Il ripetitore usa solo la T3: due T-Beam sarebbero uno spreco. Senza nominativo (N0CALL) la scheda TX non trasmette: ideale per la prova a banco.</text>
-<text x="60" y="1068" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Procedura di prova: docs/banco-ripetitore.md.</text>
+<text x="60" y="948" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Quattro fili: 5V e GND sulla fila sinistra del connettore (i due pin in alto, dalla parte dell'USB), IO2 e S_VP (= IO36) sulla fila destra. Tutte e due le schede usano gli stessi pin: cambia solo il ruolo (CFG SET ROLE).</text>
+<text x="60" y="978" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">IO2 e il PTT? No: il PTT e' IO0 (la riga sopra IO2), il volume IO15 (quella sotto). IO2 e S_VP non servono al cablaggio normale. S_VP e' solo ingresso; IO2 e' il MISO della microSD (sempre tolta).</text>
+<text x="60" y="1008" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Perche' non TXD e RXD (IO1 e IO3)? Sono la seriale dell'USB (programmazione e console): con il cavo collegato si scontrerebbero con il convertitore USB. Dettagli in docs/pinout.md.</text>
+<text x="60" y="1038" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Il display di ciascuna scheda mostra lo stato: 'TX ok' sulla RX e 'RX ok' sulla TX indicano che la seriale funziona. Fili corti e lontani dall'antenna. Procedura: docs/banco-ripetitore.md.</text>
+<text x="60" y="1068" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Il ripetitore usa solo la T3. Senza nominativo (N0CALL) la scheda TX non trasmette: ideale per la prova a banco.</text>
 <text x="60" y="1098" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#6b7280">Fonte: docs/pinout.md e src/board_pins_t3_v161.h. Generato da tools/render_wiring.py.</text>
 </svg>

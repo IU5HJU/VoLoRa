@@ -87,6 +87,29 @@ Due T-Beam sarebbero uno spreco (GPS, PMU e batteria non servono a un ripetitore
 
 Dettagli in [firmware.md](firmware.md) e [studio-ripetitore.md](studio-ripetitore.md); prova a banco in [banco-ripetitore.md](banco-ripetitore.md). **Da verificare sul banco.**
 
+### Pin del connettore della T3: uso normale e ripetitore (15/11/2026)
+
+Confronto con lo schema ufficiale LILYGO della T3 V1.6.1 (pin sul connettore, dall'USB verso l'antenna: fila destra `IO25, IO4, IO0, IO2, IO15, IO13, IO12, IO14, IO35, IO34, RST, S_VN, S_VP`, fila sinistra `5V, GND, 3.3V, GND, IO26, LoRa1, LoRa2, IO19, IO23, IO22, RXD, TXD, IO21`). Lo schema [collegamenti-ripetitore.png](images/collegamenti-ripetitore.png) è stato **ridisegnato con i pin dove stanno davvero** (prima i quattro punti erano tutti sul bordo rivolto verso l'altra scheda, in posizioni che sul connettore non esistono).
+
+| Pin | Cablaggio normale (stazione) | Ripetitore (RX e TX) | Note |
+|---|---|---|---|
+| IO0 | **PTT** (pulsante a massa) | libero | pin di boot: non premerlo all'accensione |
+| **IO2** | libero (MISO della microSD) | **seriale TX** | **non è il PTT** (il PTT è IO0, la riga sopra); pin di strapping, ma qui è solo un'uscita verso un ingresso (S_VP): all'accensione non viene mai tenuto alto da fuori |
+| IO15 | volume (opzionale) | volume (opzionale) | strapping |
+| IO4, IO25, IO13, IO14 | altoparlante (I2S, amplificatore) | altoparlante di monitor, se montato | |
+| IO34 | microfono | microfono, se c'è | solo ingresso |
+| IO35 | batteria | batteria | solo ingresso |
+| **S_VP (IO36)** | libero | **seriale RX** | solo ingresso, nessuna funzione sulla scheda |
+| S_VN (IO39) | libero | libero | solo ingresso, alternativa a S_VP per la RX |
+| IO12 | libero | libero | strapping (tensione della flash): da evitare |
+| IO21, IO22 | OLED | OLED | |
+| IO19, IO23, IO26 (e LoRa1, LoRa2) | radio | radio | non toccare |
+| **TXD (IO1), RXD (IO3)** | seriale dell'USB | seriale dell'USB | vedi sotto |
+
+**Perché non TXD e RXD per la seriale del ripetitore.** Sono i pin della UART0, la stessa che il convertitore USB della scheda usa per la **programmazione** (il caricamento del firmware dalla pagina) e per la **console** (`CFG`, il registro, la pagina di configurazione via Web Serial): il firmware stampa lì di continuo e il ripetitore ne ha bisogno per essere configurato. Collegarvi l'altra scheda significherebbe (1) due uscite sullo stesso filo (il convertitore USB e l'altra scheda) quando c'è il cavo, (2) i messaggi di avvio e il registro mescolati ai pacchetti di collegamento, (3) nessun caricamento del firmware con i fili collegati. Il convertitore è alimentato dal pin `5V` e tiene il filo alto anche senza PC. La seriale fra le due schede resta quindi sulla UART2 con pin liberi: **RX = S_VP** (solo ingresso), **TX = IO2** (l'unica uscita libera del connettore nel cablaggio normale che non sia uno strapping delicato come IO12).
+
+**Se una T3 ha il PTT su IO2** (il firmware lo cerca su **IO0**, `kPtt = 0`), il cablaggio non corrisponde al firmware e il PTT non funzionerebbe: va spostato su IO0. Se invece serve comunque liberare IO2, l'alternativa è **IO12** come TX (con le cautele dello strapping: niente pull-up e niente carico verso il positivo), da cambiare in `kLinkTx` e nei documenti.
+
 ## Alimentazione
 
 - Il pin `5V` del connettore dà i 5 V solo con USB collegato. Con batteria l'amplificatore va a 3,3 V (circa 0,7 W su 8 Ω); il 3,3 V è condiviso con ESP32 e radio, quindi un condensatore da circa 100 µF vicino all'amplificatore è utile.

@@ -373,73 +373,88 @@ def draw_ripetitore():
     global els
     els = []
     header("Ripetitore: due T3 collegate con quattro fili",
-           "Le due schede sono T3 normali, gia' cablate (microfono, altoparlante, pulsanti): per il ripetitore si aggiungono solo i quattro fili.")
+           "Le due schede sono T3 normali, gia' cablate (microfono, altoparlante, pulsanti): si aggiungono solo i quattro fili. Pin disegnati dove stanno sul connettore.")
 
-    def board(x0, title, role):
-        rect(x0, 110, 420, 560, "#1f2937", "#111827", rx=18)
-        rect(x0 + 150, 114, 120, 26, "#9ca3af", rx=5, sw=0)
-        text(x0 + 210, 132, "micro USB", 13, "middle", "bold", "#111827")
-        text(x0 + 210, 200, "LILYGO LoRa32 T3 V1.6.1", 20, "middle", "bold", "#e5e7eb")
-        text(x0 + 210, 236, title, 28, "middle", "bold", "#ffffff")
-        text(x0 + 210, 266, role, 14, "middle", "normal", "#d1d5db")
-        text(x0 + 210, 330, "USB in alto, faccia con le sigle dei pin", 12, "middle", "normal", "#9ca3af")
-        text(x0 + 210, 354, "Antenna a 433 MHz sempre collegata", 12, "middle", "normal", "#9ca3af")
-        text(x0 + 210, 378, "microSD tolta", 12, "middle", "normal", "#9ca3af")
+    # Le due schede: faccia dei componenti, USB in alto, come in collegamenti-t3.png: stessi pin, stesso ordine delle due file del connettore.
+    PIN_Y = [200 + 52 * i for i in range(13)]
+    RIGHT = ["IO25", "IO4", "IO0", "IO2", "IO15", "IO13", "IO12", "IO14", "IO35", "IO34", "RST", "S_VN", "S_VP"]
+    LEFT = ["5V", "GND", "3.3V", "GND", "IO26", "LoRa1", "LoRa2", "IO19", "IO23", "IO22", "RXD", "TXD", "IO21"]
+    BY0, BY1 = 130, 880
+    TEAL, PURP = "#0d9488", C["mic"]
+    # pin del ripetitore (colore); gli altri pin con la loro funzione normale restano grigi
+    used_left = {0: C["5v"], 1: C["gnd"]}
+    used_right = {"IO2": None, "S_VP": None}
+    normal = {"IO25": "ampl. SD", "IO4": "ampl. DIN", "IO0": "PTT", "IO15": "volume", "IO13": "I2S WS", "IO14": "I2S BCLK", "IO34": "microfono"}
 
-    RX0, TX0 = 140, 1140
-    board(RX0, "SCHEDA RX", "ascolta l'ingresso, manda alla TX")
-    board(TX0, "SCHEDA TX", "trasmette l'uscita")
+    def board(bx0, bx1, title, role, ioc, svc):
+        rect(bx0, BY0, bx1 - bx0, BY1 - BY0, "#1f2937", "#111827", rx=18)
+        cx = (bx0 + bx1) // 2
+        rect(cx - 50, BY0 + 4, 100, 26, "#9ca3af", rx=5, sw=0)
+        text(cx, BY0 + 22, "micro USB", 13, "middle", "bold", "#111827")
+        text(cx, 326, "LILYGO LoRa32 T3 V1.6.1", 12, "middle", "bold", "#9ca3af")
+        text(cx, 366, title, 24, "middle", "bold", "#ffffff")
+        text(cx, 392, role, 11, "middle", "normal", "#d1d5db")
+        rect(cx - 70, 440, 140, 100, "#374151", "#4b5563", rx=8)
+        text(cx, 484, "Radio SX1278", 14, "middle", "bold", "#e5e7eb")
+        text(cx, 506, "ESP32-PICO-D4", 12, "middle", "normal", "#d1d5db")
+        ry = dict(zip(RIGHT, PIN_Y))
+        for name, y in ry.items():
+            col = ioc if name == "IO2" else (svc if name == "S_VP" else C["grey"])
+            hot = name in ("IO2", "S_VP")
+            dot(bx1, y, col, 8 if hot else 6, "#ffffff" if hot else "#6b7280")
+            text(bx1 - 16, y + 5, name, 14, "end", "bold", "#e5e7eb" if hot else "#9ca3af")
+            if name in normal and not hot:
+                text(bx1 - 70, y + 5, normal[name], 10, "end", "normal", "#6b7280")
+        for k, name in enumerate(LEFT):
+            y = PIN_Y[k]
+            col = used_left.get(k, C["grey"])
+            hot = k in used_left
+            dot(bx0, y, col, 8 if hot else 6, "#ffffff" if hot else "#6b7280")
+            text(bx0 + 16, y + 5, name, 14, "start", "bold", "#e5e7eb" if hot else "#9ca3af")
+        return ry
 
-    # pin usati: i punti si disegnano sul bordo rivolto verso l'altra scheda; sulla scheda vera stanno sulle due file del connettore
-    rows = {"5V": 450, "GND": 506, "IO2": 562, "S_VP": 618}
-    colors = {"5V": C["5v"], "GND": C["gnd"], "IO2": "#0d9488", "S_VP": C["mic"]}
-    side = {"5V": "fila sinistra", "GND": "fila sinistra", "IO2": "fila destra", "S_VP": "fila destra (IO36)"}
-    XA, XB = RX0 + 420, TX0          # bordo destro della RX, bordo sinistro della TX
-    for name, y in rows.items():
-        dot(XA, y, colors[name], 8)
-        text(XA - 16, y + 5, name, 16, "end", "bold", "#e5e7eb")
-        text(XA - 16, y + 22, side[name], 10, "end", "normal", "#9ca3af")
-        dot(XB, y, colors[name], 8)
-        text(XB + 16, y + 5, name, 16, "start", "bold", "#e5e7eb")
-        text(XB + 16, y + 22, side[name], 10, "start", "normal", "#9ca3af")
+    LX0, LX1, RX0, RX1 = 120, 480, 720, 1080
+    ryL = board(LX0, LX1, "SCHEDA RX", "ascolta l'ingresso, manda alla TX", TEAL, PURP)
+    ryR = board(RX0, RX1, "SCHEDA TX", "trasmette l'uscita", PURP, TEAL)
 
-    # fili fra le due schede
-    wire([(XA, rows["5V"]), (XB, rows["5V"])], C["5v"], 5)
-    wire([(XA, rows["GND"]), (XB, rows["GND"])], C["gnd"], 5)
-    # seriale incrociata: TX (IO2) di una -> RX (S_VP) dell'altra
-    wire([(XA, rows["IO2"]), (XA + 80, rows["IO2"]), (XB - 80, rows["S_VP"]), (XB, rows["S_VP"])], "#0d9488", 5)
-    wire([(XA, rows["S_VP"]), (XA + 80, rows["S_VP"]), (XB - 80, rows["IO2"]), (XB, rows["IO2"])], C["mic"], 5)
-    dot(XA, rows["IO2"], "#0d9488", 8)
-    dot(XB, rows["IO2"], C["mic"], 8)
+    # 5V e GND: fra le due file sinistre, girando sopra le schede
+    wire([(LX0, PIN_Y[0]), (LX0 - 40, PIN_Y[0]), (LX0 - 40, 100), (600, 100), (600, PIN_Y[0]), (RX0, PIN_Y[0])], C["5v"], 5)
+    wire([(LX0, PIN_Y[1]), (LX0 - 20, PIN_Y[1]), (LX0 - 20, 114), (630, 114), (630, PIN_Y[1]), (RX0, PIN_Y[1])], C["gnd"], 5)
+    # seriale incrociata: RX.IO2 -> TX.S_VP e RX.S_VP -> TX.IO2, passando sotto le schede (i due pin sono sulla fila destra di entrambe)
+    wire([(LX1, ryL["IO2"]), (520, ryL["IO2"]), (520, 904), (1110, 904), (1110, ryR["S_VP"]), (RX1, ryR["S_VP"])], TEAL, 5)
+    wire([(LX1, ryL["S_VP"]), (540, ryL["S_VP"]), (540, 890), (1130, 890), (1130, ryR["IO2"]), (RX1, ryR["IO2"])], PURP, 5)
+    for pt, col in (((LX1, ryL["IO2"]), TEAL), ((LX1, ryL["S_VP"]), PURP), ((RX1, ryR["S_VP"]), TEAL), ((RX1, ryR["IO2"]), PURP)):
+        dot(pt[0], pt[1], col, 8)
 
-    # legenda dei fili
     legend = [
         ("5V - 5V", C["5v"], "alimentazione (vedi procedura)"),
         ("GND - GND", C["gnd"], "massa comune"),
-        ("RX.IO2 -> TX.S_VP", "#0d9488", "seriale RX -> TX"),
-        ("RX.S_VP <- TX.IO2", C["mic"], "seriale TX -> RX"),
+        ("RX.IO2 -> TX.S_VP (IO36)", TEAL, "seriale RX -> TX"),
+        ("RX.S_VP (IO36) <- TX.IO2", PURP, "seriale TX -> RX"),
     ]
+    text(1160, 190, "Quattro fili", 18, "start", "bold")
     for i, (a, col, b) in enumerate(legend):
-        y = 170 + i * 34
-        rect(640, y - 14, 24, 20, col, rx=4, sw=0)
-        text(676, y + 2, a, 15, "start", "bold")
-        text(860, y + 2, b, 14, "start", "normal", "#4b5563")
-    text(850, 340, "115200 baud, 3,3 V", 14, "middle", "normal", "#4b5563")
+        y = 226 + i * 50
+        rect(1160, y - 14, 24, 20, col, rx=4, sw=0)
+        text(1196, y + 2, a, 15, "start", "bold")
+        text(1196, y + 22, b, 13, "start", "normal", "#4b5563")
+    text(1160, 440, "115200 baud, 3,3 V", 14, "start", "normal", "#4b5563")
 
     # altoparlante facoltativo sulla RX
-    rect(RX0, 700, 420, 150, "#fffbeb", "#d97706", rx=10)
-    text(RX0 + 210, 730, "Altoparlante di monitor (facoltativo, per il sysop)", 14, "middle", "bold", "#92400e")
-    text(RX0 + 210, 756, "MAX98357A + altoparlante 8 ohm, come sulla scheda normale:", 13, "middle", "normal", "#92400e")
-    text(RX0 + 210, 780, "IO14 BCLK, IO13 LRC, IO4 DIN, IO25 SD, 5V e GND", 13, "middle", "normal", "#92400e")
-    text(RX0 + 210, 806, "Pulsante del volume (facoltativo): IO15 e GND", 13, "middle", "normal", "#92400e")
-    text(RX0 + 210, 832, "Il microfono (IO34), se c'e', resta com'e'", 13, "middle", "bold", "#92400e")
+    rect(1160, 480, 480, 170, "#fffbeb", "#d97706", rx=10)
+    text(1400, 510, "Altoparlante di monitor (facoltativo, per il sysop)", 14, "middle", "bold", "#92400e")
+    text(1400, 536, "MAX98357A + altoparlante 8 ohm, come sulla scheda normale:", 13, "middle", "normal", "#92400e")
+    text(1400, 560, "IO14 BCLK, IO13 LRC, IO4 DIN, IO25 SD, 5V e GND", 13, "middle", "normal", "#92400e")
+    text(1400, 586, "Pulsante del volume (facoltativo): IO15 e GND", 13, "middle", "normal", "#92400e")
+    text(1400, 612, "PTT (solo T3 normale): IO0 e GND, non serve nel ripetitore", 13, "middle", "normal", "#92400e")
+    text(1400, 638, "Il microfono (IO34), se c'e', resta com'e'", 13, "middle", "bold", "#92400e")
 
     notes_panel([
-        "Quattro fili fra le due schede: 5V, GND e la seriale incrociata. RX e TX usano gli stessi due pin, IO2 (TX) e S_VP = IO36 (RX): la T3 e' la stessa, cambia solo il ruolo (CFG SET ROLE).",
-        "Nessun pin del cablaggio normale e' toccato (microfono IO34 compreso). S_VP e' solo ingresso senza pull-up interno; IO2 e' il MISO dello slot microSD: microSD sempre tolta.",
-        "Il display di ciascuna scheda mostra lo stato: 'TX ok' sulla RX e 'RX ok' sulla TX indicano che la seriale funziona. Fili corti e lontani dall'antenna.",
-        "Il ripetitore usa solo la T3: due T-Beam sarebbero uno spreco. Senza nominativo (N0CALL) la scheda TX non trasmette: ideale per la prova a banco.",
-        "Procedura di prova: docs/banco-ripetitore.md.",
+        "Quattro fili: 5V e GND sulla fila sinistra del connettore (i due pin in alto, dalla parte dell'USB), IO2 e S_VP (= IO36) sulla fila destra. Tutte e due le schede usano gli stessi pin: cambia solo il ruolo (CFG SET ROLE).",
+        "IO2 e il PTT? No: il PTT e' IO0 (la riga sopra IO2), il volume IO15 (quella sotto). IO2 e S_VP non servono al cablaggio normale. S_VP e' solo ingresso; IO2 e' il MISO della microSD (sempre tolta).",
+        "Perche' non TXD e RXD (IO1 e IO3)? Sono la seriale dell'USB (programmazione e console): con il cavo collegato si scontrerebbero con il convertitore USB. Dettagli in docs/pinout.md.",
+        "Il display di ciascuna scheda mostra lo stato: 'TX ok' sulla RX e 'RX ok' sulla TX indicano che la seriale funziona. Fili corti e lontani dall'antenna. Procedura: docs/banco-ripetitore.md.",
+        "Il ripetitore usa solo la T3. Senza nominativo (N0CALL) la scheda TX non trasmette: ideale per la prova a banco.",
         "Fonte: docs/pinout.md e src/board_pins_t3_v161.h. Generato da tools/render_wiring.py.",
     ])
     return els
