@@ -20,6 +20,8 @@ class WifiConfig {
   // (quella mostrata sul display all'accensione). La password e' scritta in 'password' (almeno 16 caratteri). false se non parte.
   bool beginLan(Handler handler, char* password, size_t passCap);
   bool loop();
+  // millis() dell'ultima richiesta alla pagina o a un comando (0 = nessuna): chi apre la finestra di configurazione la prolunga solo finche' si lavora davvero.
+  static uint32_t lastRequestMs();
   bool active() const { return active_; }
   // Chiude server e punto di accesso e spegne il Wi-Fi (la scheda puo' poi usarlo come client). Libera la memoria del server.
   void end();

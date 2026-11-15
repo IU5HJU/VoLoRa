@@ -81,7 +81,7 @@ Il nodo non usa PTT, tasti né menu, quindi la scheda funziona uguale su tutte l
 
 - sul display compaiono la rete `VoLoRa-XXXX`, la **password** (8 cifre, la stessa a ogni avvio, vedi [display.md](display.md)), `http://192.168.4.1` e il conto alla rovescia "il nodo parte in 2:45";
 - la stessa pagina di configurazione della voce "Wi-Fi" del menu (nominativo, `ROLE`, `WIFISSID`, `WIFIPASS`, `PEER`, `NODEID`, `PEERID`, `NODEKEY`...); quando salvi con un riavvio la scheda riparte con le impostazioni nuove;
-- finché un telefono o un computer è collegato alla rete la finestra **si prolunga** (almeno 60 secondi dall'ultimo controllo); allo scadere si spegne il Wi-Fi e parte il nodo;
+- la finestra **si prolunga di 60 secondi a ogni richiesta** alla pagina (aprirla, leggere, salvare): finché lavori non si chiude; **un telefono che resta solo collegato alla rete non la tiene aperta** (dal 15/11/2026: prima bastava un client collegato e un dispositivo che si riconnetteva da solo teneva fermo il nodo). Allo scadere si spegne il Wi-Fi e parte il nodo;
 - se il nodo **non è pronto** (manca `WIFISSID`, `PEER`, `NODEID` o `NODEKEY`, o il profilo non è Standard) la finestra **non scade**: il display dice cosa manca e si esce solo con un riavvio dopo la configurazione;
 - la seriale USB resta attiva e funziona come prima.
 

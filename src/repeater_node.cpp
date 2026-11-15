@@ -33,7 +33,7 @@ constexpr uint32_t kLinkBaud = 115200;
 constexpr uint32_t kHeartbeatMs = 1000;
 constexpr uint32_t kLinkDeadMs = 3500;
 constexpr uint32_t kDisplayMs = 500;
-constexpr uint32_t kConfigWindowMs = 180000;  // il nodo apre il Wi-Fi di configurazione per 3 minuti all'avvio (si prolunga con un client collegato)
+constexpr uint32_t kConfigWindowMs = 180000;  // il nodo apre il Wi-Fi di configurazione per 3 minuti all'avvio (si prolunga di 60 s a ogni richiesta alla pagina)
 
 typedef std::function<bool(const char*, char*, size_t)> CfgHandler;
 
@@ -382,7 +382,7 @@ void sendFrame(uint8_t type, const uint8_t* data, size_t len) {
 // Finche' mancano dei parametri il nodo non parte: mostra cosa manca e lascia la console USB per impostarli.
 // Configurazione dal Wi-Fi all'avvio del nodo, anche con la scheda appena uscita dalla scatola: la scheda crea la rete VoLoRa-XXXX (password
 // sul display, pagina su 192.168.4.1) per 'windowMs' millisecondi, poi la chiude e parte il nodo. Finche' c'e' un client collegato la
-// finestra si prolunga (almeno 60 s dall'ultima verifica). windowMs 0 = senza scadenza (nodo non pronto): si esce solo con un riavvio.
+// finestra si prolunga di 60 s a ogni richiesta alla pagina (non per il solo fatto che un client e' collegato). windowMs 0 = senza scadenza (nodo non pronto): si esce solo con un riavvio.
 // Anche la seriale resta attiva. Ritorna solo alla scadenza o se il Wi-Fi non parte.
 void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const char* why) {
   static WifiConfig wc;
@@ -399,7 +399,10 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
   for (;;) {
     const uint32_t now = millis();
     if (windowMs != 0) {
-      if (WiFi.softAPgetStationNum() > 0 && static_cast<int32_t>(deadline - now) < 60000) deadline = now + 60000;
+      // Si prolunga solo mentre si lavora sulla pagina (una richiesta negli ultimi 60 s), non per il solo fatto che un telefono resta collegato alla rete:
+      // altrimenti un dispositivo che si riconnette da solo terrebbe fermo il nodo per sempre.
+      const uint32_t lr = WifiConfig::lastRequestMs();
+      if (lr != 0 && static_cast<int32_t>(lr + 60000 - deadline) > 0) deadline = lr + 60000;
       if (static_cast<int32_t>(now - deadline) >= 0) break;
     }
     if (usb.poll() || wc.loop()) restartNow(ui);

@@ -12,6 +12,7 @@ namespace {
 AsyncWebServer* server = nullptr;
 WifiConfig::Handler handler;
 volatile bool rebootRequested = false;
+volatile uint32_t lastRequest = 0;  // millis() dell'ultima richiesta autenticata (pagina o comando): serve a non chiudere la finestra del nodo mentre si lavora
 bool lanAuth = false;  // true: pagine dalla rete di casa, con utente e password
 char lanPass[16] = {0};
 }  // namespace
@@ -42,6 +43,7 @@ static void addRoutes() {
       request->requestAuthentication();
       return;
     }
+    lastRequest = millis() | 1;  // mai 0: 0 vuol dire "nessuna richiesta"
     Serial.println("[wifi] richiesta della pagina");
     // Come nel Tracker di Guzman: risposta dalla flash (senza copiare la pagina nella memoria), con tipo e lunghezza.
     request->send(request->beginResponse(200, "text/html", reinterpret_cast<const uint8_t*>(kWifiPage), sizeof(kWifiPage) - 1));
@@ -51,6 +53,7 @@ static void addRoutes() {
       request->requestAuthentication();
       return;
     }
+    lastRequest = millis() | 1;
     const String line = request->hasParam("c") ? request->getParam("c")->value() : String();
     Serial.printf("[wifi] comando dalla pagina: %s\n", line.c_str());
     // Solo comandi CFG; quelli che usano audio o radio non ci sono (la scheda e' ferma).
@@ -153,6 +156,8 @@ void WifiConfig::end() {
   rebootRequested = false;
   lanAuth = false;
 }
+
+uint32_t WifiConfig::lastRequestMs() { return lastRequest; }
 
 bool WifiConfig::loop() {
   if (!active_) return false;
