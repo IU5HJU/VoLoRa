@@ -539,8 +539,8 @@ static bool radioTestMorse(const lcr::RadioTestRequest& rq, const lcr::MorseBurs
   const uint32_t t0 = millis();
   for (size_t i = 0; i < n; i++) {
     if (radioTestAbort()) return false;
-    if (b[i].tone) {
-      if (!radio.fskSend(pattern, b[i].bytes)) {
+    if (b[i].bytes != 0) {  // un pacchetto (in FM con la nota al centro, in CW il tono)
+      if (!lcr::sendMorseBurst(radio, b[i], pattern)) {
         Serial.printf("CFG RADIOTEST ERR trasmissione (errore radio %d)\n", radio.lastError());
         return false;
       }
@@ -549,7 +549,7 @@ static bool radioTestMorse(const lcr::RadioTestRequest& rq, const lcr::MorseBurs
     }
   }
   uint32_t planned = 0;
-  for (size_t i = 0; i < n; i++) planned += b[i].tone ? static_cast<uint32_t>(lcr::burstAirMs(b[i].bytes, kbps) + 0.5f) : b[i].ms;
+  for (size_t i = 0; i < n; i++) planned += b[i].bytes != 0 ? static_cast<uint32_t>(lcr::burstAirMs(b[i].bytes, kbps) + 0.5f) : b[i].ms;
   Serial.printf("CFG RADIOTEST morse fine durata=%lu ms (prevista dai pacchetti %lu ms, testo %s)\n", static_cast<unsigned long>(millis() - t0),
                 static_cast<unsigned long>(planned), rq.text);
   return true;

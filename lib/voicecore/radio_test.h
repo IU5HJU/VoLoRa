@@ -9,7 +9,7 @@
 // o una linea e' un pacchetto della durata giusta; le pause sono silenzio.
 //
 // Comando (resto della riga dopo "CFG RADIOTEST"):
-//   MORSE FM|CW TESTO [wpm=15] [hz=700] [dev=2.5] [ramp=0..15] [shape=0|0.3|0.5|1.0]   un identificativo
+//   MORSE FM|CW TESTO [wpm=20] [hz=700] [dev=2.5] [ramp=0..15] [shape=0|0.3|0.5|1.0]   un identificativo
 //   BEACON FM|CW TESTO PERIODO_S [stessi parametri]                                    lo ripete ogni PERIODO_S secondi (fino a un tasto in seriale)
 //   CARRIER [SECONDI] [ramp=..]                                                        portante senza modulazione (misura della frequenza)
 //   TONE [SECONDI] [hz=700] [dev=2.5] [shape=..] [ramp=..]                             tono continuo in FM (misura di deviazione e tono)
@@ -27,7 +27,7 @@ struct RadioTestRequest {
   RadioTestKind kind = RadioTestKind::Morse;
   bool fm = true;       // Morse a tono in FM (true) o CW puro (false); Carrier e' sempre CW, Tone sempre FM
   char text[17] = {0};
-  int wpm = 15;         // parole al minuto (PARIS): un punto dura 1200 / wpm ms
+  int wpm = 20;         // parole al minuto (PARIS): un punto dura 1200 / wpm ms
   float toneHz = 700;   // tono in FM
   float devKhz = 2.5f;  // deviazione di picco in FM
   int ramp = -1;        // salita della potenza (4 bit del registro PaRamp), -1 = valore del chip
@@ -74,14 +74,31 @@ bool sendCarrierMs(Radio& radio, uint32_t ms, float kbps, OnSent onSent) {
   return true;
 }
 
+// Un elemento del piano. In FM ogni elemento e' un pacchetto: 'lead' byte di portante, 'body' byte di tono, il resto di portante, cosi' la nota
+// sta al centro del pacchetto e i bordi fra un pacchetto e l'altro cadono nelle pause (mai dentro un tono). Un pacchetto di sola portante ha
+// body = 0 e tone = false. In CW le pause sono vere attese: tone = false, bytes = 0, ms = durata.
 struct MorseBurst {
-  bool tone;       // true: pacchetto da trasmettere, false: pausa
-  uint32_t ms;     // durata voluta
-  uint16_t bytes;  // byte del pacchetto (solo per i toni)
+  bool tone;       // true: il pacchetto contiene tono
+  uint32_t ms;     // durata voluta (in aria)
+  uint16_t bytes;  // byte del pacchetto (0 = pausa da attendere, solo CW)
+  uint16_t lead;   // byte di portante prima del tono
+  uint16_t body;   // byte di tono
 };
 
-// Elementi del Morse di r.text con le durate di r.wpm, ognuno tradotto in byte. Un tono piu' lungo di un pacchetto (kFskMaxPacketBytes) si
-// spezza in piu' pacchetti di fila. *clamped diventa true solo se l'elenco ('cap') e' troppo corto per tutti. Ritorna il numero di elementi.
+// Trasmette un elemento del piano FM: 0xFF (portante) per 'lead' byte, 'tonePattern' per 'body', 0xFF per il resto. Un solo pacchetto, al massimo 64 byte.
+template <class Radio>
+bool sendMorseBurst(Radio& radio, const MorseBurst& b, uint8_t tonePattern) {
+  if (b.bytes == 0 || b.bytes > kFskMaxPacketBytes) return false;
+  if (b.body == 0) return radio.fskSend(0xFF, b.bytes);
+  if (b.lead == 0 && b.body == b.bytes) return radio.fskSend(tonePattern, b.bytes);
+  uint8_t buf[kFskMaxPacketBytes];
+  for (uint16_t i = 0; i < b.bytes; i++) buf[i] = (i >= b.lead && i < b.lead + b.body) ? tonePattern : 0xFF;
+  return radio.fskSendBuf(buf, b.bytes);
+}
+
+// Elementi del Morse di r.text con le durate di r.wpm, ognuno tradotto in byte. In FM la nota sta al centro del pacchetto, con meta' della pausa
+// prima e meta' dopo (la pausa che non entra nei 64 byte diventa un pacchetto di sola portante). Un tono piu' lungo di un pacchetto
+// (kFskMaxPacketBytes) si spezza in piu' pacchetti di fila. *clamped diventa true solo se l'elenco ('cap') e' troppo corto per tutti. Ritorna il numero di elementi.
 size_t planMorseBursts(const RadioTestRequest& r, MorseBurst* out, size_t cap, bool* clamped);
 
 }  // namespace lcr

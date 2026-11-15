@@ -573,7 +573,7 @@ static void testMorseId() {
     else if (fb.pattern == 0xFF) carriers++;
   }
   CHECK(!r.radio.fskBursts.empty() && r.radio.fskBursts[0].pattern == 0xFF && r.radio.fskBursts.back().pattern == 0xFF);
-  CHECK(carriers + toneBursts.size() == r.radio.fskBursts.size() && carriers > 5);
+  CHECK(carriers + toneBursts.size() == r.radio.fskBursts.size() && carriers > 3);
   for (size_t i = 0; i < n; i++) {
     if (!plan[i].tone) continue;
     CHECK(tones < toneBursts.size() && toneBursts[tones].bytes == plan[i].bytes);
@@ -606,8 +606,8 @@ static void testMorseAbortedByVoice() {
   Rig r;
   r.sch->setCallsign("IZ0RPT");
   r.sch->setBeaconInterval(60000);
-  r.sch->setMorseId(true);
-  r.run(18000);
+  r.sch->setMorseId(true, 15, 700.0f, 2.5f);
+  r.run(15500);
   CHECK(r.sch->state() == TxScheduler::State::Morse);
   r.voice(3);  // la voce passa: il Morse si ferma, la radio torna LoRa con i parametri della voce
   CHECK(r.sch->state() == TxScheduler::State::Voice && !r.radio.inFsk && r.radio.fskEnds == 1 && r.sch->stats().morseAborted == 1);
@@ -620,7 +620,7 @@ static void testMorseFailures() {
   Rig r;
   r.sch->setCallsign("IZ0RPT");
   r.sch->setBeaconInterval(60000);
-  r.sch->setMorseId(true);
+  r.sch->setMorseId(true, 15, 700.0f, 2.5f);
   r.radio.failFsk = true;  // la radio non passa in FSK: nessun blocco, il testo e' uscito e il regista torna normale
   r.run(30000);
   CHECK(countBeacons(r) == 1 && r.sch->stats().morseAborted == 1 && r.sch->state() != TxScheduler::State::Morse);
@@ -629,8 +629,8 @@ static void testMorseFailures() {
   // TX spenta dal sysop durante il Morse: si ferma
   CtlRig c;
   c.sch->setBeaconInterval(60000);
-  c.sch->setMorseId(true);
-  c.run(18000);
+  c.sch->setMorseId(true, 15, 700.0f, 2.5f);
+  c.run(15500);
   CHECK(c.sch->state() == TxScheduler::State::Morse);
   c.sch->onControl({kSysopOff, 0, 1}, c.t, c.fx);
   CHECK(c.sch->state() != TxScheduler::State::Morse && !c.radio.inFsk && c.sch->stats().morseAborted == 1);
@@ -640,7 +640,7 @@ static void testMorseFailures() {
 
 static void testIdentifyCommandAlsoMorse() {
   CtlRig r;
-  r.sch->setMorseId(true);
+  r.sch->setMorseId(true, 15, 700.0f, 2.5f);
   r.run(500);
   r.sch->onControl({kSysopIdentify, 0, 1}, r.t, r.fx);
   CHECK(r.sch->state() == TxScheduler::State::Morse && r.radio.fskBegins == 1);

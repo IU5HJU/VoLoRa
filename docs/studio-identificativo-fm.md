@@ -1,6 +1,6 @@
 # Identificativo del ripetitore in FM: Morse a tono (studio di fattibilità e decisione)
 
-**In sintesi (12/11/2026).** Il ripetitore trasmette il **proprio nominativo in Morse, con un tono modulato in FM stretta** (canale da 12,5 kHz: 15 parole al minuto, tono 700 Hz, deviazione ±2,5 kHz), dopo l'identificativo in testo per le schede LoRa (ogni 1-10 minuti, `CFG SET IDINT`; si spegne con `CFG SET IDMORSE OFF`). Chi **non ha schede LoRa** lo sente con un ricevitore FM qualsiasi e capisce che quella frequenza è occupata da un ripetitore LoRa. È già nel firmware del ripetitore; i valori sono da misurare con il firmware di prova `CFG RADIOTEST` (sezioni in fondo). Il CW puro (portante accesa e spenta) è descritto qui come alternativa e resta solo nella prova.
+**In sintesi (12/11/2026).** Il ripetitore trasmette il **proprio nominativo in Morse, con un tono modulato in FM stretta** (canale da 12,5 kHz: 20 parole al minuto, tono 700 Hz, deviazione ±2,5 kHz), dopo l'identificativo in testo per le schede LoRa (ogni 1-10 minuti, `CFG SET IDINT`; si spegne con `CFG SET IDMORSE OFF`). Chi **non ha schede LoRa** lo sente con un ricevitore FM qualsiasi e capisce che quella frequenza è occupata da un ripetitore LoRa. È già nel firmware del ripetitore; i valori sono da misurare con il firmware di prova `CFG RADIOTEST` (sezioni in fondo). Il CW puro (portante accesa e spenta) è descritto qui come alternativa e resta solo nella prova.
 
 
 Domanda di partenza: le schede LoRa possono trasmettere un identificativo che **chi non ha una scheda LoRa** capisce con un normale ricevitore (CW puro a banda stretta, oppure FM a 12,5 kHz con un tono Morse), così da sapere che la frequenza è occupata da un dispositivo LoRa? **Solo studio: nessun codice scritto, nessuna prova sul banco.** Quello che segue distingue ciò che ho verificato da ciò che resta da misurare.
@@ -58,7 +58,7 @@ Non c'è un firmware a parte: i comandi di prova stanno nel firmware normale (co
 |---|---|
 | `CFG RADIOTEST CARRIER 5` | portante pura (tutti i bit a 1) per 5 s: serve a misurare la **frequenza** e la sua deriva |
 | `CFG RADIOTEST TONE 5 hz=700 dev=2.5` | tono continuo in FM (bit 1010...) per 5 s: serve a misurare **deviazione, frequenza del tono, armoniche** |
-| `CFG RADIOTEST MORSE FM N0CALL` | l'identificativo in Morse con tono in FM stretta (15 parole al minuto, tono 700 Hz, deviazione ±2,5 kHz) |
+| `CFG RADIOTEST MORSE FM N0CALL` | l'identificativo in Morse con tono in FM stretta (20 parole al minuto, tono 700 Hz, deviazione ±2,5 kHz) |
 | `CFG RADIOTEST MORSE CW N0CALL` | lo stesso in CW puro (portante accesa e spenta) |
 | `CFG RADIOTEST BEACON FM N0CALL 60` | l'identificativo in FM ripetuto ogni 60 s (da 10 s a un'ora), per vedere nel tempo **frequenza, rientro a LoRa e deriva**; si ferma con un tasto qualsiasi dalla seriale |
 
@@ -78,7 +78,7 @@ Quando hai i numeri, tarare i parametri (tono, deviazione, rampa, wpm) e decider
 
 ## Decisione del 12/11/2026: il Morse in FM entra subito nell'identificativo
 
-Dopo il testo dell'identificativo periodico (e con IDENTIFICA del sysop) il ripetitore manda il nominativo in **Morse con tono in FM stretta**: 15 parole al minuto, 700 Hz, deviazione ±2,5 kHz, `CFG SET IDMORSE ON` (di base acceso). Provato sul PC con un'altra radio finta (`test_tx_scheduler`: piano dei pacchetti, durata, interruzione dalla voce, TX spenta, radio che non va in FSK); **parametri e comportamento della radio vera sono da misurare** con il firmware di prova qui sopra, sulla T3 TX con N0CALL tolto solo a banco e a potenza minima. Il CW puro resta solo nella prova. Se le misure dicono che tono o deviazione vanno cambiati, sono tre costanti nel firmware.
+Dopo il testo dell'identificativo periodico (e con IDENTIFICA del sysop) il ripetitore manda il nominativo in **Morse con tono in FM stretta**: 20 parole al minuto, 700 Hz, deviazione ±2,5 kHz, `CFG SET IDMORSE ON` (di base acceso). Provato sul PC con un'altra radio finta (`test_tx_scheduler`: piano dei pacchetti, durata, interruzione dalla voce, TX spenta, radio che non va in FSK); **parametri e comportamento della radio vera sono da misurare** con il firmware di prova qui sopra, sulla T3 TX con N0CALL tolto solo a banco e a potenza minima. Il CW puro resta solo nella prova. Se le misure dicono che tono o deviazione vanno cambiati, sono tre costanti nel firmware.
 
 
 ## Prova del 13/11/2026 sul nodo e correzione: portante continua
@@ -97,3 +97,16 @@ Da verificare sul banco: (1) se il ricevitore non sente più la portante compari
 
 La FIFO dell'SX127x in FSK è di **64 byte**: RadioLib 7.5.0 rifiuta con `RADIOLIB_ERR_PACKET_TOO_LONG` (`fixedPacketLengthMode`) i pacchetti più lunghi, e la nostra `fskSend` ritorna `false`. Fino al 13/11/2026 (mattina) il Morse usava solo toni da 14 e 42 byte (punto e linea a 15 wpm e 700 Hz) e le pause erano attese: partiva. Con la portante continua (`0aee99f`, 13/11 pomeriggio) la **portante iniziale da 500 ms = 88 byte** superava il limite: `sendCarrierMs` falliva al primo pacchetto, l'identificativo veniva interrotto subito (`morseAborted`, `errore radio -4`) e il contatore dei Morse completi restava a 0, sul nodo come sul ripetitore (scheda TX). Corretto: portante e toni lunghi si spezzano in pacchetti da **64 byte al massimo** (`kFskMaxPacketBytes` in `radio_test.h`), uno dopo l'altro; fra un pacchetto e l'altro la portante si ferma per qualche millisecondo (da misurare). Anche i comandi `CFG RADIOTEST` con `CARRIER`, `TONE` e il CW lento usavano pacchetti da 255 byte e non potevano funzionare. La radio finta dei test rifiuta ora i pacchetti oltre 64 byte come quella vera: con il vecchio limite i test del Morse del nodo e della scheda TX falliscono.
 
+
+## Note al centro del pacchetto, 20 wpm (15/11/2026)
+
+Dopo la correzione dei 64 byte il Morse del nodo è stato riascoltato (funziona, "non perfetto"): fra un pacchetto e l'altro la portante si ferma per qualche millisecondo (non misurato) e, se il bordo cade dentro una nota, la nota si sente troncata. Da qui la scelta di **non far cadere mai un bordo dentro una nota**:
+
+- **Ogni elemento del Morse è un solo pacchetto FSK**: portante (`0xFF`), nota (`0xAA`), portante. La pausa fra due note si divide a metà: metà in coda al pacchetto della nota prima, metà in testa a quello della nota dopo. I bordi cadono quindi nelle pause, dove c'è solo portante. Lo squelch si apre una volta con la portante iniziale da 500 ms e il resto resta portante quasi continua.
+- **Velocità portata da 15 a 20 wpm**, tono sempre 700 Hz (1,4 kbit/s, 175 byte/s). A 20 wpm un punto è di 10,5 byte (11 con l'arrotondamento), una linea e una pausa fra lettere di 31,5 (32): una linea con mezza pausa di lettera da ogni parte occupa 16 + 32 + 16 = **64 byte, esattamente la FIFO**. A 15 wpm (punto 14 byte, linea 42) la linea con le pause fra elementi entra (7 + 42 + 7 = 56) ma con la pausa fra lettere no (21 + 42 + 21 = 84); sotto circa 13 wpm non entra nemmeno quella con le pause fra elementi (4 punti = 64 byte).
+- **Se non entra**, `planMorseBursts` divide in parti uguali il posto che avanza e il resto della pausa diventa un pacchetto di sola portante (`body = 0`), sempre con i bordi in silenzio. Lo stesso vale per la pausa fra parole (7 punti).
+- La stessa funzione serve il nodo, la scheda TX del ripetitore e `CFG RADIOTEST MORSE FM`. Il CW (`MORSE CW`) è rimasto com'era: pacchetti di tono e pause come attese, perché lì la pausa deve essere silenzio.
+- Un identificativo di 6 caratteri dura circa 5 secondi, contro i 6-7 di prima.
+- `wpm=` del comando di prova accetta sempre 5-30 (di base 20). Il tono resta 700 Hz: abbassandolo (500 Hz = 125 byte/s) le linee con mezza pausa di lettera entrano con margine anche a 15 wpm.
+
+**Provato sul PC** (`test_radio_test`: ogni pacchetto ≤ 64 byte, ogni nota intera in un pacchetto e della lunghezza giusta, nessun pacchetto di sola portante a 20 wpm per IR5XXX, IZ0RPT, N0CALL, IU5HJU e le cifre, 12/15/25 wpm e 500 Hz; `test_tx_scheduler` e `test_node_core` con la radio finta che rifiuta oltre 64 byte). **Da ascoltare sulla radio vera**: se i bordi in silenzio bastano a non sentire interruzioni, e quanto dura il vuoto a ogni pacchetto. Il display del nodo si ridisegna ogni 500 ms (circa 25 ms di I2C) e, se cade fra due pacchetti, apre un vuoto nella portante: in quel caso va sospeso durante il Morse.

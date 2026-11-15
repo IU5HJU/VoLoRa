@@ -125,28 +125,92 @@ float burstAirMs(uint16_t bytes, float kbps) { return static_cast<float>(bytes) 
 size_t planMorseBursts(const RadioTestRequest& r, MorseBurst* out, size_t cap, bool* clamped) {
   if (clamped) *clamped = false;
   if (!out || cap == 0) return 0;
-  const uint16_t unitMs = static_cast<uint16_t>(1200 / (r.wpm > 0 ? r.wpm : 15));
+  const uint16_t unitMs = static_cast<uint16_t>(1200 / (r.wpm > 0 ? r.wpm : 20));
   MorseElement el[160];
   const size_t n = morseElements(r.text, unitMs, el, sizeof(el) / sizeof(el[0]));
   const float kbps = radioTestBitRateKbps(r);
+  // byte = ms * bit/s / 8000, arrotondato per eccesso a mezzo byte (con interi: 1,4f in float vale 1,39999998 e farebbe 10,4999 invece di 10,5)
+  const long bps = std::lround(static_cast<double>(kbps) * 1000.0);
+  auto toBytes = [&](uint32_t ms) {
+    const long b = (static_cast<long>(ms) * bps + 4000) / 8000;
+    return b < 1 ? 1L : b;
+  };
+  auto airMs = [&](long bytes) { return static_cast<uint32_t>(std::lround(static_cast<double>(bytes) * 8.0 / kbps)); };
+  const bool fm = (r.kind == RadioTestKind::Morse || r.kind == RadioTestKind::Beacon) && r.fm;
   size_t k = 0;
-  for (size_t i = 0; i < n && k < cap; i++) {
-    if (!el[i].tone) {
-      out[k++] = {false, el[i].ms, 0};
-      continue;
+  auto put = [&](bool tone, long bytes, long lead, long body) {
+    if (k >= cap) {
+      if (clamped) *clamped = true;
+      return false;
     }
-    long bytes = std::lround(static_cast<double>(el[i].ms) * kbps / 8.0);
-    if (bytes < 1) bytes = 1;
-    // Un tono piu' lungo della FIFO della radio (64 byte) si spezza in piu' pacchetti di fila (fra uno e l'altro la portante si ferma per un attimo).
+    out[k++] = {tone, airMs(bytes), static_cast<uint16_t>(bytes), static_cast<uint16_t>(lead), static_cast<uint16_t>(body)};
+    return true;
+  };
+  // Pacchetti di sola portante per 'bytes' byte (al massimo 64 l'uno).
+  auto carriers = [&](long bytes) {
     while (bytes > 0) {
-      if (k >= cap) {
-        if (clamped) *clamped = true;
-        return k;
-      }
       const long part = bytes > kFskMaxPacketBytes ? kFskMaxPacketBytes : bytes;
-      out[k++] = {true, static_cast<uint32_t>(std::lround(static_cast<double>(part) * 8.0 / kbps)), static_cast<uint16_t>(part)};
+      if (!put(false, part, 0, 0)) return false;
       bytes -= part;
     }
+    return true;
+  };
+  if (!fm) {  // CW: i toni sono pacchetti, le pause attese (la radio resta in standby)
+    for (size_t i = 0; i < n; i++) {
+      if (!el[i].tone) {
+        if (k >= cap) return k;
+        out[k++] = {false, el[i].ms, 0, 0, 0};
+        continue;
+      }
+      long bytes = toBytes(el[i].ms);
+      while (bytes > 0) {
+        const long part = bytes > kFskMaxPacketBytes ? kFskMaxPacketBytes : bytes;
+        if (!put(true, part, 0, part)) return k;
+        bytes -= part;
+      }
+    }
+    return k;
+  }
+  // FM: ogni nota e' un pacchetto con meta' della pausa prima e meta' dopo. La portante non si spegne mai.
+  long carry = 0;  // byte di pausa gia' trasmessi come coda del pacchetto precedente
+  for (size_t i = 0; i < n; i++) {
+    if (!el[i].tone) continue;
+    const long body = toBytes(el[i].ms);
+    long gapBefore = 0, gapAfter = 0;
+    if (i > 0 && !el[i - 1].tone) gapBefore = toBytes(el[i - 1].ms) - carry;
+    if (i + 1 < n && !el[i + 1].tone) gapAfter = toBytes(el[i + 1].ms);
+    carry = 0;
+    if (body > kFskMaxPacketBytes) {  // nota piu' lunga della FIFO: pacchetti di fila, la pausa prima come portante
+      if (!carriers(gapBefore)) return k;
+      long left = body;
+      while (left > 0) {
+        const long part = left > kFskMaxPacketBytes ? kFskMaxPacketBytes : left;
+        if (!put(true, part, 0, part)) return k;
+        left -= part;
+      }
+      continue;
+    }
+    // Prima: la parte di pausa non gia' trasmessa dal pacchetto precedente (la prima nota non ne ha); dopo: meta' della pausa che segue.
+    const long free = kFskMaxPacketBytes - body;
+    long wantLead = gapBefore;
+    long wantTail = gapAfter / 2;
+    if (wantLead + wantTail > free) {  // non entra: si divide il posto in parti uguali, il resto va in portante a parte
+      long half = free / 2;
+      wantLead = wantLead < half ? wantLead : half;
+      wantTail = wantTail < half ? wantTail : half;
+      if (wantLead + wantTail < free) {  // se una parte e' piu' corta dell'altra, l'altra puo' prendersi il posto che avanza
+        long room = free - wantLead - wantTail;
+        long more = (gapBefore - wantLead) < room ? (gapBefore - wantLead) : room;
+        wantLead += more;
+        room -= more;
+        const long moreTail = (gapAfter / 2 - wantTail) < room ? (gapAfter / 2 - wantTail) : room;
+        wantTail += moreTail;
+      }
+    }
+    const long before = gapBefore - wantLead;  // pausa prima non coperta dal pacchetto: portante a parte
+    if (before > 0 && !carriers(before)) return k;
+    if (!put(true, wantLead + body + wantTail, wantLead, body)) return k;
+    carry = wantTail;
   }
   return k;
 }

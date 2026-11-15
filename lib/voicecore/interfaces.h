@@ -54,6 +54,12 @@ class IRadio {
     (void)bytes;
     return false;
   }
+  // Un pacchetto con byte diversi (portante, tono, portante): il Morse con la nota al centro del pacchetto. Al massimo 64 byte.
+  virtual bool fskSendBuf(const uint8_t* data, uint16_t bytes) {
+    (void)data;
+    (void)bytes;
+    return false;
+  }
   virtual void fskEnd() {}
   // Non bloccante. Ritorna i byte copiati in buf, 0 se non c'e' nulla.
   virtual size_t receive(uint8_t* buf, size_t cap, int* rssi) = 0;
