@@ -12,6 +12,8 @@ input,select,button{font:inherit;padding:.5rem;width:100%;box-sizing:border-box;
 button{background:#0b5ed7;color:#fff;border:0;border-radius:.4rem;margin-top:1rem}
 button.sec{background:#e5e7eb;color:#14181f}
 .hint{color:#555;font-size:.85rem;margin:.2rem 0 0}
+details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
+.nomode{display:none!important}
 #st{margin-top:1rem;padding:.6rem;border-radius:.4rem;display:none}
 #st.ok{display:block;background:#d9f2e0;color:#14532d}
 #st.err{display:block;background:#fde2e2;color:#7f1d1d}
@@ -21,18 +23,65 @@ button.sec{background:#e5e7eb;color:#14181f}
 <p class="hint" id="intro">Scheda collegata al suo Wi-Fi. Finché questa pagina è aperta <strong>la trasmissione è disattivata</strong>. Per uscire riavvia la scheda (pulsante in fondo o pressione lunga del volume).</p>
 <form id="f" autocomplete="off">
 <label for="callsign">Nominativo</label><input id="callsign" maxlength="8" required>
+<label for="role">Modalità della scheda</label>
+<select id="role"><option value="off">Stazione normale</option><option value="rptrx">Ripetitore: scheda RX (ascolta l'ingresso)</option><option value="rpttx">Ripetitore: scheda TX (trasmette l'uscita)</option><option value="node">Nodo Internet (su Wi-Fi)</option></select>
+<p class="hint">Di base la scheda è una <strong>stazione normale</strong>. Ripetitore e nodo Internet mostrano qui sotto solo le loro impostazioni; posizione, MeshCom, testi e sysop compaiono solo per la stazione normale.</p>
+<p class="hint" id="rolenote" hidden><strong>Su questa scheda (T-Beam)</strong> il ripetitore non c'è: due T-Beam sarebbero uno spreco (GPS, PMU e batteria che non servono). Il <strong>nodo Internet</strong> va bene anche sulla T-Beam.</p>
+<div data-modes="rptrx rpttx">
+<p class="hint">Due schede possono fare da ripetitore: una <strong>RX</strong> ascolta la frequenza di ingresso (quella del profilo, qui sopra) e una <strong>TX</strong> ritrasmette sulla frequenza di uscita. Con un ruolo da ripetitore la scheda non funziona più da stazione: dopo il riavvio mostra lo stato del ripetitore. <strong>Attenzione:</strong> una scheda in ruolo da ripetitore non ha il menu a bordo e questa pagina non si apre più; per tornare stazione serve il cavo USB (sito web delle impostazioni o terminale seriale, <code>CFG SET ROLE OFF</code>). Vale dal riavvio.</p>
+</div>
+<div id="nodebox" data-modes="node">
+<p class="hint"><strong>Nodo Internet:</strong> la scheda porta i pacchetti LoRa a un'altra scheda o a un reflector via Wi-Fi (UDP firmato). Solo profilo Standard. Dopo il riavvio la pagina si apre dalla rete di casa (indirizzo e password sono scritti sulla seriale all'avvio) e, per i primi 3 minuti, dal Wi-Fi della scheda.</p>
+</div>
+<div id="netbox" data-modes="rptrx node">
+<h2>Wi-Fi e rete</h2>
+<p class="hint"><strong>Nodo Internet:</strong> tutti i campi servono. <strong>Ripetitore:</strong> si imposta sulla scheda RX (la TX non ha il Wi-Fi); con la rete vuota il ripetitore resta solo in radio. Non serve aprire porte sul router: la scheda scrive lei per prima.</p>
+<label for="wifissid">Rete Wi-Fi (nome)</label><input id="wifissid" maxlength="32" autocomplete="off" placeholder="nome della rete">
+<label for="wifipass">Password del Wi-Fi</label><input id="wifipass" maxlength="64" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="vuota = non cambiarla">
+<p class="hint" id="wifipasshint">Password non impostata (rete aperta).</p>
+<label for="peer">Reflector o altro nodo: nome o indirizzo, e porta</label><input id="peer" autocomplete="off" spellcheck="false" placeholder="reflector.example.org:5400">
+<p class="hint">Un nome si risolve da solo; la porta è la 5400 se manca.</p>
+<label for="peerid">Id del reflector (PEERID)</label><input id="peerid" type="number" min="0" max="4294967295" placeholder="1000">
+<label for="nodeid">Id di questa scheda (NODEID)</label><input id="nodeid" type="number" min="1" max="4294967295" placeholder="lo dà il sysop">
+<p class="hint">Te lo assegna il sysop del reflector quando registra il tuo nodo: lascialo vuoto finché non ti risponde.</p>
+<label for="nodekey">Chiave (32 cifre esadecimali)</label><input id="nodekey" maxlength="32" autocomplete="off" spellcheck="false" placeholder="vuota = non cambiarla">
+<button type="button" class="sec" id="gennodekey">Genera una chiave nuova</button>
+<p class="hint" id="nodekeyhint">Chiave non impostata.</p>
+<pre id="regline" hidden></pre>
+<label for="nodeport">Porta locale (NODEPORT)</label><input id="nodeport" type="number" min="1" max="65535" placeholder="5400">
+</div>
+<div id="rxbox" hidden>
+<label for="monitor">Altoparlante di monitor sulla RX</label><select id="monitor"><option value="off">Spento</option><option value="on">Acceso</option></select>
+<p class="hint">Con un altoparlante collegato (per il sysop in postazione) la RX fa ascoltare la voce che riceve. La seriale fra le due schede non cambia; i pin dell'altoparlante sono nella guida del firmware.</p>
+</div>
+<div id="txbox" hidden>
+<label for="freqout">Frequenza di uscita (MHz)</label><input id="freqout" inputmode="decimal">
+<p class="hint">Da 430.000 a 440.000. Sulla scheda TX sono anche la frequenza dei messaggi.</p>
+</div>
+<div data-modes="rpttx node">
+<label for="idint">Identificativo ogni (minuti, 1-10)</label><input id="idint" type="number" min="1" max="10">
+<p class="hint">Ogni quanti minuti la scheda trasmette il proprio identificativo (il nominativo qui sopra, in modo testo: le stazioni lo vedono passare senza suoni). Di base 10.</p>
+<label for="idmorse">Identificativo anche in Morse (FM)</label><select id="idmorse"><option value="on">Sì</option><option value="off">No</option></select>
+<p class="hint">Dopo il testo la scheda manda il nominativo in Morse con un tono in FM stretta (20 parole al minuto, 700 Hz): chi non ha le schede LoRa lo sente con un ricevitore FM qualsiasi. Dura circa 5 secondi.</p>
+</div>
 <label for="profile">Profilo</label>
-<select id="profile"><option value="std">Standard (Codec2 3200)</option><option value="rng">Range (Codec2 1200, collegamenti difficili)</option><option value="msg">Messaggio</option><option value="dir">Diretta (simplex, frequenza propria, senza shift)</option></select>
+<select id="profile"><option value="std">Standard (Codec2 3200)</option><option value="rng">Range (Codec2 1200, collegamenti difficili)</option><option value="msg">Messaggio</option><option value="dir">Diretta (Codec2 3200)</option></select>
 <label for="freq">Frequenza Standard (MHz)</label><input id="freq" inputmode="decimal" required>
+<p class="hint">Da 430.000 a 440.000.</p>
+<div data-modes="off">
+<label for="shiftdir">Shift (si applica solo alla frequenza del modo standard)</label><select id="shiftdir"><option value="0">Nessuno (simplex, di base)</option><option value="+">+ (trasmetto sopra)</option><option value="-">- (trasmetto sotto)</option></select>
+<label for="shiftmhz">Scostamento dello shift (MHz, da 0 a 10)</label><input id="shiftmhz" inputmode="decimal" placeholder="7.600">
+<p class="hint">Come l'offset di un ripetitore: si ascolta sulla frequenza Standard e si trasmette sulla frequenza + o - lo scostamento (passi di 1 kHz, deve restare tra 430.000 e 440.000). Vale dal riavvio.</p>
+</div>
+<details data-modes="off rptrx rpttx"><summary>Frequenze degli altri modi (Messaggio, Range, Diretta)</summary>
 <label for="freqmsg">Frequenza Messaggio (MHz)</label><input id="freqmsg" inputmode="decimal" required>
 <label for="freqrange">Frequenza Range (MHz)</label><input id="freqrange" inputmode="decimal" required>
 <label for="freqdir">Frequenza Diretta (MHz)</label><input id="freqdir" inputmode="decimal" required>
-<p class="hint">Da 430.000 a 440.000. Le frequenze di Range e Messaggio seguono quella dello Standard finché non le cambi a mano; possono essere uguali o diverse.</p>
-<label for="shiftdir">Shift per operare via ripetitore</label><select id="shiftdir"><option value="0">Nessuno (simplex, di base)</option><option value="+">+ (trasmetto sopra)</option><option value="-">- (trasmetto sotto)</option></select>
-<label for="shiftmhz">Scostamento dello shift (MHz, da 0 a 10)</label><input id="shiftmhz" inputmode="decimal" placeholder="7.600">
-<p class="hint">Come l'offset di un ripetitore: direzione e scostamento libero da 0 a 10 MHz (passi di 1 kHz). Si ascolta sulla frequenza qui sopra e si trasmette sulla frequenza + o - lo scostamento (deve restare tra 430.000 e 440.000). Vale dal riavvio, solo per la stazione normale.</p>
+<p class="hint">Da 430.000 a 440.000. Di base seguono la frequenza dello Standard finché non le cambi a mano; possono essere uguali o diverse. La Diretta è in simplex, senza shift.</p>
+</details>
 <label for="power">Potenza (dBm)</label><input id="power" type="number" min="2" max="17" required>
-<label for="volume">Volume (0-10)</label><input id="volume" type="number" min="0" max="10" required>
+<div data-modes="off rptrx"><label for="volume">Volume (0-10)</label><input id="volume" type="number" min="0" max="10" required></div>
+<div data-modes="off">
 <label for="micfloor">Fondo del microfono (dBFS)</label><input id="micfloor" type="number" min="-80" max="-36" required>
 <label for="pos">Trasmetti la posizione</label><select id="pos"><option value="off">No</option><option value="on">Sì</option></select>
 <label for="qth">Posizione fissa (latitudine,longitudine, oppure none)</label><input id="qth" placeholder="43.7696,11.2558">
@@ -47,26 +96,6 @@ button.sec{background:#e5e7eb;color:#14181f}
 <label for="mcdest3">Destinatario 3</label><input id="mcdest3" maxlength="15">
 <label for="mcdest4">Destinatario 4</label><input id="mcdest4" maxlength="15">
 <label for="mcdest5">Destinatario 5</label><input id="mcdest5" maxlength="15">
-<h2>Ripetitore</h2>
-<p class="hint">Due schede possono fare da ripetitore: una <strong>RX</strong> ascolta la frequenza di ingresso (quella del profilo, qui sopra) e una <strong>TX</strong> ritrasmette sulla frequenza di uscita. Con un ruolo da ripetitore la scheda non funziona più da stazione: dopo il riavvio mostra lo stato del ripetitore. <strong>Attenzione:</strong> una scheda in ruolo da ripetitore non ha il menu a bordo e questa pagina non si apre più; per tornare stazione serve il cavo USB (sito web delle impostazioni o terminale seriale, <code>CFG SET ROLE OFF</code>). Vale dal riavvio.</p>
-<label for="role">Ruolo della scheda</label>
-<select id="role"><option value="off">Stazione normale</option><option value="rptrx">Ripetitore: scheda RX (ascolta l'ingresso)</option><option value="rpttx">Ripetitore: scheda TX (trasmette l'uscita)</option><option value="node">Nodo Internet (T3 su Wi-Fi)</option></select>
-<p class="hint" id="rolenote" hidden><strong>Su questa scheda (T-Beam)</strong> il ripetitore non c'è: due T-Beam sarebbero uno spreco (GPS, PMU e batteria che non servono). Il <strong>nodo Internet</strong> va bene anche sulla T-Beam.</p>
-<div id="nodebox" hidden>
-<p class="hint"><strong>Nodo Internet:</strong> la T3 porta i pacchetti LoRa a un'altra T3 via Wi-Fi (UDP firmato). Solo profilo Standard. Rete, indirizzo dell'altro nodo, id e chiave si impostano da seriale (<code>CFG SET WIFISSID</code>, <code>WIFIPASS</code>, <code>PEER</code>, <code>NODEID</code>, <code>PEERID</code>, <code>NODEKEY</code>: vedi la guida del firmware). Come per il ripetitore, in questo ruolo la scheda non ha il menu e questa pagina non si apre più.</p>
-</div>
-<div id="rxbox" hidden>
-<label for="monitor">Altoparlante di monitor sulla RX</label><select id="monitor"><option value="off">Spento</option><option value="on">Acceso</option></select>
-<p class="hint">Con un altoparlante collegato (per il sysop in postazione) la RX fa ascoltare la voce che riceve. La seriale fra le due schede non cambia; i pin dell'altoparlante sono nella guida del firmware.</p>
-</div>
-<div id="txbox" hidden>
-<label for="freqout">Frequenza di uscita (MHz)</label><input id="freqout" inputmode="decimal">
-<p class="hint">Da 430.000 a 440.000. Sulla scheda TX sono anche la frequenza dei messaggi.</p>
-<label for="idint">Identificativo ogni (minuti, 1-10)</label><input id="idint" type="number" min="1" max="10">
-<p class="hint">Ogni quanti minuti la TX trasmette l'identificativo del ripetitore (il nominativo qui sopra, in modo testo: le stazioni lo vedono passare senza suoni). Di base 10.</p>
-<label for="idmorse">Identificativo anche in Morse (FM)</label><select id="idmorse"><option value="on">Sì</option><option value="off">No</option></select>
-<p class="hint">Dopo il testo la TX manda il nominativo in Morse con un tono in FM stretta (20 parole al minuto, 700 Hz): chi non ha le schede LoRa lo sente con un ricevitore FM qualsiasi e capisce che la frequenza è occupata da un ripetitore. Dura circa 5 secondi.</p>
-</div>
 <h2>Modo Sysop</h2>
 <p class="hint">Per chi gestisce un ripetitore. Con il <strong>modo Sysop</strong> acceso il menu della scheda (volume lungo) mostra <strong>Comandi Sysop</strong> al posto di Invia testo: scegli il comando (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA) e la scheda lo trasmette firmato al ripetitore. Resta acceso finché non lo spegni. Il nominativo e la chiave vanno impostati uguali sul ripetitore (schede RX e TX) e sulla scheda del sysop; la chiave non si rilegge mai.</p>
 <label for="sysopmode">Modo Sysop</label><select id="sysopmode"><option value="off">Spento</option><option value="on">Acceso</option></select>
@@ -84,6 +113,7 @@ button.sec{background:#e5e7eb;color:#14181f}
 <label for="text4">Testo 4</label><input id="text4" maxlength="150">
 <label for="text5">Testo 5</label><input id="text5" maxlength="150">
 </div>
+</div>
 <button type="submit" id="save">Salva</button>
 <button type="button" class="sec" id="reboot">Riavvia la scheda</button>
 </form>
@@ -100,7 +130,7 @@ let board='';
 let fp='';
 function fill(m){if(m.board!==undefined){board=m.board;$('gpsbox').hidden=board!=='tbeam';for(const o of $('role').options)if(o.value==='rptrx'||o.value==='rpttx')o.disabled=board==='tbeam';$('rolenote').hidden=board!=='tbeam';}for(const k of ['callsign','profile','freq','freqmsg','freqrange','freqdir','power','volume','micfloor','pos','qth','gps','role','freqout'])if(m[k]!==undefined&&$(k))$(k).value=m[k];fp=$('freq').value.trim();}
 $('freq').addEventListener('input',()=>{const v=$('freq').value.trim();for(const id of ['freqmsg','freqrange','freqdir'])if($(id).value.trim()===fp)$(id).value=v;fp=v;});   // le frequenze uguali a quella dello Standard la seguono; quelle cambiate a mano restano
-function roleShow(){const r=$('role').value;$('rxbox').hidden=r!=='rptrx';$('txbox').hidden=r!=='rpttx';$('nodebox').hidden=r!=='node';}
+function roleShow(){const r=$('role').value;$('rxbox').hidden=r!=='rptrx';$('txbox').hidden=r!=='rpttx';for(const e of document.querySelectorAll('[data-modes]'))e.classList.toggle('nomode',!e.dataset.modes.split(' ').includes(r));}   // di ogni modalità si vedono solo i suoi campi
 $('role').addEventListener('change',roleShow);
 async function loadRole(){try{const r=await cmd('CFG GET MONITOR');if(r.startsWith('CFG MONITOR='))$('monitor').value=r.slice(12)==='on'?'on':'off';}catch(e){}roleShow();}
 function sysopShow(){const on=$('sysopmode').value==='on';$('sysopbox').hidden=!on;$('textsbox').hidden=on;}
@@ -110,14 +140,21 @@ function shiftOff(on){$('shiftdir').disabled=$('shiftmhz').disabled=!on;}
 function setShiftFields(k){if(!k){$('shiftdir').value='0';$('shiftmhz').value='';return;}$('shiftdir').value=k>0?'+':'-';$('shiftmhz').value=(Math.abs(k)/1000).toFixed(3);}
 function shiftKhz(){const d=$('shiftdir').value;if(d==='0')return {k:'0'};const t=$('shiftmhz').value.trim().replace(',','.');if(!/^\d{1,2}(\.\d{1,3})?$/.test(t)||+t>10)return {err:'Lo scostamento dello shift deve essere da 0 a 10 MHz (al massimo tre decimali).'};const k=Math.round(+t*1000);return {k:k===0?'0':(d==='-'?'-':'+')+k};}
 async function loadShift(){try{const r=await cmd('CFG GET SHIFT');if(r.startsWith('CFG SHIFT=')){setShiftFields(parseInt(r.slice(10),10));shiftOff(true);}else shiftOff(false);}catch(e){shiftOff(false);}}
+let nodeKeyIsSet=false;
+const DEFREF='iu5hju.ddns.net:5400',DEFREFID='1000';   // il reflector di base: solo il valore di partenza dei campi
+async function loadNode(){try{const r=await cmd('CFG GET NODE');const m=/^CFG NODE ssid=(.*) pass=(\S+) ip=(\S+) port=(\d+) listen=(\d+) id=(\d+) peerid=(\d+) key=(\S+)$/.exec(r);if(!m)return;$('wifissid').value=m[1]==='none'?'':m[1];$('wifipass').value='';$('wifipasshint').textContent=m[2]==='set'?'Password impostata (non si mostra). Lasciala vuota per non cambiarla.':'Password non impostata (rete aperta).';const noPeer=m[3]==='none';$('peer').value=noPeer?DEFREF:m[3]+':'+m[4];$('nodeport').value=m[5];$('nodeid').value=m[6]==='0'?'':m[6];$('peerid').value=noPeer&&m[7]==='0'?DEFREFID:(m[7]==='0'?'':m[7]);nodeKeyIsSet=m[8]==='set';$('nodekey').value='';$('nodekeyhint').textContent=nodeKeyIsSet?'Chiave impostata (non si mostra). Lasciala vuota per non cambiarla.':'Chiave non impostata.';}catch(e){}}
+$('gennodekey').addEventListener('click',()=>{const cs=$('callsign').value.trim().toUpperCase();if(!/^[A-Z0-9\/]{1,8}$/.test(cs)||/^N0CALL$|^NOCALL$/.test(cs)){st('Scrivi prima il tuo nominativo (in alto): la chiave si registra per quel nominativo.','err');return;}const b=new Uint8Array(16);crypto.getRandomValues(b);const k=Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');$('nodekey').value=k;$('regline').hidden=false;$('regline').textContent='Nominativo: '+cs+'\nChiave: '+k;$('nodekeyhint').textContent='Chiave generata: copiala adesso (dopo il salvataggio non si rilegge) e mandala al sysop del reflector su un canale privato. '+(nodeKeyIsSet?'La scheda ha già una chiave: salvando, la nuova prende il suo posto.':'');});
+function netPlan(role){if(role!=='node'&&role!=='rptrx')return null;const ssid=$('wifissid').value.trim(),pass=$('wifipass').value,peerT=$('peer').value.trim(),nid=$('nodeid').value.trim(),pid=$('peerid').value.trim(),key=$('nodekey').value.trim(),lport=$('nodeport').value.trim();if(role==='rptrx'&&ssid===''&&nid===''&&key==='')return {off:true};const where=role==='node'?'Il nodo Internet':'Il ripetitore in rete';if(ssid===''||!/^[\x20-\x7E]{1,32}$/.test(ssid))return {err:where+' ha bisogno del nome della rete Wi-Fi (da 1 a 32 caratteri, ASCII).'};if(pass!==''&&!/^[\x20-\x7E]{8,64}$/.test(pass))return {err:'La password del Wi-Fi deve avere da 8 a 64 caratteri (ASCII).'};const pm=/^([^:]+)(?::(\d{1,5}))?$/.exec(peerT);const hostOk=pm&&(/^(\d{1,3}\.){3}\d{1,3}$/.test(pm[1])?pm[1].split('.').every(x=>+x<=255):(pm[1].length<=63&&/[A-Za-z]/.test(pm[1])&&/^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*$/.test(pm[1])));if(!hostOk||(pm[2]!==undefined&&(+pm[2]<1||+pm[2]>65535)))return {err:'Reflector non valido: un nome (reflector.example.org) o un indirizzo IPv4, e la porta (da 1 a 65535).'};if(nid!==''&&(!/^\d{1,10}$/.test(nid)||+nid<1||+nid>4294967295))return {err:"L'id di questa scheda (NODEID) deve essere un numero da 1 in su, oppure vuoto finché il sysop non te lo comunica."};if(pid!==''&&(!/^\d{1,10}$/.test(pid)||+pid>4294967295))return {err:"L'id del reflector (PEERID) deve essere un numero, oppure vuoto."};if(key!==''&&!/^[0-9a-fA-F]{32}$/.test(key))return {err:'La chiave deve avere 32 cifre esadecimali.'};if(key===''&&!nodeKeyIsSet)return {err:where+' ha bisogno della chiave (la sua riga nel file del reflector): scrivila o genera una nuova.'};if(!/^\d{1,5}$/.test(lport)||+lport<1||+lport>65535)return {err:'La porta locale deve essere da 1 a 65535.'};return {ssid,pass,peer:pm[1]+':'+(pm[2]!==undefined?pm[2]:'5400'),peerid:pid===''?'0':String(+pid),nodeid:nid===''?'':String(+nid),key,lport:String(+lport)};}
+async function saveNet(n){const O=c=>cmd(c).then(r=>{if(!r.startsWith('CFG OK'))throw new Error('Rifiutato ('+c.split(' ')[2]+'): '+r);});if(n.off){await O('CFG SET WIFISSID NONE');return;}await O('CFG SET WIFISSID '+n.ssid);if(n.pass!=='')await O('CFG SET WIFIPASS '+n.pass);await O('CFG SET PEER '+n.peer);await O('CFG SET NODEPORT '+n.lport);await O('CFG SET PEERID '+n.peerid);if(n.nodeid!=='')await O('CFG SET NODEID '+n.nodeid);if(n.key!=='')await O('CFG SET NODEKEY '+n.key);}
 async function loadIdint(){try{const r=await cmd('CFG GET IDINT');if(r.startsWith('CFG IDINT='))$('idint').value=r.slice(10);}catch(e){}try{const r=await cmd('CFG GET IDMORSE');if(r.startsWith('CFG IDMORSE='))$('idmorse').value=r.slice(12)==='off'?'off':'on';}catch(e){}}
 async function loadSysop(){try{const r=await cmd('CFG GET SYSOP');if(r.startsWith('CFG SYSOP ')){const m=parse(r.slice(10));$('sysop').value=m.call&&m.call!=='none'?m.call:'';$('sysopmode').value=m.mode==='on'?'on':'off';$('sysopkey').value='';$('sysopkeyhint').textContent=m.key==='set'?'Chiave impostata (non si mostra). Lascia vuoto per non cambiarla.':'Chiave non impostata.';sysopShow();}}catch(e){}}
-async function load(){try{const t=await cmd('CFG GET');if(!t.startsWith('CFG '))throw new Error(t);fill(parse(t));await loadSysop();await loadIdint();await loadShift();await loadRole();for(let i=1;i<=5;i++){const r=await cmd('CFG GET TEXT'+i);$('text'+i).value=r.startsWith('CFG TEXT'+i+'=')?r.slice(('CFG TEXT'+i+'=').length):'';}try{const r=await cmd('CFG GET MC');if(r.startsWith('CFG MC ')){const m=parse(r.slice(7));$('mcfreq').value=m.freqmc||'';$('mcssid').value=m.ssid||'';$('mcwindow').value=m.window||'';for(let i=1;i<=5;i++){const d=await cmd('CFG GET MCDEST'+i);$('mcdest'+i).value=d.startsWith('CFG MCDEST'+i+'=')?d.slice(('CFG MCDEST'+i+'=').length):'';}}}catch(e){}st('Valori letti dalla scheda.','ok');}catch(e){st('Lettura non riuscita: '+e.message,'err');}}
+async function load(){try{const t=await cmd('CFG GET');if(!t.startsWith('CFG '))throw new Error(t);fill(parse(t));await loadSysop();await loadIdint();await loadShift();await loadNode();await loadRole();for(let i=1;i<=5;i++){const r=await cmd('CFG GET TEXT'+i);$('text'+i).value=r.startsWith('CFG TEXT'+i+'=')?r.slice(('CFG TEXT'+i+'=').length):'';}try{const r=await cmd('CFG GET MC');if(r.startsWith('CFG MC ')){const m=parse(r.slice(7));$('mcfreq').value=m.freqmc||'';$('mcssid').value=m.ssid||'';$('mcwindow').value=m.window||'';for(let i=1;i<=5;i++){const d=await cmd('CFG GET MCDEST'+i);$('mcdest'+i).value=d.startsWith('CFG MCDEST'+i+'=')?d.slice(('CFG MCDEST'+i+'=').length):'';}}}catch(e){}st('Valori letti dalla scheda.','ok');}catch(e){st('Lettura non riuscita: '+e.message,'err');}}
 $('f').addEventListener('submit',async ev=>{
   ev.preventDefault();st('Salvataggio…','');
   const want={callsign:$('callsign').value.trim().toUpperCase(),profile:$('profile').value,freq:$('freq').value.trim(),freqmsg:$('freqmsg').value.trim(),freqrange:$('freqrange').value.trim(),freqdir:$('freqdir').value.trim(),power:$('power').value,volume:$('volume').value,micfloor:$('micfloor').value,pos:$('pos').value,qth:$('qth').value.trim()||'none',role:$('role').value};
   if(board==='tbeam')want.gps=$('gps').value;
   if(want.role==='rpttx'){const fo=$('freqout').value.trim();const k=Math.round(parseFloat(fo)*1000);if(!/^\d{3}(\.\d{1,3})?$/.test(fo)||!(k>=430000&&k<=440000)){st('La frequenza di uscita deve essere tra 430.000 e 440.000 MHz.','err');return;}want.freqout=fo;}   // la T3 non ha il GPS: il comando non si manda
+  const net=netPlan(want.role);if(net&&net.err){st(net.err,'err');return;}
   const keys={callsign:'CALLSIGN',freq:'FREQ',freqmsg:'FREQMSG',freqrange:'FREQRANGE',freqdir:'FREQDIR',power:'POWER',volume:'VOLUME',micfloor:'MICFLOOR',profile:'PROFILE',pos:'POS',qth:'QTH',gps:'GPS',role:'ROLE',freqout:'FREQOUT'};  // il GPS e' in want solo sulla T-Beam
   const texts=[];for(let i=1;i<=5;i++){const v=$('text'+i).value.trim();if(v!==''&&!/^[\x20-\x7A\x7C\x7E]+$/.test(v)){st('Il testo '+i+' ha caratteri non ammessi: solo ASCII, senza accenti.','err');return;}texts.push(v);}
   try{
@@ -128,7 +165,8 @@ $('f').addEventListener('submit',async ev=>{
     const mcds=[];for(let i=1;i<=5;i++){const d=$('mcdest'+i).value.trim().toUpperCase();if(d!==''&&!/^(\*|[A-Z0-9\/-]{1,15})$/.test(d)){st('Destinatario '+i+' non valido: gruppo, nominativo-SSID, * oppure vuoto.','err');return;}mcds.push(d);}
     const mcw=+$('mcwindow').value;if(!(mcw>=30&&mcw<=1800)){st("L'ascolto dopo l'invio deve durare da 30 a 1800 secondi.",'err');return;}
     for(const c of ['CFG SET FREQMC '+$('mcfreq').value.trim(),'CFG SET MCSSID '+$('mcssid').value.trim(),'CFG SET MCWINDOW '+mcw].concat(mcds.map((d,i)=>'CFG SET MCDEST'+(i+1)+' '+(d||'NONE')))){const r=await cmd(c);if(!r.startsWith('CFG OK')){st('Rifiutato ('+c+'): '+r,'err');return;}}
-    if(want.role==='rpttx'){const idn=+$('idint').value;if(!(idn>=1&&idn<=10)){st('Il tempo dell\'identificativo deve essere da 1 a 10 minuti.','err');return;}
+    if(net)await saveNet(net);
+    if(want.role==='rpttx'||want.role==='node'){const idn=+$('idint').value;if(!(idn>=1&&idn<=10)){st('Il tempo dell\'identificativo deve essere da 1 a 10 minuti.','err');return;}
     for(const c of ['CFG SET IDINT '+idn,'CFG SET IDMORSE '+$('idmorse').value]){const r=await cmd(c);if(!r.startsWith('CFG OK')){st('Rifiutato ('+c+'): '+r,'err');return;}}}
     if(want.role==='rptrx'){const r=await cmd('CFG SET MONITOR '+$('monitor').value);if(!r.startsWith('CFG OK')){st('Rifiutato (MONITOR): '+r,'err');return;}}
     const sy=$('sysop').value.trim().toUpperCase();if(sy!==''&&!/^[A-Z0-9\/]{1,8}$/.test(sy)){st('Il nominativo del sysop non è valido.','err');return;}
@@ -138,7 +176,7 @@ $('f').addEventListener('submit',async ev=>{
     const back=parse(await cmd('CFG GET'));const bad=[];
     for(const k of Object.keys(want)){let a=String(back[k]),b=String(want[k]);if(k.startsWith('freq')){a=parseFloat(a);b=parseFloat(b);}else if(k==='qth'&&b!=='none'){const x=b.split(',').map(parseFloat),y=a.split(',').map(parseFloat);if(Math.abs(x[0]-y[0])<2e-5&&Math.abs(x[1]-y[1])<2e-5)continue;}else if(k==='callsign'||k==='profile'||k==='role'){a=a.toLowerCase();b=b.toLowerCase();}else if(!isNaN(a)&&!isNaN(b)){a=Number(a);b=Number(b);}
       if(a!==b)bad.push(k);}
-    fill(back);await loadSysop();await loadIdint();await loadRole();
+    fill(back);await loadSysop();await loadIdint();await loadNode();await loadRole();
     if(bad.length)st('Salvato, ma la scheda riporta valori diversi: '+bad.join(', '),'err');
     else st('Salvato e riletto dalla scheda: tutto coincide. I cambi di profilo, frequenza, potenza e nominativo valgono dal riavvio.','ok');
   }catch(e){st('Errore di comunicazione: '+e.message,'err');}

@@ -23,6 +23,7 @@ const st = {
   noShift: false,   // firmware senza shift (piu' vecchio)
   shift: 0,
   drop: null,   // chiave che la scheda "dimentica" di salvare
+  node: { ssid: 'none', pass: '', ip: 'none', port: 5400, listen: 5400, id: 0, peerid: 0, key: '' },
 };
 const KEYS = ['callsign', 'freq', 'freqmsg', 'freqrange', 'freqdir', 'power', 'volume', 'micfloor', 'profile', 'pos', 'qth', 'gps', 'role', 'freqout'];
 function handle(line) {
@@ -68,6 +69,19 @@ function handle(line) {
       st.shift = v; return 'CFG OK shift=' + (v > 0 ? '+' : '') + v;
     }
   }
+  if (line === 'CFG GET NODE') return 'CFG NODE ssid=' + st.node.ssid + ' pass=' + (st.node.pass ? 'set' : 'none') + ' ip=' + st.node.ip + ' port=' + st.node.port + ' listen=' + st.node.listen + ' id=' + st.node.id + ' peerid=' + st.node.peerid + ' key=' + (st.node.key ? 'set' : 'none');
+  let nm = /^CFG SET WIFISSID (.+)$/.exec(line);
+  if (nm) { st.node.ssid = nm[1] === 'NONE' ? 'none' : nm[1]; return 'CFG OK wifissid=' + st.node.ssid; }
+  nm = /^CFG SET WIFIPASS (.+)$/.exec(line);
+  if (nm) { if (nm[1].length < 8) return 'CFG ERR wifipass da 8 a 64 caratteri'; st.node.pass = nm[1]; return 'CFG OK wifipass=set'; }
+  nm = /^CFG SET PEER (\S+):(\d+)$/.exec(line);
+  if (nm) { st.node.ip = nm[1]; st.node.port = +nm[2]; return 'CFG OK peer=' + nm[1] + ':' + nm[2]; }
+  nm = /^CFG SET NODEPORT (\d+)$/.exec(line);
+  if (nm) { st.node.listen = +nm[1]; return 'CFG OK nodeport=' + nm[1]; }
+  nm = /^CFG SET (NODEID|PEERID) (\d+)$/.exec(line);
+  if (nm) { st.node[nm[1] === 'NODEID' ? 'id' : 'peerid'] = +nm[2]; return 'CFG OK ' + nm[1].toLowerCase() + '=' + nm[2]; }
+  nm = /^CFG SET NODEKEY ([0-9a-fA-F]{32})$/.exec(line);
+  if (nm) { st.node.key = nm[1]; return 'CFG OK nodekey=set'; }
   const t = line.split(' ');
   if (t[1] === 'GET') return 'CFG ' + KEYS.map((k) => k + '=' + st.cfg[k]).join(' ') + ' board=' + st.board + ' reboot=0 test=0';
   if (t[1] === 'SET') {
@@ -97,6 +111,7 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   const url = 'http://127.0.0.1:' + server.address().port + '/';
   const browser = await chromium.launch(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {});
   const p = await browser.newPage();
+  await p.addInitScript(() => { document.addEventListener('DOMContentLoaded', () => { const d = document.querySelector('details'); if (d) d.open = true; }); });   // le frequenze degli altri modi sono in un riquadro chiuso: nei test si aprono
   await p.goto(url);
   await p.waitForFunction(() => document.getElementById('callsign').value !== '');
   check('lettura iniziale', (await p.inputValue('#callsign')) === 'IU5HJU' && (await p.inputValue('#freqrange')) === '433.900');
@@ -119,7 +134,7 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   check('comandi inviati', st.cmds.includes('CFG SET PROFILE rng') && st.cmds.includes('CFG SET FREQRANGE 434.250') && st.cmds.includes('CFG SET QTH 43.7696,11.2558'), st.cmds.join('|'));
   check('testi salvati (con spazi) e posto vuoto con NONE', st.cmds.includes('CFG SET TEXT2 Sono QRV su 433.775, chiamami') && st.cmds.includes('CFG SET TEXT4 NONE') && st.texts[1] === 'Sono QRV su 433.775, chiamami' && st.texts[3] === '', JSON.stringify(st.texts));
   check('MeshCom salvato (destinatario in maiuscolo, vuoto = NONE)', st.mc.dests[3] === 'IU5ABC-9' && st.mc.dests[4] === '' && st.mc.ssid === '12' && st.mc.window === '90' && st.cmds.includes('CFG SET MCDEST4 IU5ABC-9') && st.cmds.includes('CFG SET MCDEST5 NONE'), JSON.stringify(st.mc));
-  check('rilettura dopo il salvataggio', st.cmds[st.cmds.length - 5] === 'CFG GET' && st.cmds[st.cmds.length - 4] === 'CFG GET SYSOP' && st.cmds[st.cmds.length - 3] === 'CFG GET IDINT' && st.cmds[st.cmds.length - 2] === 'CFG GET IDMORSE' && st.cmds[st.cmds.length - 1] === 'CFG GET MONITOR');
+  check('rilettura dopo il salvataggio', st.cmds[st.cmds.length - 6] === 'CFG GET' && st.cmds[st.cmds.length - 5] === 'CFG GET SYSOP' && st.cmds[st.cmds.length - 4] === 'CFG GET IDINT' && st.cmds[st.cmds.length - 3] === 'CFG GET IDMORSE' && st.cmds[st.cmds.length - 2] === 'CFG GET NODE' && st.cmds[st.cmds.length - 1] === 'CFG GET MONITOR');
   check('nominativo maiuscolo', st.cfg.callsign === 'IU5HJU/P');
 
   // Modo Sysop: di partenza spento (testi visibili, elenco comandi nascosto), chiave non impostata
@@ -185,6 +200,42 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   await p.selectOption('#role', 'off'); await p.click('#save');
   await p.waitForFunction(() => /Salvato/.test(document.getElementById('st').textContent));
   check('di nuovo stazione normale', st.cfg.role === 'off' && (await p.isHidden('#rxbox')) && (await p.isHidden('#txbox')));
+
+
+  // Di ogni modalità si vedono solo i suoi campi; lo shift sta sotto la frequenza Standard
+  check('profilo Diretta: solo il codec, come lo Standard', (await p.textContent('#profile option[value=dir]')) === 'Diretta (Codec2 3200)' && (await p.textContent('#profile option[value=std]')) === 'Standard (Codec2 3200)');
+  check('shift: descrizione, e posto subito dopo la frequenza Standard (prima delle altre frequenze)', (await p.textContent('label[for=shiftdir]')) === 'Shift (si applica solo alla frequenza del modo standard)' &&
+        await p.evaluate(() => { const f = document.getElementById('freq'), sh = document.getElementById('shiftdir'), o = document.getElementById('freqmsg'); const B = Node.DOCUMENT_POSITION_FOLLOWING; return !!(f.compareDocumentPosition(sh) & B) && !!(sh.compareDocumentPosition(o) & B); }));
+  check('stazione normale: shift, volume, microfono, posizione, MeshCom, sysop, testi visibili; rete e identificativo nascosti',
+        (await p.isVisible('#shiftdir')) && (await p.isVisible('#volume')) && (await p.isVisible('#micfloor')) && (await p.isVisible('#pos')) && (await p.isVisible('#mcfreq')) && (await p.isVisible('#sysopmode')) && (await p.isVisible('#text1')) && (await p.isVisible('#freqmsg')) &&
+        (await p.isHidden('#wifissid')) && (await p.isHidden('#idint')) && (await p.isHidden('#nodebox')));
+  await p.selectOption('#role', 'node');
+  check('nodo: Wi-Fi e rete, identificativo visibili; shift, volume, microfono, posizione, MeshCom, sysop, testi e altre frequenze nascosti',
+        (await p.isVisible('#wifissid')) && (await p.isVisible('#peer')) && (await p.isVisible('#nodekey')) && (await p.isVisible('#idint')) && (await p.isVisible('#freq')) && (await p.isVisible('#power')) &&
+        (await p.isHidden('#shiftdir')) && (await p.isHidden('#volume')) && (await p.isHidden('#micfloor')) && (await p.isHidden('#pos')) && (await p.isHidden('#mcfreq')) && (await p.isHidden('#sysopmode')) && (await p.isHidden('#text1')) && (await p.isHidden('#freqmsg')));
+  check('nodo: i campi della rete partono dal reflector di base', (await p.inputValue('#peer')) === 'iu5hju.ddns.net:5400' && (await p.inputValue('#peerid')) === '1000' && (await p.inputValue('#nodeport')) === '5400' && (await p.inputValue('#wifissid')) === '');
+  await p.click('#save');
+  await p.waitForTimeout(400);
+  check('nodo senza rete Wi-Fi: salvataggio bloccato', /nome della rete Wi-Fi/.test(await p.textContent('#st')) && st.cfg.role === 'off');
+  await p.fill('#wifissid', 'Casa Mia'); await p.fill('#wifipass', '1234'); await p.click('#save');
+  await p.waitForTimeout(400);
+  check('password Wi-Fi troppo corta bloccata', /da 8 a 64/.test(await p.textContent('#st')) && st.node.ssid === 'none');
+  await p.fill('#wifipass', '12345678'); await p.click('#save');
+  await p.waitForTimeout(400);
+  check('nodo senza chiave: bloccato', /chiave/.test(await p.textContent('#st')) && st.node.ssid === 'none');
+  await p.click('#gennodekey');
+  const newKey = await p.inputValue('#nodekey');
+  check('chiave generata: 32 cifre e riga per il sysop', /^[0-9a-f]{32}$/.test(newKey) && (await p.isVisible('#regline')) && (await p.textContent('#regline')).includes(newKey) && (await p.textContent('#regline')).includes('IU5HJU'));
+  await p.fill('#nodeid', '7'); await p.click('#save');
+  await p.waitForFunction(() => /Salvato/.test(document.getElementById('st').textContent));
+  check('nodo salvato: rete, password, reflector, id, chiave, porta, ruolo',
+        st.node.ssid === 'Casa Mia' && st.node.pass === '12345678' && st.node.ip === 'iu5hju.ddns.net' && st.node.port === 5400 && st.node.peerid === 1000 && st.node.id === 7 && st.node.key === newKey && st.node.listen === 5400 && st.cfg.role === 'node');
+  check('nodo salvato: identificativo e Morse mandati, niente comandi della stazione (shift, microfono, volume)',
+        st.cmds.includes('CFG SET IDINT 3') || st.cmds.some((c) => c.startsWith('CFG SET IDINT')));
+  check('rilettura: la password e la chiave non si mostrano, restano impostate', (await p.inputValue('#wifipass')) === '' && (await p.inputValue('#nodekey')) === '' && /impostata/.test(await p.textContent('#wifipasshint')) && /impostata/.test(await p.textContent('#nodekeyhint')) && (await p.inputValue('#wifissid')) === 'Casa Mia' && (await p.inputValue('#nodeid')) === '7');
+  await p.selectOption('#role', 'off'); await p.click('#save');
+  await p.waitForFunction(() => /Salvato/.test(document.getElementById('st').textContent));
+  check('torna stazione normale: i campi della stazione ricompaiono', st.cfg.role === 'off' && (await p.isVisible('#shiftdir')) && (await p.isHidden('#wifissid')));
 
   check('GPS nascosto sulla T3', await p.isHidden('#gps'));
   check('nessun comando GPS sulla T3', !st.cmds.some((c) => c.startsWith('CFG SET GPS')));
