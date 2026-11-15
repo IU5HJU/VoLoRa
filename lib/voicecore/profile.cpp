@@ -24,6 +24,10 @@ const Profile kProfiles[kProfileCount] = {
     // occupano circa 12,5 s in aria (42%). Pre-buffer come il Range. E' il modo di base, quello da usare via ripetitore o nodo.
     {kProfileStandard, "std", "Standard", 7, 250.0f, 5, 12, kModeCodec2_3200, kMaxTurnMs, false, kPrebufferFrames,
      kPrebufferTimeoutMs, kSessionTimeoutMs, 0, false},
+    // Diretta (14/11/2026): gli stessi parametri radio e lo stesso Codec2 dello Standard (quindi si sente con una stazione in Standard sulla stessa
+    // frequenza), ma con la propria frequenza (CFG SET FREQDIR) e senza shift: traffico in simplex con un corrispondente vicino.
+    {kProfileDirect, "dir", "Diretta", 7, 250.0f, 5, 12, kModeCodec2_3200, kMaxTurnMs, false, kPrebufferFrames, kPrebufferTimeoutMs,
+     kSessionTimeoutMs, 0, false},
 };
 
 }  // namespace

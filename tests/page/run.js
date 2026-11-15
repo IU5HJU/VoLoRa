@@ -599,6 +599,43 @@ async function scenario(name, fn, opts = {}) {
     check('nessun riavvio dopo l\'errore', !(await cmds(p)).includes('CFG REBOOT'));
   });
 
+  await scenario('profilo Diretta: frequenza propria, senza shift', async (p) => {
+    check('campo spento prima di collegare', await p.isDisabled('#freqdir'));
+    await connect(p);
+    check('profilo Diretta nell\'elenco', (await p.evaluate(() => Array.from(document.getElementById('profile').options).map((o) => o.value))).includes('dir'));
+    check('frequenza Diretta letta e attiva', !(await p.isDisabled('#freqdir')) && (await p.inputValue('#freqdir')) === '433.900');
+    // la frequenza della Diretta uguale a quella dello Standard la segue; quella cambiata a mano resta
+    await p.fill('#freq', '434.100');
+    check('segue lo Standard finche\' e\' uguale', (await p.inputValue('#freqdir')) === '434.100');
+    await p.fill('#freqdir', '433.500');
+    await p.fill('#freq', '433.000');
+    check('cambiata a mano resta', (await p.inputValue('#freqdir')) === '433.500');
+    // salvataggio: FREQDIR e PROFILE dir
+    await p.fill('#callsign', 'IU5HJU'); await p.selectOption('#profile', 'dir');
+    await p.click('#save');
+    await until(p, () => window.__st.cmds.includes('CFG REBOOT'), null, 15000);
+    const c = await cmds(p);
+    check('CFG SET FREQDIR e PROFILE dir inviati', c.includes('CFG SET FREQDIR 433.500') && c.includes('CFG SET PROFILE dir'), c.join(' | '));
+    check('FREQDIR salvato nella scheda', (await p.evaluate(() => window.__st.cfg.freqdir)) === '433.500' && (await p.evaluate(() => window.__st.cfg.profile)) === 'dir');
+    // frequenza non valida: nessun comando
+    await p.evaluate(() => { window.__st.cmds.length = 0; });
+    await p.fill('#freqdir', '445.000');
+    await p.click('#save');
+    await until(p, () => document.getElementById('status').className === 'err');
+    check('Diretta fuori banda rifiutata', (await status(p)).includes('Diretta'), await status(p));
+    check('nessun SET con la Diretta non valida', !(await cmds(p)).some((x) => x.startsWith('CFG SET')));
+  });
+
+  await scenario('firmware senza il profilo Diretta: campo spento, il resto funziona', async (p) => {
+    await p.evaluate(() => { window.__st.noFreqDir = true; });
+    await connect(p);
+    check('campo Diretta spento', await p.isDisabled('#freqdir'));
+    await p.fill('#callsign', 'IU5HJU');
+    await p.click('#save');
+    await until(p, () => window.__st.cmds.includes('CFG REBOOT'), null, 15000);
+    check('nessun FREQDIR inviato', !(await cmds(p)).some((x) => /FREQDIR/.test(x)));
+  });
+
   await scenario('frequenze dei profili: possono essere diverse o uguali, mai bloccanti', async (p) => {
     check('campo spento prima di collegare', await p.isDisabled('#freqmsg'));
     await connect(p);

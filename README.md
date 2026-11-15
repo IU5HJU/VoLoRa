@@ -3,13 +3,14 @@
 *(già LoRa-Codec-2-RTX fino all'11/11/2026: se cerchi il vecchio nome, sei nel posto giusto.)*
 
 Messaggi vocali broadcast a turni (stile QSO) tra schede LilyGo a 433 MHz (LoRa32 T3 V1.6.1 e T-Beam V1.2, quest'ultima anche con il modulo radio SX1262), per radioamatori.
-La voce è compressa con Codec2 e trasmessa con LoRa, con tre **profili** da scegliere dal menu della scheda:
+La voce è compressa con Codec2 e trasmessa con LoRa, con quattro **profili** da scegliere dal menu della scheda:
 
 | Profilo | Radio | Codec2 | Uso |
 |---|---|---|---|
 | **Standard** (S) | SF7, banda 250 kHz | 3200 bps | voce in tempo reale più naturale; è il profilo di base, quello del ripetitore e del nodo Internet |
 | **Range** (R) | SF8, banda 250 kHz | 1200 bps | voce in tempo reale con un po' più di portata (circa 2,5 dB teorici, non misurati) |
 | **Messaggio** (M) | SF12, banda 125 kHz | 1200 bps | lungo raggio: si registra un messaggio (fino a 15 s); chi riceve lo trova in una casella e lo ascolta premendo il PTT, con la percentuale sul display |
+| **Diretta** (D) | SF7, banda 250 kHz | 3200 bps | **come lo Standard** (si sente con una stazione in Standard sulla stessa frequenza) ma con **una frequenza tutta sua, impostabile a piacere, e senza shift**: per il traffico in simplex con un corrispondente vicino, quando di solito lavori via ripetitore o nodo, senza riconfigurare niente |
 
 **Perché lo Standard è il 3200 (decisione del 12/11/2026):** il guadagno di portata del 1200 (Range) è modesto, circa 2,5 dB teorici e non misurati, mentre la voce a 3200 bit/s suona meglio. Il **Range** resta nel firmware per i collegamenti in condizioni difficili, quando serve quel poco di portata in più a scapito della qualità vocale ([decisione](docs/roadmap.md)).
 

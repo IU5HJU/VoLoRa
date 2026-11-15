@@ -17,6 +17,7 @@
 //   CFG MIC MEASURE              -> misura il fondo per 3 s (stare in silenzio), poi: CFG MIC fondo=-61 min=-63 max=-58 frames=75
 //   CFG SET VOLUME 7             -> CFG OK volume=7            (0 = muto, 1-10 in passi da 3 dB; 5 = 0 dB, 6-10 = guadagno fino a +15 dB)
 //   CFG SET FREQRANGE 433.900    -> CFG OK freqrange=433.900   (come FREQ, per il profilo Range, Codec2 1200; se manca vale come FREQ)
+//   CFG SET FREQDIR 433.500      -> CFG OK freqdir=433.500     (come FREQ, per il profilo Diretta: voce Codec2 3200 come lo Standard, ma frequenza propria e senza shift)
 //   CFG SET ROLE RPTRX           -> CFG OK role=rptrx          (OFF = scheda normale, RPTRX/RPTTX = scheda RX/TX del ripetitore; vale dal riavvio)
 //   CFG SET FREQOUT 434.400      -> CFG OK freqout=434.400     (frequenza di uscita del ripetitore, usata dalla scheda TX)
 //   CFG SET PROFILE MSG          -> CFG OK profile=msg         (STD = Standard 3200 SF7, RNG = Range 1200 SF8, MSG = Messaggio SF12/BW125; QUA vale come STD; vale dal riavvio)
@@ -136,6 +137,7 @@ struct Settings {
   char mcDests[kMcDestSlots][16];
   int32_t shiftKhz = 0;       // shift in trasmissione, in kHz, da -10000 a +10000 (vale dal riavvio; ignorato dai ruoli ripetitore e nodo)
   uint32_t freqRangeKhz = 0;  // frequenza del profilo Range (Codec2 1200; 0 = come lo Standard)
+  uint32_t freqDirKhz = 0;    // frequenza del profilo Diretta (simplex, senza shift; 0 = come lo Standard)
   uint8_t role = kRoleNormal;  // ruolo: normale o scheda RX/TX del ripetitore (vale dal riavvio)
   // Comandi del sysop al ripetitore (sysop.h): nominativo del sysop e chiave condivisa di 16 byte (mai mostrata da CFG GET); vale dal riavvio.
   char sysopCall[kMaxCallsign + 1] = {0};
@@ -181,6 +183,7 @@ struct Settings {
 
   // Frequenza del profilo in uso (quella con cui lavora la radio).
   uint32_t rangeFreqKhz() const { return freqRangeKhz ? freqRangeKhz : freqKhz; }
+  uint32_t directFreqKhz() const { return freqDirKhz ? freqDirKhz : freqKhz; }
   // Frequenza di uscita del ripetitore: quella impostata, altrimenti quella del profilo.
   uint32_t outFreqKhz() const { return freqOutKhz ? freqOutKhz : profileFreqKhz(); }
   // Copia con la frequenza del profilo in uso sostituita da khz (la scheda TX del ripetitore la usa per la radio).
@@ -188,11 +191,12 @@ struct Settings {
     Settings s = *this;
     if (profile == kProfileMessage) s.freqMsgKhz = khz;
     else if (profile == kProfileRange) s.freqRangeKhz = khz;
+    else if (profile == kProfileDirect) s.freqDirKhz = khz;
     else s.freqKhz = khz;
     return s;
   }
   uint32_t profileFreqKhz() const {
-    return profile == kProfileMessage ? freqMsgKhz : profile == kProfileRange ? rangeFreqKhz() : freqKhz;
+    return profile == kProfileMessage ? freqMsgKhz : profile == kProfileRange ? rangeFreqKhz() : profile == kProfileDirect ? directFreqKhz() : freqKhz;
   }
   // Nominativo-SSID usato nell'escursione MeshCom ("IU5HJU-99"); senza SSID se mcSsid e' 0. cap almeno 16.
   void mcCallsign(char* out, size_t cap) const {
@@ -201,7 +205,9 @@ struct Settings {
     else snprintf(out, cap, "%s-%u", callsign, static_cast<unsigned>(mcSsid));
   }
   // Frequenza di trasmissione della stazione: quella del profilo in uso piu' lo shift (con shift 0 e' la stessa di ascolto).
-  uint32_t txFreqKhz() const { return static_cast<uint32_t>(static_cast<int64_t>(profileFreqKhz()) + shiftKhz); }
+  // Nel profilo Diretta lo shift non si applica (simplex): trasmette sulla stessa frequenza con cui ascolta.
+  int32_t effectiveShiftKhz() const { return profile == kProfileDirect ? 0 : shiftKhz; }
+  uint32_t txFreqKhz() const { return static_cast<uint32_t>(static_cast<int64_t>(profileFreqKhz()) + effectiveShiftKhz()); }
   float freqMhz() const { return static_cast<float>(profileFreqKhz()) / 1000.0f; }
 };
 

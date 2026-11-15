@@ -48,11 +48,12 @@ static void testGesture() {
 static void testMenu() {
   size_t n = 0;
   const MenuItem* items = defaultMenuItems(n);
-  CHECK(n == 7);
+  CHECK(n == 8);
   // i tre profili si chiamano "Modo ...": Standard (id 2, Codec2 3200), Range (id 0, Codec2 1200), Messaggio (id 1); le altre voci no
   CHECK(strcmp(items[0].label, "Modo Standard") == 0 && items[0].id == 2);
   CHECK(strcmp(items[1].label, "Modo Range") == 0 && items[1].id == 0);
   CHECK(strcmp(items[2].label, "Modo Messaggio") == 0 && items[2].id == 1);
+  CHECK(strcmp(items[3].label, "Modo Diretta") == 0 && items[3].id == 3);  // Diretta (14/11/2026): come lo Standard, ma frequenza propria e senza shift
   for (size_t i = 0; i < n; i++) CHECK(strlen(items[i].label) <= 16);  // entrano nelle righe del menu (21 caratteri con "* ")
   Menu m(items, n);
   CHECK(!m.isOpen());
@@ -60,17 +61,19 @@ static void testMenu() {
   // Si apre sulla voce in uso (Range, id 0).
   CHECK(m.open(0, 0));
   CHECK(m.isOpen() && m.selectedIndex() == 1);
-  // Range -> Messaggio -> Invia testo -> MeshCom -> MeshCom ascolto -> Wi-Fi -> Standard -> Range
+  // Range -> Messaggio -> Diretta -> Invia testo -> MeshCom -> MeshCom ascolto -> Wi-Fi -> Standard -> Range
   m.next(100);
   CHECK(m.selectedIndex() == 2 && m.item(2).id == 1);
+  m.next(110);
+  CHECK(m.selectedIndex() == 3 && m.item(3).id == 3);  // Diretta
   m.next(120);
-  CHECK(m.selectedIndex() == 3 && m.item(3).id == kMenuTextId);  // Invia testo
+  CHECK(m.selectedIndex() == 4 && m.item(4).id == kMenuTextId);  // Invia testo
   m.next(125);
-  CHECK(m.selectedIndex() == 4 && m.item(4).id == kMenuMeshId);  // MeshCom (escursione)
+  CHECK(m.selectedIndex() == 5 && m.item(5).id == kMenuMeshId);  // MeshCom (escursione)
   m.next(128);
-  CHECK(m.selectedIndex() == 5 && m.item(5).id == kMenuMeshListenId);  // MeshCom ascolto
+  CHECK(m.selectedIndex() == 6 && m.item(6).id == kMenuMeshListenId);  // MeshCom ascolto
   m.next(130);
-  CHECK(m.selectedIndex() == 6 && m.item(6).id == kMenuWifiId);
+  CHECK(m.selectedIndex() == 7 && m.item(7).id == kMenuWifiId);
   m.next(150);
   CHECK(m.selectedIndex() == 0);
   m.next(200);
@@ -86,22 +89,30 @@ static void testMenu() {
   CHECK(o.kind == K::Selected && o.id == 1);
 
   // Le altre voci si scelgono da qualunque profilo: Invia testo (101), MeshCom (102), Wi-Fi (100); si parte da Messaggio (id 1)
+  CHECK(m.open(1, 490));
+  m.next(495);
+  o = m.confirm(498);
+  CHECK(o.kind == K::Selected && o.id == 3);  // Diretta: id 3, e' un profilo
   CHECK(m.open(1, 500));
+  m.next(505);
   m.next(510);
   o = m.confirm(520);
   CHECK(o.kind == K::Selected && o.id == kMenuTextId);  // Invia testo: id 101
   CHECK(m.open(1, 600));
+  m.next(605);
   m.next(610);
   m.next(615);
   o = m.confirm(620);
   CHECK(o.kind == K::Selected && o.id == kMenuMeshId);  // MeshCom: id 102, non e' un profilo
   CHECK(m.open(1, 700));
+  m.next(705);
   m.next(710);
   m.next(720);
   m.next(725);
   o = m.confirm(730);
   CHECK(o.kind == K::Selected && o.id == kMenuMeshListenId);  // MeshCom ascolto: id 104
   CHECK(m.open(1, 740));
+  m.next(745);
   m.next(750);
   m.next(760);
   m.next(765);

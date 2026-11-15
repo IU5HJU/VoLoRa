@@ -151,6 +151,7 @@ BADGES = {
     "S": [".XXXXXXXX.", "XXXXXXXXXX", "XX........", "XXXXXXXX..", ".XXXXXXXX.", "..XXXXXXXX", "........XX", "XXXXXXXXXX", ".XXXXXXXX."],
     "M": ["XX......XX", "XXX....XXX", "XXXX..XXXX", "XX.XXXX.XX", "XX..XX..XX", "XX......XX", "XX......XX", "XX......XX", "XX......XX"],
     "R": ["XXXXXXXX..", "XXXXXXXXX.", "XX.....XXX", "XX.....XXX", "XXXXXXXXX.", "XXXXXXXX..", "XX..XXX...", "XX...XXX..", "XX....XXXX"],
+    "D": ["XXXXXXXX..", "XXXXXXXXX.", "XX.....XXX", "XX.....XXX", "XX.....XXX", "XX.....XXX", "XX.....XXX", "XXXXXXXXX.", "XXXXXXXX.."],
     "T": ["XXXXXXXXXX", "XXXXXXXXXX", "....XX....", "....XX....", "....XX....", "....XX....", "....XX....", "....XX....", "....XX...."],
 }
 
@@ -525,8 +526,8 @@ def screens(font):
          show_message(font, "PROVA TONI", "fase 1: senza radio")),
         ("25  Verifica audio con la radio", "Gli stessi tre toni mentre la scheda trasmette in continuo: si controlla se la radio disturba microfono e amplificatore.",
          show_message(font, "PROVA TONI", "fase 2: con radio TX")),
-        ("26  Menu (sette voci)", "Volume lungo: la finestra scorre e la voce scelta (qui \"MeshCom ascolto\") resta visibile; * = modo in uso (Range).",
-         draw_menu(font, ["Modo Standard", "Modo Range", "Modo Messaggio", "Invia testo", "MeshCom", "MeshCom ascolto", "Wi-Fi"], 5, 1)),
+        ("26  Menu (otto voci)", "Volume lungo: la finestra scorre e la voce scelta (qui \"MeshCom ascolto\") resta visibile; * = modo in uso (Range).",
+         draw_menu(font, ["Modo Standard", "Modo Range", "Modo Messaggio", "Modo Diretta", "Invia testo", "MeshCom", "MeshCom ascolto", "Wi-Fi"], 6, 1)),
         ("27  MeshCom: ascolto", "Dopo \"MeshCom ascolto\" (o un testo inviato): lettera T, frequenza della rete di testo, conto alla rovescia di MCWINDOW.",
          draw_screen(font, mesh_sec=272)),
         ("28  Nodo: Wi-Fi all'avvio", "Primi 3 minuti del nodo: rete, password (qui di esempio), pagina e conto alla rovescia. Con un client collegato si prolunga.",
@@ -571,6 +572,8 @@ def screens(font):
          draw_main(font, "RX N0CALL", "Ricevo messaggio 40%", "RSSI -92  SNR 7.5", badge="M")),
         ("48  Invio di un testo", "Trasmissione di un SMS dal menu \"Invia testo\".",
          draw_main(font, "INVIO SMS", "Trasmetto il testo")),
+        ("49  Profilo Diretta", "Come lo Standard ma con frequenza propria (qui 433.600) e senza shift: lettera D in alto a destra. Dal menu \"Modo Diretta\".",
+         draw_main(font, "ASCOLTO", "Premi PTT per parlare", badge="D", freq="433.600")),
     ]
 
 

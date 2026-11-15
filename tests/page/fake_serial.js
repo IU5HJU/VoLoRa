@@ -4,8 +4,9 @@
 // il test lo legge (cmds = comandi ricevuti) e lo modifica per simulare situazioni diverse.
 (() => {
   const st = window.__st = {
-    cfg: { callsign: 'N0CALL', freq: '433.900', freqmsg: '433.900', freqrange: '433.900', power: 10, volume: 7, micfloor: -60, profile: 'std', pos: 'off', qth: 'none', gps: 'off' },
+    cfg: { callsign: 'N0CALL', freq: '433.900', freqmsg: '433.900', freqrange: '433.900', freqdir: '433.900', power: 10, volume: 7, micfloor: -60, profile: 'std', pos: 'off', qth: 'none', gps: 'off' },
     active: { callsign: 'N0CALL', freq: '433.900', freqmsg: '433.900', power: 10, volume: 7, profile: 'std' },
+    noFreqDir: false,     // firmware senza il profilo Diretta (piu' vecchio)
     noFreqMsg: false,     // firmware con una sola frequenza (piu' vecchio)
     noPos: false,         // firmware senza posizione (piu' vecchio): CFG GET senza pos=/qth= e CFG SET POS/QTH sconosciuti
     noGps: false,
@@ -44,7 +45,7 @@
   const get = () => {
     const c = st.cfg, a = st.active;
     const reboot = (c.callsign !== a.callsign || c.freq !== a.freq || c.power !== a.power || c.volume !== a.volume || c.profile !== a.profile || c.freqmsg !== a.freqmsg || c.freqrange !== a.freqrange) ? 1 : 0;
-    return `CFG callsign=${c.callsign} freq=${c.freq}${st.noFreqMsg ? '' : ' freqmsg=' + c.freqmsg + (st.legacyFw ? ' freqqual=' : ' freqrange=') + c.freqrange} power=${c.power} volume=${c.volume} micfloor=${c.micfloor}${st.noProfile ? '' : ' profile=' + c.profile} board=${st.board} reboot=${reboot} test=${st.test ? 1 : 0}${st.noPos ? '' : ' pos=' + c.pos + ' qth=' + c.qth}${st.noGps ? '' : ' gps=' + c.gps}${st.noRole ? '' : ' role=' + (c.role || 'off') + ' freqout=' + (c.freqout || c.freq)}`;
+    return `CFG callsign=${c.callsign} freq=${c.freq}${st.noFreqMsg ? '' : ' freqmsg=' + c.freqmsg + (st.legacyFw ? ' freqqual=' : ' freqrange=') + c.freqrange + (st.legacyFw || st.noFreqDir ? '' : ' freqdir=' + c.freqdir)} power=${c.power} volume=${c.volume} micfloor=${c.micfloor}${st.noProfile ? '' : ' profile=' + c.profile} board=${st.board} reboot=${reboot} test=${st.test ? 1 : 0}${st.noPos ? '' : ' pos=' + c.pos + ' qth=' + c.qth}${st.noGps ? '' : ' gps=' + c.gps}${st.noRole ? '' : ' role=' + (c.role || 'off') + ' freqout=' + (c.freqout || c.freq)}`;
   };
   const inRange = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
   const handle = (line) => {
@@ -156,6 +157,10 @@
       } else if (key === 'MCSSID' && !st.noMc) {
         if (!inRange(+v, 0, 99)) return out('CFG ERR mcssid da 0 a 99');
         st.mc.ssid = String(+v); out('CFG OK mcssid=' + v);
+      } else if (key === 'FREQDIR' && !st.noFreqMsg && !st.noFreqDir) {
+        const khz = Math.round(parseFloat(v) * 1000);
+        if (!(khz >= 430000 && khz <= 440000)) return out('CFG ERR freqdir fuori dai limiti');
+        st.cfg.freqdir = v; out('CFG OK freqdir=' + v);
       } else if (key === 'FREQRANGE' && !st.noFreqMsg) {
         const khz = Math.round(parseFloat(v) * 1000);
         if (!(khz >= 430000 && khz <= 440000)) return out('CFG ERR freqrange fuori dai limiti');
@@ -172,7 +177,7 @@
         st.cfg.volume = +v; out('CFG OK volume=' + v);
       } else if (key === 'PROFILE' && !st.noProfile) {
         const pv = v.toLowerCase();
-        if (pv !== 'std' && pv !== 'msg' && pv !== 'rng') return out('CFG ERR profile usa STD (Standard), RNG (Range) oppure MSG (Messaggio)');
+        if (pv !== 'std' && pv !== 'msg' && pv !== 'rng' && !(pv === 'dir' && !st.noFreqDir)) return out('CFG ERR profile usa STD (Standard), RNG (Range), MSG (Messaggio) oppure DIR (Diretta)');
         st.cfg.profile = pv; out('CFG OK profile=' + pv);
       } else if (key === 'POS' && !st.noPos) {
         const pv = v.toLowerCase();

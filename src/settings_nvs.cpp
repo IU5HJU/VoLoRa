@@ -13,6 +13,7 @@ lcr::Settings compileTimeSettings() {
   strncpy(s.callsign, LCR_CALLSIGN, lcr::kMaxCallsign);
   s.freqKhz = static_cast<uint32_t>(LCR_FREQUENCY_MHZ * 1000.0f + 0.5f);
   s.freqRangeKhz = s.freqKhz;
+  s.freqDirKhz = s.freqKhz;
   s.freqMsgKhz = s.freqKhz;  // tutte le frequenze dei profili partono uguali
   s.powerDbm = LCR_TX_POWER_DBM;
   s.volume = LCR_VOLUME_STEP;
@@ -43,6 +44,7 @@ bool NvsSettingsStorage::load(lcr::Settings& out) {
       out.freqRangeKhz = p.getUInt("freq", 0);
       out.freqKhz = p.getUInt("fqua", out.freqRangeKhz);
     }
+    out.freqDirKhz = p.getUInt("fdir", 0);  // assente nelle versioni precedenti: come lo Standard
     out.freqMsgKhz = p.getUInt("fmsg", out.freqKhz);  // assente nelle versioni precedenti: stessa frequenza dello Standard
     out.role = static_cast<uint8_t>(p.getUChar("role", lcr::kRoleNormal));  // assenti nelle versioni precedenti
     out.freqOutKhz = p.getUInt("fout", 0);
@@ -103,7 +105,7 @@ bool NvsSettingsStorage::load(lcr::Settings& out) {
 bool NvsSettingsStorage::save(const lcr::Settings& s) {
   Preferences p;
   if (!p.begin(kNamespace, false)) return false;
-  const bool ok = p.putString("call", s.callsign) > 0 && p.putUInt("freq", s.freqKhz) > 0 && p.putUInt("fmsg", s.freqMsgKhz) > 0 && p.putUInt("frng", s.rangeFreqKhz()) > 0 && p.putUChar("pv", 2) > 0 && p.putUChar("role", s.role) > 0 && p.putUInt("fout", s.freqOutKhz) > 0 && p.putBool("mon", s.rxMonitor) > 0 && p.putUInt("fmc", s.freqMcKhz) > 0 && p.putUChar("mcs", s.mcSsid) > 0 && p.putInt("pwr", s.powerDbm) > 0 &&
+  const bool ok = p.putString("call", s.callsign) > 0 && p.putUInt("freq", s.freqKhz) > 0 && p.putUInt("fmsg", s.freqMsgKhz) > 0 && p.putUInt("frng", s.rangeFreqKhz()) > 0 && p.putUInt("fdir", s.directFreqKhz()) > 0 && p.putUChar("pv", 2) > 0 && p.putUChar("role", s.role) > 0 && p.putUInt("fout", s.freqOutKhz) > 0 && p.putBool("mon", s.rxMonitor) > 0 && p.putUInt("fmc", s.freqMcKhz) > 0 && p.putUChar("mcs", s.mcSsid) > 0 && p.putInt("pwr", s.powerDbm) > 0 &&
                     p.putInt("vol2", s.volume) > 0 &&
                     p.putInt("floor", s.micFloorDb) > 0 && p.putUChar("prof", s.profile) > 0 &&
                     p.putBool("gps", s.gpsOn) > 0 && p.putBool("ptx", s.posTx) > 0 && p.putBool("qset", s.qthSet) > 0 && p.putInt("qlat", s.qthLatE7) > 0 &&

@@ -60,7 +60,7 @@ Il tag lo crea chi pubblica, a mano: i documenti non lo creano.
 ## Stato della checklist per la rc.1 (14/11/2026)
 
 1. **`main` verde:** sì, Build #325 (commit `f86a61f`); `make test` completo passa in CI.
-2. **Documenti allineati:** README, guida rapida, indice, `firmware.md`, `display.md`, `banco-nodo.md`, `prove.md`, `roadmap.md` e note di rilascio riflettono il firmware di quel commit.  Il mockup del display (48 schermate) e il PDF sul formato del pacchetto sono rigenerati (433,475 MHz).
+2. **Documenti allineati:** README, guida rapida, indice, `firmware.md`, `display.md`, `banco-nodo.md`, `prove.md`, `roadmap.md` e note di rilascio riflettono il firmware di quel commit.  Il mockup del display (49 schermate) e il PDF sul formato del pacchetto sono rigenerati (433,475 MHz).
 3. **Note di rilascio:** [v0.1.0-rc.1.md](note-rilascio/v0.1.0-rc.1.md), con l'elenco di ciò che non è provato su scheda.
 4. **Provato su due schede:** la voce a turni, la prova di potenza (5,02 km), la SX1262 in ricezione, l'aggiornamento senza perdere le impostazioni (T3 con registri, T-Beam SX1278 con registro e SX1262 riferito), il nodo su T-Beam con la finestra Wi-Fi all'avvio e la pagina di gestione dalla rete di casa aperta da un telefono con utente e password. **Non provate su scheda** le novità del 14/11/2026 elencate nelle note (distanza in km, Wi-Fi del nodo, ultima stazione sul display, "MeshCom ascolto", posizione dal browser, prova dei toni dopo il watchdog).
 

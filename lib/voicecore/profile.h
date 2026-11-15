@@ -3,6 +3,9 @@
 //   Standard   voce in tempo reale a Codec2 3200, SF7/BW250: piu' fedele, il modo di base (via ripetitore o nodo). Dal 12/11/2026;
 //              fino ad allora si chiamava "Qualita'" e "Standard" era il Codec2 1200.
 //   Range      voce in tempo reale a Codec2 1200, SF8/BW250 (il vecchio "Standard"): un po' piu' di portata, meno fedelta'; resta per i collegamenti in condizioni difficili.
+//   Diretta    come lo Standard (voce Codec2 3200, SF7/BW250, stessi pacchetti: si sente con una stazione in Standard sulla stessa frequenza) ma
+//              con una frequenza propria impostata a piacere (CFG SET FREQDIR) e SENZA shift: per fare traffico in simplex con un corrispondente
+//              vicino senza riconfigurare la scheda quando di solito si lavora via ripetitore o nodo.
 //   Messaggio  lungo raggio: SF12/BW125. Si registra un messaggio, lo si trasmette piu' lentamente del parlato e chi
 //              riceve lo memorizza e lo riproduce a ricezione conclusa.
 //
@@ -17,7 +20,7 @@
 
 namespace lcr {
 
-enum ProfileId : uint8_t { kProfileRange = 0, kProfileMessage = 1, kProfileStandard = 2, kProfileCount = 3 };
+enum ProfileId : uint8_t { kProfileRange = 0, kProfileMessage = 1, kProfileStandard = 2, kProfileDirect = 3, kProfileCount = 4 };
 
 struct Profile {
   uint8_t id;

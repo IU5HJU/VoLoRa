@@ -195,8 +195,9 @@
         <option value="std">Standard: voce in tempo reale, più fedele (SF7, 250 kHz, Codec2 3200)</option>
         <option value="rng">Range: collegamenti difficili, un po' più di portata, meno fedele (SF8, 250 kHz, Codec2 1200)</option>
         <option value="msg">Messaggio: lungo raggio, registra e invia (SF12, 125 kHz)</option>
+        <option value="dir">Diretta: traffico in simplex con un corrispondente vicino, frequenza propria e senza shift (SF7, 250 kHz, Codec2 3200)</option>
       </select>
-      <p class="hint" id="profilehint"><strong>Standard</strong>: voce in tempo reale con Codec2 3200, la più naturale: è il modo di base, quello da usare via ripetitore o nodo. <strong>Range</strong>: voce in tempo reale con Codec2 1200 (il vecchio &ldquo;Standard&rdquo; di prima del 12/11/2026), un po&rsquo; più di portata (circa 2,5 dB teorici in più, non misurati) ma meno fedele: da usare per i collegamenti in condizioni difficili, quando serve quel poco in più. <strong>Messaggio</strong>: tieni premuto il PTT e registra fino a 15 secondi (quanto ripete il ripetitore); un secondo dopo il rilascio la scheda trasmette il messaggio, molto più lentamente del parlato (circa 94 secondi in aria ogni 10 secondi di voce) e con circa 13 dB di sensibilità in più; chi riceve lo ascolta <strong>a ricezione conclusa</strong>. <strong>Le schede con profili diversi non si sentono</strong>: usa lo stesso profilo (e la stessa frequenza) su tutte. Vale dal riavvio.</p>
+      <p class="hint" id="profilehint"><strong>Standard</strong>: voce in tempo reale con Codec2 3200, la più naturale: è il modo di base, quello da usare via ripetitore o nodo. <strong>Range</strong>: voce in tempo reale con Codec2 1200 (il vecchio &ldquo;Standard&rdquo; di prima del 12/11/2026), un po&rsquo; più di portata (circa 2,5 dB teorici in più, non misurati) ma meno fedele: da usare per i collegamenti in condizioni difficili, quando serve quel poco in più. <strong>Diretta</strong>: come lo Standard (stessa voce, stessi parametri radio) ma su una <strong>frequenza tutta sua</strong> e <strong>senza shift</strong>, per il traffico in simplex con un corrispondente vicino quando di solito lavori via ripetitore o nodo. <strong>Messaggio</strong>: tieni premuto il PTT e registra fino a 15 secondi (quanto ripete il ripetitore); un secondo dopo il rilascio la scheda trasmette il messaggio, molto più lentamente del parlato (circa 94 secondi in aria ogni 10 secondi di voce) e con circa 13 dB di sensibilità in più; chi riceve lo ascolta <strong>a ricezione conclusa</strong>. <strong>Le schede con profili diversi non si sentono</strong>: usa lo stesso profilo (e la stessa frequenza) su tutte. Vale dal riavvio.</p>
 
       <label for="freq">Frequenza (MHz)</label>
       <input id="freq" inputmode="decimal" pattern="[0-9]{3}(\.[0-9]{1,3})?" placeholder="433.475" disabled required>
@@ -207,16 +208,19 @@
         <select id="shiftdir" disabled><option value="0">Nessuno (simplex, di base)</option><option value="+">+ (trasmetto sopra la frequenza di ascolto)</option><option value="-">&minus; (trasmetto sotto la frequenza di ascolto)</option></select>
         <label for="shiftmhz">Shift: scostamento (MHz, da 0 a 10)</label>
         <input id="shiftmhz" inputmode="decimal" autocomplete="off" placeholder="per esempio 7.600" disabled>
-        <p class="hint" id="shifthint">Come l'offset di un ripetitore su una radio: una <strong>direzione</strong> (+ o &minus;) e uno <strong>scostamento libero da 0 a 10 MHz</strong>, a passi di 1 kHz (per esempio 7.600). La scheda <strong>ascolta</strong> sulla frequenza qui sopra (l'uscita del ripetitore) e <strong>trasmette</strong> sulla frequenza + o &minus; lo scostamento (l'ingresso). Con &laquo;Nessuno&raquo; tutto come prima, ascolto e trasmissione sulla stessa frequenza. La frequenza di trasmissione deve restare tra 430.000 e 440.000 MHz (anche per le frequenze degli altri profili): altrimenti la scheda rifiuta lo shift. Vale dal riavvio; sul display e in seriale (<code>Via ripetitore: ...</code>) si vede la frequenza di trasmissione. Non vale per i ruoli ripetitore e nodo n&eacute; durante l'escursione MeshCom.</p>
+        <p class="hint" id="shifthint">Come l'offset di un ripetitore su una radio: una <strong>direzione</strong> (+ o &minus;) e uno <strong>scostamento libero da 0 a 10 MHz</strong>, a passi di 1 kHz (per esempio 7.600). La scheda <strong>ascolta</strong> sulla frequenza qui sopra (l'uscita del ripetitore) e <strong>trasmette</strong> sulla frequenza + o &minus; lo scostamento (l'ingresso). Con &laquo;Nessuno&raquo; tutto come prima, ascolto e trasmissione sulla stessa frequenza. La frequenza di trasmissione deve restare tra 430.000 e 440.000 MHz (anche per le frequenze degli altri profili): altrimenti la scheda rifiuta lo shift. Vale dal riavvio; sul display e in seriale (<code>Via ripetitore: ...</code>) si vede la frequenza di trasmissione. Non vale per i ruoli ripetitore e nodo n&eacute; durante l'escursione MeshCom n&eacute; nel profilo <strong>Diretta</strong> (simplex).</p>
       </div>
       <details class="falsi" id="otherfreq" data-modes="off rptrx rpttx">
-      <summary>Frequenze degli altri profili (Range e Messaggio)</summary>
+      <summary>Frequenze degli altri profili (Range, Messaggio e Diretta)</summary>
       <label for="freqmsg">Frequenza del profilo Messaggio (MHz)</label>
       <input id="freqmsg" inputmode="decimal" pattern="[0-9]{3}(\.[0-9]{1,3})?" placeholder="433.475" disabled required>
       <p class="hint" id="freqmsghint">La scheda usa la frequenza del profilo scelto. Di base seguono la frequenza dello Standard: se la cambi, quelle uguali la seguono. Le frequenze <strong>possono essere uguali</strong> (nelle prove si usa spesso una frequenza nota) e le puoi cambiare a piacere per configurazioni particolari. <button id="sameFreq" type="button" class="secondary" disabled>Usa quella dello Standard</button></p>
       <label for="freqrange">Frequenza del profilo Range (MHz)</label>
       <input id="freqrange" inputmode="decimal" pattern="[0-9]{3}(\.[0-9]{1,3})?" placeholder="433.475" disabled required>
       <p class="hint">Come sopra, per il profilo Range: di base segue lo Standard, e può essere uguale alle altre.</p>
+      <label for="freqdir">Frequenza del profilo Diretta (MHz)</label>
+      <input id="freqdir" inputmode="decimal" pattern="[0-9]{3}(\.[0-9]{1,3})?" placeholder="433.475" disabled required>
+      <p class="hint" id="freqdirhint">Il profilo <strong>Diretta</strong> serve per il traffico <strong>in simplex</strong> con un corrispondente vicino: la voce è quella dello Standard (stessi parametri radio, quindi si sente anche con una stazione in Standard sulla stessa frequenza), ma su <strong>questa frequenza, libera da 430.000 a 440.000 MHz, e senza shift</strong>. Si passa dal menu della scheda (&ldquo;Modo Diretta&rdquo;) senza riconfigurare niente: lo shift e le altre frequenze restano per quando torni allo Standard.</p>
       <p class="hint" id="freqnote" hidden>Stessa frequenza per i due profili: va bene per le prove, ma <strong>non è un canale condiviso</strong>. Profili diversi non si decodificano a vicenda e il controllo "canale occupato" non vede un segnale dell'altro profilo.</p>
 
       </details>
@@ -496,6 +500,7 @@
   let profileSeen = false;   // l'ultimo CFG GET conteneva il profilo
   let legacyFw = false;     // il firmware collegato e' precedente alla ridenominazione Standard/Range (12/11/2026)
   let freqRangeSeen = false;
+  let freqDirSeen = false;
   let freqMsgSeen = false;   // l'ultimo CFG GET conteneva la frequenza del profilo Messaggio
   let posSeen = false, gpsSeen = false;   // l'ultimo CFG GET conteneva pos=/qth= e gps= (firmware piu' vecchi: no)
   let textSeen = false;      // la scheda risponde a CFG GET TEXTn (firmware piu' vecchi: no)
@@ -670,7 +675,7 @@
     $('connect').disabled = on;
     $('disconnect').disabled = !on;
     for (const id of ['callsign', 'freq', 'power', 'volume', 'micfloor', 'floorDown', 'floorUp', 'measure', 'save', 'reload', 'reset', 'testOn', 'testOff', 'hwMic', 'hwTones']) $(id).disabled = !on;
-    if (!on) { legacyFw = false; profileSeen = false; freqMsgSeen = false; freqRangeSeen = false; posSeen = false; gpsSeen = false; textSeen = false; mcSeen = false; sysopSeen = false; idintSeen = false; idmorseSeen = false; shiftSeen = false; nodeSeen = false; roleSeen = false; roleShow(); }
+    if (!on) { legacyFw = false; profileSeen = false; freqMsgSeen = false; freqRangeSeen = false; freqDirSeen = false; posSeen = false; gpsSeen = false; textSeen = false; mcSeen = false; sysopSeen = false; idintSeen = false; idmorseSeen = false; shiftSeen = false; nodeSeen = false; roleSeen = false; roleShow(); }
     $('idint').disabled = !on || !idintSeen;
     for (const id of NET_IDS) $(id).disabled = !on || !nodeSeen;
     $('shiftdir').disabled = $('shiftmhz').disabled = !on || !shiftSeen;
@@ -683,6 +688,7 @@
     $('freqmsg').disabled = !on || !freqMsgSeen;   // il firmware piu' vecchio ha una sola frequenza
     $('sameFreq').disabled = !on || !freqMsgSeen;
     $('freqrange').disabled = !on || !freqRangeSeen;
+    $('freqdir').disabled = !on || !freqDirSeen;
     $('profile').disabled = !on || !profileSeen;   // il firmware piu' vecchio non ha i profili
   }
 
@@ -702,6 +708,7 @@
         if (m.volume !== undefined) $('volume').value = m.volume;
         if (m.freqmsg !== undefined) { $('freqmsg').value = m.freqmsg; freqMsgSeen = true; $('freqmsg').disabled = !port; $('sameFreq').disabled = !port; }
         if (m.freqrange !== undefined) { $('freqrange').value = m.freqrange; freqRangeSeen = true; $('freqrange').disabled = !port; }
+        if (m.freqdir !== undefined) { $('freqdir').value = m.freqdir; freqDirSeen = true; $('freqdir').disabled = !port; }
         updateFreqNote();
         if (m.profile !== undefined) { $('profile').value = m.profile; profileSeen = true; $('profile').disabled = !port; }
         if (m.micfloor !== undefined) { $('micfloor').value = m.micfloor; lastFloor = Number(m.micfloor); }
@@ -840,6 +847,13 @@
       const kq = Math.round(parseFloat(frng) * 1000);
       if (kq < LIMITS.freqMin || kq > LIMITS.freqMax) return { err: 'La frequenza del profilo Range deve essere tra 430.000 e 440.000 MHz.' };
     }
+    let fdir = null;
+    if (!$('freqdir').disabled) {
+      fdir = $('freqdir').value.trim();
+      if (!/^\d{3}(\.\d{1,3})?$/.test(fdir)) return { err: 'Frequenza del profilo Diretta non valida: usa il formato 433.475.' };
+      const kd = Math.round(parseFloat(fdir) * 1000);
+      if (kd < LIMITS.freqMin || kd > LIMITS.freqMax) return { err: 'La frequenza del profilo Diretta deve essere tra 430.000 e 440.000 MHz.' };
+    }
     const pw = Number($('power').value);
     if (!Number.isInteger(pw) || pw < LIMITS.pwrMin || pw > LIMITS.pwrMax) return { err: 'La potenza deve essere un numero intero da 2 a 17 dBm.' };
     const vol = Number($('volume').value);
@@ -847,7 +861,7 @@
     const fl = Number($('micfloor').value);
     if ($('micfloor').value === '' || !Number.isInteger(fl) || fl < -80 || fl > -36) return { err: 'Il fondo del microfono deve essere un intero da -80 a -36 dBFS.' };
     const prof = $('profile').value;
-    if (!$('profile').disabled && prof !== 'std' && prof !== 'msg' && prof !== 'rng') return { err: 'Profilo non valido.' };
+    if (!$('profile').disabled && prof !== 'std' && prof !== 'msg' && prof !== 'rng' && prof !== 'dir') return { err: 'Profilo non valido.' };
     let pos = null, qth = null, gps = null;
     if (!$('pos').disabled) pos = $('pos').value === 'on' ? 'on' : 'off';
     if (!$('qthlat').disabled) {
@@ -947,7 +961,7 @@
         net = { ssid, pass, peer: pm[1] + ':' + (pm[2] !== undefined ? pm[2] : '5400'), peerid: pid === '' ? '0' : String(+pid), nodeid: nid === '' ? '' : String(+nid), key, lport: String(+lport) };
       }
     }
-    return { net, shift, cs, freq: fm, fmsg, frng, pw, vol, fl, prof, pos, qth, gps, texts, mc, sysop, idint, idmorse, role, freqout, monitor };
+    return { net, shift, cs, freq: fm, fmsg, frng, fdir, pw, vol, fl, prof, pos, qth, gps, texts, mc, sysop, idint, idmorse, role, freqout, monitor };
   }
 
   // La scheda stampa la posizione fissa con 5 decimali: si confronta con una tolleranza di circa 2 metri.
@@ -972,6 +986,7 @@
       replies.push(await send('CFG SET FREQ ' + v.freq, /^CFG (OK|ERR)/));
       if (v.fmsg !== null) replies.push(await send('CFG SET FREQMSG ' + v.fmsg, /^CFG (OK|ERR)/));
       if (v.frng !== null) replies.push(await send('CFG SET FREQRANGE ' + v.frng, /^CFG (OK|ERR)/));
+      if (v.fdir !== null) replies.push(await send('CFG SET FREQDIR ' + v.fdir, /^CFG (OK|ERR)/));
       if (v.shift !== null) replies.push(await send('CFG SET SHIFT ' + v.shift, /^CFG (OK|ERR)/));
       replies.push(await send('CFG SET POWER ' + v.pw, /^CFG (OK|ERR)/));
       replies.push(await send('CFG SET VOLUME ' + v.vol, /^CFG (OK|ERR)/));
@@ -1061,7 +1076,7 @@
   let freqPrev = '';
   $('freq').addEventListener('input', () => {
     const v = $('freq').value.trim();
-    for (const id of ['freqmsg', 'freqrange']) if (!$(id).disabled && $(id).value.trim() === freqPrev) $(id).value = v;
+    for (const id of ['freqmsg', 'freqrange', 'freqdir']) if (!$(id).disabled && $(id).value.trim() === freqPrev) $(id).value = v;
     freqPrev = v;
     updateFreqNote();
   });

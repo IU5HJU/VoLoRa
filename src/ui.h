@@ -25,7 +25,7 @@ class UiNotifier : public lcr::INotifier {
   // Profilo in uso: cambia i testi (messaggio) e il limite di durata mostrato.
   void setProfile(const lcr::Profile& p) {
     message_ = p.message;
-    badge_ = p.id == lcr::kProfileMessage ? 'M' : (p.id == lcr::kProfileRange ? 'R' : 'S');
+    badge_ = p.id == lcr::kProfileMessage ? 'M' : (p.id == lcr::kProfileRange ? 'R' : (p.id == lcr::kProfileDirect ? 'D' : 'S'));
     maxTurnSec_ = p.maxTurnMs / 1000;
   }
 

@@ -52,8 +52,10 @@ void UiNotifier::drawProfileBadge() {
                                     "XXXXXXXX..", "XX..XXX...", "XX...XXX..", "XX....XXXX"};
   static const char* const kT[9] = {"XXXXXXXXXX", "XXXXXXXXXX", "....XX....", "....XX....", "....XX....",
                                     "....XX....", "....XX....", "....XX....", "....XX...."};
+  static const char* const kD[9] = {"XXXXXXXX..", "XXXXXXXXX.", "XX.....XXX", "XX.....XXX", "XX.....XXX",
+                                    "XX.....XXX", "XX.....XXX", "XXXXXXXXX.", "XXXXXXXX.."};
   const char b = meshSec_ > 0 ? 'T' : badge_;  // durante l'escursione MeshCom la lettera e' T
-  const char* const* g = b == 'M' ? kM : (b == 'R' ? kR : (b == 'T' ? kT : kS));
+  const char* const* g = b == 'M' ? kM : (b == 'R' ? kR : (b == 'T' ? kT : (b == 'D' ? kD : kS)));
   for (int y = 0; y < 9; y++)
     for (int x = 0; x < 10; x++)
       if (g[y][x] == 'X') display_.drawPixel(118 + x, y, SSD1306_WHITE);

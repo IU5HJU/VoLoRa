@@ -747,7 +747,7 @@ static void applyProfileChoice(uint8_t id) {
 
 // ---- Escursione MeshCom dal menu: testo (o solo ascolto), poi destinatario ----
 
-static char modeLetter() { return settings.profile == lcr::kProfileMessage ? 'M' : (settings.profile == lcr::kProfileRange ? 'R' : 'S'); }
+static char modeLetter() { return settings.profile == lcr::kProfileMessage ? 'M' : (settings.profile == lcr::kProfileRange ? 'R' : (settings.profile == lcr::kProfileDirect ? 'D' : 'S')); }
 
 static void mcOpenText(uint32_t now) {
   const lcr::Settings& st = console->stored();

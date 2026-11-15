@@ -533,7 +533,7 @@ void testGpsSetting() {
 void testGet() {
   Fixture f;
   CHECK(f.run("CFG GET") == ConsoleResult::Ok);
-  CHECK(strcmp(f.reply, "CFG callsign=N0CALL freq=433.900 freqmsg=433.900 freqrange=433.900 power=10 volume=5 micfloor=-60 profile=std board=T3 reboot=0 test=0 pos=off qth=none gps=off role=off freqout=433.900") == 0);
+  CHECK(strcmp(f.reply, "CFG callsign=N0CALL freq=433.900 freqmsg=433.900 freqrange=433.900 power=10 volume=5 micfloor=-60 profile=std board=T3 reboot=0 test=0 pos=off qth=none gps=off role=off freqout=433.900 freqdir=433.900") == 0);
   CHECK(f.run("  cfg   get \r\n") == ConsoleResult::Ok);  // maiuscole, spazi e fine riga indifferenti
   CHECK(strncmp(f.reply, "CFG callsign=N0CALL", 19) == 0);
   CHECK(f.run("CFG GET extra") == ConsoleResult::Error);
@@ -689,6 +689,42 @@ void testProfile() {
   CHECK(!isValidSettings(s));
 }
 
+void testDirect() {
+  // Profilo Diretta (14/11/2026): frequenza propria e niente shift
+  Fixture f;
+  CHECK(f.run("CFG GET") == ConsoleResult::Ok && strstr(f.reply, "freqdir=433.900"));  // di base come lo Standard
+  CHECK(f.run("CFG SET PROFILE DIR") == ConsoleResult::Ok && strcmp(f.reply, "CFG OK profile=dir") == 0 && f.st.data.profile == kProfileDirect);
+  CHECK(f.run("CFG SET FREQDIR 433.500") == ConsoleResult::Ok && strcmp(f.reply, "CFG OK freqdir=433.500") == 0);
+  CHECK(f.st.data.profileFreqKhz() == 433500 && f.st.data.freqKhz == 433900);  // la Diretta ha la sua, lo Standard resta
+  CHECK(f.run("CFG GET") == ConsoleResult::Ok && strstr(f.reply, "freqdir=433.500") && strstr(f.reply, "profile=dir") && strstr(f.reply, "freq=433.900"));
+  CHECK(f.run("CFG SET FREQDIR 500.000") == ConsoleResult::Error && f.run("CFG SET FREQDIR abc") == ConsoleResult::Error);
+  // Lo shift non vale nella Diretta (simplex): si trasmette dove si ascolta; negli altri profili si applica
+  CHECK(f.run("CFG SET SHIFT 5000") == ConsoleResult::Ok);
+  CHECK(f.st.data.shiftKhz == 5000 && f.st.data.txFreqKhz() == 433500 && f.st.data.effectiveShiftKhz() == 0);
+  Settings std = f.st.data;
+  std.profile = kProfileStandard;
+  CHECK(std.txFreqKhz() == 433900 + 5000 && std.effectiveShiftKhz() == 5000);
+  // La frequenza della Diretta non e' toccata dallo shift: anche fuori banda con lo shift e' valida finche' e' in banda
+  CHECK(isValidSettings(f.st.data));
+  // Se la frequenza della Diretta e' uguale a quella dello Standard, segue il cambio di FREQ; se e' diversa no
+  Fixture g;
+  g.run("CFG SET PROFILE DIR");
+  g.run("CFG SET FREQ 434.000");
+  CHECK(g.st.data.directFreqKhz() == 434000);
+  g.run("CFG SET FREQDIR 435.000");
+  g.run("CFG SET FREQ 433.000");
+  CHECK(g.st.data.directFreqKhz() == 435000 && g.st.data.freqKhz == 433000);
+  Settings bad = g.st.data;
+  bad.freqDirKhz = 500000;
+  CHECK(!isValidSettings(bad));
+  bad.freqDirKhz = 429999;
+  CHECK(!isValidSettings(bad));
+  CHECK(Settings(g.st.data) == g.st.data);
+  Settings other = g.st.data;
+  other.freqDirKhz = 435500;
+  CHECK(other != g.st.data);
+}
+
 void testMicFloor() {
   Fixture f;
   CHECK(f.run("CFG SET MICFLOOR -58") == ConsoleResult::Ok && f.st.data.micFloorDb == -58);
@@ -801,6 +837,7 @@ int main() {
   testTestMode();
   testVersion();
   testFreqMsg();
+  testDirect();
   testProfile();
   testMicFloor();
   testOther();

@@ -11,7 +11,7 @@ if (!m) { console.log('pagina non trovata in wifi_page.h'); process.exit(1); }
 const PAGE = m[1];
 
 const st = {
-  cfg: { callsign: 'IU5HJU', profile: 'std', freq: '433.900', freqmsg: '433.900', freqrange: '433.900', power: 10, volume: 7, micfloor: -60, pos: 'off', qth: 'none', gps: 'off', role: 'off', freqout: '433.900' },
+  cfg: { callsign: 'IU5HJU', profile: 'std', freq: '433.900', freqmsg: '433.900', freqrange: '433.900', freqdir: '433.900', power: 10, volume: 7, micfloor: -60, pos: 'off', qth: 'none', gps: 'off', role: 'off', freqout: '433.900' },
   monitor: 'off',
   cmds: [],
   board: 't3',
@@ -24,7 +24,7 @@ const st = {
   shift: 0,
   drop: null,   // chiave che la scheda "dimentica" di salvare
 };
-const KEYS = ['callsign', 'freq', 'freqmsg', 'freqrange', 'power', 'volume', 'micfloor', 'profile', 'pos', 'qth', 'gps', 'role', 'freqout'];
+const KEYS = ['callsign', 'freq', 'freqmsg', 'freqrange', 'freqdir', 'power', 'volume', 'micfloor', 'profile', 'pos', 'qth', 'gps', 'role', 'freqout'];
 function handle(line) {
   st.cmds.push(line);
   if (line === 'CFG GET MONITOR') return 'CFG MONITOR=' + st.monitor;

@@ -31,6 +31,17 @@ static void testTable() {
   CHECK(!profileFromCode("mess", id) && !profileFromCode("", id) && !profileFromCode(nullptr, id));
 }
 
+static void testDirect() {
+  // Diretta: i parametri radio e il Codec2 dello Standard (si sente con una stazione in Standard sulla stessa frequenza), nome e codice propri
+  const Profile& d = profileFor(kProfileDirect);
+  const Profile& s = profileFor(kProfileStandard);
+  CHECK(d.id == kProfileDirect && strcmp(d.code, "dir") == 0 && strcmp(d.name, "Diretta") == 0);
+  CHECK(d.sf == s.sf && d.bwKhz == s.bwKhz && d.cr == s.cr && d.preambleSymbols == s.preambleSymbols && d.codecMode == s.codecMode && d.maxTurnMs == s.maxTurnMs);
+  CHECK(!d.message && !d.textOnly && d.syncWord == s.syncWord && d.rxPrebufferFrames == s.rxPrebufferFrames);
+  uint8_t id = 0;
+  CHECK(profileFromCode("DIR", id) && id == kProfileDirect && profileFromCode("dir", id) && id == kProfileDirect);
+}
+
 static void testMeshcom() {
   // Escursione sulle reti di testo: non e' un profilo selezionabile
   const Profile& p = meshcomProfile();
@@ -38,7 +49,7 @@ static void testMeshcom() {
   CHECK(p.sf == 11 && p.bwKhz == 250.0f && p.cr == 6 && p.preambleSymbols == 8 && p.syncWord == 0x2B);
   CHECK(p.maxTurnMs == 0);  // niente voce
   uint8_t id = 0;
-  CHECK(!profileFromCode("mc", id) && kProfileCount == 3);
+  CHECK(!profileFromCode("mc", id) && kProfileCount == 4);
   // i profili veri non sono di solo testo e usano la sync word di user_config.h
   for (uint8_t i = 0; i < kProfileCount; i++) CHECK(!profileFor(i).textOnly && profileFor(i).syncWord == 0);
   // Confronto con i tempi in aria misurati da un nodo vero (CHANNEL_UTIL: 43 byte 566 ms, 58 byte 711 ms, 106 byte 1154 ms)
@@ -80,6 +91,7 @@ static void testMessageBudget() {
 int main() {
   testTable();
   testMeshcom();
+  testDirect();
   testAirtime();
   testMessageBudget();
   TEST_MAIN_END();

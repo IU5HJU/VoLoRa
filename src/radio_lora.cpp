@@ -31,7 +31,7 @@ int RadioLora::setFreq(float mhz) {
 
 bool RadioLora::begin(const lcr::Settings& settings) {
   settings_ = settings;
-  txShiftKhz_ = settings.role == lcr::kRoleNormal ? settings.shiftKhz : 0;  // lo shift vale solo per la stazione normale
+  txShiftKhz_ = settings.role == lcr::kRoleNormal ? settings.effectiveShiftKhz() : 0;  // lo shift vale solo per la stazione normale e non nel profilo Diretta (simplex)
   SPI.begin(pins::kRadioSclk, pins::kRadioMiso, pins::kRadioMosi, pins::kRadioCs);
 #if defined(RADIO_SX1262)
   // SX1262: l'interrupt e' DIO1, e c'e' il pin BUSY (RadioLib lo aspetta tra un comando e l'altro)
