@@ -5,11 +5,16 @@ CXXFLAGS ?= -std=c++17 -Wall -Wextra -O1 -g -fsanitize=address,undefined -Ilib/v
 
 CORE := $(wildcard lib/voicecore/*.cpp)
 HDRS := $(wildcard lib/voicecore/*.h tests/*.h tools/*.h)
-TESTS := packet stream node button audio output pins battery settings link level tone decode amp profile menu position morse nmea live repeater repeater_link message_store inbox text_picker rx_monitor meshcom_frame text_template choice_picker tx_scheduler sha256 sysop radio_test node_link node_core reflector_core peer_resolve repeater_uplink reflector_config http_mini admin_auth
+TESTS := packet stream node button audio output pins battery settings link level tone decode amp profile menu position morse nmea live repeater repeater_link message_store inbox text_picker rx_monitor meshcom_frame text_template choice_picker tx_scheduler sha256 sysop radio_test node_link node_core reflector_core peer_resolve repeater_uplink reflector_config http_mini admin_auth nvs
 
 .PHONY: test test-page test-py lcr_decode lcr_live codec_compare pdf clean vlnode vlreflector reflector-smoke
 test: $(addprefix build/test_,$(TESTS))
 	@for t in $^; do ./$$t || exit 1; done
+
+# Impostazioni salvate nella scheda: src/settings_nvs.cpp con una memoria NVS finta (tests/nvs).
+build/test_nvs: tests/nvs/test_nvs.cpp src/settings_nvs.cpp tests/nvs/Preferences.h tests/nvs/Arduino.h $(CORE) $(HDRS)
+	@mkdir -p build
+	$(CXX) $(CXXFLAGS) -Itests/nvs -Isrc -o $@ tests/nvs/test_nvs.cpp src/settings_nvs.cpp $(CORE)
 
 build/test_%: tests/test_%.cpp $(CORE) $(HDRS)
 	@mkdir -p build

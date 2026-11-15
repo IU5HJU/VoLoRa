@@ -410,3 +410,9 @@ Registro: [prove-log/2026-11-14-tbeam-sx1278-nodo-avvio-con-finestra-wifi.txt](p
 - **Memoria con la pagina in uso:** `heap` 116552 all'avvio del nodo, **106892** a server acceso e **101272** mentre la pagina legge la configurazione: il nodo resta sopra i 100 KB liberi.
 - **Non provato:** il nodo non pronto (finestra senza scadenza), l'ultima stazione transitata sul display (contatori ancora a 0), una modifica fatta dalla pagina di gestione.
 
+### 14/11/2026, PC, IU5HJU (aggiornamento al firmware con il profilo Diretta: le impostazioni restano?)
+
+- Prova sul PC con `src/settings_nvs.cpp` e una memoria NVS finta (`tests/nvs`, `make build/test_nvs`): le impostazioni salvate **prima** della Diretta (senza la chiave `fdir`) si leggono ancora **tutte** (nominativo, frequenze, profilo, shift, posizione, ruolo nodo con rete, reflector, id e chiave) e restano valide; la **Diretta segue la frequenza dello Standard** (`433.900` se è quella salvata) finché non la si imposta con `CFG SET FREQDIR`; dopo il primo salvataggio con il firmware nuovo `fdir` è scritta e riletta.
+- Con la **memoria vuota** (scheda nuova o `CFG RESET`) la Diretta parte a **433.475 MHz**, come lo Standard.
+- **Non provato su una scheda** l'aggiornamento vero al firmware con la Diretta.
+
