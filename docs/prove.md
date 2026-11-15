@@ -416,3 +416,10 @@ Registro: [prove-log/2026-11-14-tbeam-sx1278-nodo-avvio-con-finestra-wifi.txt](p
 - Con la **memoria vuota** (scheda nuova o `CFG RESET`) la Diretta parte a **433.475 MHz**, come lo Standard.
 - **Non provato su una scheda** l'aggiornamento vero al firmware con la Diretta.
 
+### 14/11/2026, casa, IU5HJU (nodo su T-Beam SX1278: stazione transitata sul display e sulla seriale)
+
+- **Foto del display del nodo** (T-Beam SX1278, radio 433.475 MHz, profilo Standard) dopo che una scheda in radio (IU5HJU) ha trasmesso verso il nodo: `NODO INTERNET` / `WiFi 192.168.1.50` / `REF ok iu5hju.ddns.n~` / `R>N 28  N>R 0` / `Ult IU5HJU -37 10.2dB`. Le cinque righe stanno nei 21 caratteri e **non si sovrappongono** (il difetto della riga lunga visto in precedenza non c'è più); la riga `REF` è tagliata a 14 caratteri con `~` come previsto; l'ultima stazione compare come `Ult` (dopo 5 s dall'ultimo pacchetto) senza `dBm`, perché il formato completo supererebbe i 21 caratteri. **Corrisponde alla schermata 30 del mockup.**
+- **Seriale:** `[nodo] transito 1: IU5HJU RSSI -37 dBm SNR 9.8 dB` (l'SNR del display, 10.2 dB, è quello dell'ultimo pacchetto) e `radio->rete 28`. **L'ultima stazione transitata funziona** su display e seriale; 28 pacchetti passati dalla radio verso l'altro nodo.
+- **Memoria:** `heap` stabile intorno a **107 KB** per tutto il registro (106 908 - 107 080 byte, nessun calo: nessuna perdita di memoria visibile in circa 10 minuti), 106 816 dopo il transito.
+- **Da indagare:** negli identificativi periodici il contatore dei Morse completi resta a **0** (`id 2 (Morse 0)` dopo due identificativi in testo, e `id 12 (Morse 0)` nel registro precedente), pur con `IDMORSE=on`. Il Morse del nodo era provato solo sul PC. Il registro del nodo mostra ora anche i Morse interrotti, i rimandati e l'ultimo errore della radio (`interrotti`, `rimandati`, `errore radio`), per capire se parte e si interrompe o non parte. **Da ascoltare con un ricevitore FM** quando passa il minuto dell'identificativo.
+

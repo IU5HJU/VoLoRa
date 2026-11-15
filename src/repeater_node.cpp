@@ -512,11 +512,11 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
       lastLogMs = now;
       const lcr::NodeCore::Stats& s = core.stats();
       const lcr::NodeLink::Stats& ls = core.link().stats();
-      Serial.printf("[nodo] radio->rete %lu, rete->radio %lu (trasmessi %lu), persi coda %lu, firma errata %lu, ripetuti %lu, scartati collegamento giu' %lu, id %lu (Morse %lu), heap %u\n",
+      Serial.printf("[nodo] radio->rete %lu, rete->radio %lu (trasmessi %lu), persi coda %lu, firma errata %lu, ripetuti %lu, scartati collegamento giu' %lu, id %lu (Morse %lu, interrotti %lu, rimandati %lu), errore radio %d, heap %u\n",
                     static_cast<unsigned long>(s.toNet), static_cast<unsigned long>(s.fromNet), static_cast<unsigned long>(s.transmitted),
                     static_cast<unsigned long>(core.queue().dropped()), static_cast<unsigned long>(ls.badSignature), static_cast<unsigned long>(ls.replays),
                     static_cast<unsigned long>(s.droppedLinkDown), static_cast<unsigned long>(s.beacons), static_cast<unsigned long>(s.morseIds),
-                    static_cast<unsigned>(ESP.getFreeHeap()));
+                    static_cast<unsigned long>(s.morseAborted), static_cast<unsigned long>(s.beaconDeferred), radio.lastError(), static_cast<unsigned>(ESP.getFreeHeap()));
     }
 
     if (now - lastDispMs >= kDisplayMs) {
