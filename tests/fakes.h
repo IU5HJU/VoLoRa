@@ -9,6 +9,7 @@
 
 #include "interfaces.h"
 #include "protocol.h"
+#include "radio_test.h"
 
 namespace fake {
 
@@ -71,6 +72,7 @@ class Radio : public lcr::IRadio {
     return true;
   }
   bool fskSend(uint8_t pattern, uint16_t bytes) override {
+    if (bytes == 0 || bytes > lcr::kFskMaxPacketBytes) return false;  // come la radio vera (RadioLib: RADIOLIB_ERR_PACKET_TOO_LONG oltre 64 byte)
     fskBursts.push_back({pattern, bytes});
     return inFsk;
   }

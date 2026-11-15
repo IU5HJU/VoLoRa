@@ -588,7 +588,7 @@ static void runRadioTest(const lcr::RadioTestRequest& rq) {
   if (rq.kind == lcr::RadioTestKind::Morse || rq.kind == lcr::RadioTestKind::Beacon) {
     bool clamped = false;
     nb = lcr::planMorseBursts(rq, bursts, sizeof(bursts) / sizeof(bursts[0]), &clamped);
-    if (clamped) Serial.println("CFG RADIOTEST avviso: un tono e' piu' lungo di un pacchetto (255 byte) ed e' stato accorciato (abbassa hz o alza wpm)");
+    if (clamped) Serial.println("CFG RADIOTEST avviso: il testo ha troppi elementi per l'elenco, il Morse e' stato accorciato");
     if (nb == 0) {
       Serial.println("CFG RADIOTEST ERR il testo non ha lettere ne' cifre");
       ui.refresh();
@@ -606,12 +606,12 @@ static void runRadioTest(const lcr::RadioTestRequest& rq) {
     } else {
       const uint32_t tb = millis() - ts;
       if (rq.kind == lcr::RadioTestKind::Carrier || rq.kind == lcr::RadioTestKind::Tone) {
-        // portante o tono continuo: pacchetti da 255 byte uno dopo l'altro (fra uno e l'altro la portante si ferma per un attimo)
-        const float packetMs = lcr::burstAirMs(255, kbps);
+        // portante o tono continuo: pacchetti da 64 byte (il massimo della FIFO) uno dopo l'altro (fra uno e l'altro la portante si ferma per un attimo)
+        const float packetMs = lcr::burstAirMs(lcr::kFskMaxPacketBytes, kbps);
         const uint32_t n = static_cast<uint32_t>(rq.seconds * 1000.0f / packetMs) + 1;
         for (uint32_t i = 0; i < n && ok; i++) {
           if (radioTestAbort()) break;
-          ok = radio.fskSend(pattern, 255);
+          ok = radio.fskSend(pattern, lcr::kFskMaxPacketBytes);
         }
         Serial.printf("CFG RADIOTEST %s fine pacchetti=%lu da %.0f ms\n", kKind[static_cast<int>(rq.kind)], static_cast<unsigned long>(n), static_cast<double>(packetMs));
       } else {

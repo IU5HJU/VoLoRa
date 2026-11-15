@@ -83,11 +83,17 @@ static void testPlan() {
   }
   CHECK(std::fabs(air - want) / want < 0.02);
   CHECK(want > 5000 && want < 9000);  // un nominativo di 6 caratteri: circa 6-7 s a 15 wpm
-  // piu' lento: 5 wpm, la linea dura 720 ms = 126 byte a 1,4 kbit/s
-  CHECK(parse("MORSE FM T wpm=5", r, e) && planMorseBursts(r, b, 160, nullptr) == 1 && b[0].ms == 720 && b[0].bytes == 126);
-  // un tono troppo acuto per un pacchetto solo: accorciato e segnalato
+  // piu' lento: 5 wpm, la linea dura 720 ms = 126 byte a 1,4 kbit/s: oltre i 64 byte della FIFO si spezza in due pacchetti di fila
+  CHECK(parse("MORSE FM T wpm=5", r, e) && planMorseBursts(r, b, 160, nullptr) == 2 && b[0].bytes == 64 && b[1].bytes == 62 && b[0].tone && b[1].tone);
+  CHECK(b[0].ms + b[1].ms >= 718 && b[0].ms + b[1].ms <= 722);
+  // un tono molto acuto (2,5 kHz, 5 kbit/s): 450 byte, otto pacchetti da 64 al massimo, niente accorciamento
   CHECK(parse("MORSE FM T wpm=5 hz=2500", r, e));
-  CHECK(planMorseBursts(r, b, 160, &clamped) == 1 && clamped && b[0].bytes == 255);
+  clamped = true;
+  const size_t nb = planMorseBursts(r, b, 160, &clamped);
+  CHECK(nb == 8 && !clamped);
+  size_t tot = 0;
+  for (size_t i = 0; i < nb; i++) { CHECK(b[i].bytes >= 1 && b[i].bytes <= kFskMaxPacketBytes); tot += b[i].bytes; }
+  CHECK(tot == 450);
   // spazio tra parole e capienza dell'elenco
   CHECK(parse("MORSE CW E_E", r, e));
   CHECK(planMorseBursts(r, b, 160, nullptr) == 3 && !b[1].tone && b[1].ms == 7 * 80);

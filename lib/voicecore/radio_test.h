@@ -53,16 +53,20 @@ float burstAirMs(uint16_t bytes, float kbps);
 
 // Morse in FM: la portante resta accesa per tutto l'identificativo. Prima del primo tono una portante pura apre lo squelch dei
 // ricevitori (kMorseLeadMs), nelle pause fra i toni la portante continua (non si spegne la radio), alla fine una coda (kMorseTailMs).
+// Un pacchetto FSK dell'SX127x sta nella FIFO della radio: al massimo 64 byte. RadioLib 7.5.0 rifiuta oltre (fixedPacketLengthMode ->
+// RADIOLIB_ERR_PACKET_TOO_LONG): una portante o un tono piu' lunghi di 64 byte (366 ms a 1,4 kbit/s) vanno spezzati in piu' pacchetti di fila.
+// Il 15/11/2026 si e' scoperto che il Morse del nodo non partiva piu' dal 13/11 perche' la portante iniziale (88 byte) superava questo limite.
+constexpr uint16_t kFskMaxPacketBytes = 64;
 constexpr uint32_t kMorseLeadMs = 500;
 constexpr uint32_t kMorseTailMs = 250;
 
-// Trasmette 'ms' millisecondi di portante pura (pacchetti 0xFF da al massimo 255 byte, uno dopo l'altro). 'onSent(ms)' dopo ogni pacchetto.
+// Trasmette 'ms' millisecondi di portante pura (pacchetti 0xFF da al massimo kFskMaxPacketBytes byte, uno dopo l'altro). 'onSent(ms)' dopo ogni pacchetto.
 // false se la radio rifiuta un pacchetto.
 template <class Radio, class OnSent>
 bool sendCarrierMs(Radio& radio, uint32_t ms, float kbps, OnSent onSent) {
   long left = static_cast<long>(static_cast<double>(ms) * kbps / 8.0 + 0.5);
   while (left > 0) {
-    const uint16_t n = static_cast<uint16_t>(left > 255 ? 255 : left);
+    const uint16_t n = static_cast<uint16_t>(left > kFskMaxPacketBytes ? kFskMaxPacketBytes : left);
     if (!radio.fskSend(0xFF, n)) return false;
     onSent(static_cast<uint32_t>(static_cast<float>(n) * 8.0f / kbps + 0.5f));
     left -= n;
@@ -76,8 +80,8 @@ struct MorseBurst {
   uint16_t bytes;  // byte del pacchetto (solo per i toni)
 };
 
-// Elementi del Morse di r.text con le durate di r.wpm, ognuno tradotto in byte. Un tono troppo lungo per un pacchetto (255 byte)
-// viene accorciato e *clamped diventa true. Ritorna il numero di elementi.
+// Elementi del Morse di r.text con le durate di r.wpm, ognuno tradotto in byte. Un tono piu' lungo di un pacchetto (kFskMaxPacketBytes) si
+// spezza in piu' pacchetti di fila. *clamped diventa true solo se l'elenco ('cap') e' troppo corto per tutti. Ritorna il numero di elementi.
 size_t planMorseBursts(const RadioTestRequest& r, MorseBurst* out, size_t cap, bool* clamped);
 
 }  // namespace lcr

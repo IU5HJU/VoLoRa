@@ -137,11 +137,16 @@ size_t planMorseBursts(const RadioTestRequest& r, MorseBurst* out, size_t cap, b
     }
     long bytes = std::lround(static_cast<double>(el[i].ms) * kbps / 8.0);
     if (bytes < 1) bytes = 1;
-    if (bytes > 255) {
-      bytes = 255;
-      if (clamped) *clamped = true;
+    // Un tono piu' lungo della FIFO della radio (64 byte) si spezza in piu' pacchetti di fila (fra uno e l'altro la portante si ferma per un attimo).
+    while (bytes > 0) {
+      if (k >= cap) {
+        if (clamped) *clamped = true;
+        return k;
+      }
+      const long part = bytes > kFskMaxPacketBytes ? kFskMaxPacketBytes : bytes;
+      out[k++] = {true, static_cast<uint32_t>(std::lround(static_cast<double>(part) * 8.0 / kbps)), static_cast<uint16_t>(part)};
+      bytes -= part;
     }
-    out[k++] = {true, el[i].ms, static_cast<uint16_t>(bytes)};
   }
   return k;
 }
