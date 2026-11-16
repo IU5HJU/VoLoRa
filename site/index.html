@@ -727,7 +727,7 @@
         lastBoard = m.board || '';
         if (m.pos !== undefined) { $('pos').value = m.pos; setQth(m.qth); posSeen = true; }
         if (m.gps !== undefined) { $('gps').value = m.gps; gpsSeen = true; }
-        if (m.role !== undefined) { $('role').value = m.role; if (m.freqout) $('freqout').value = m.freqout; roleSeen = true; updateRoleControls(!!port); roleShow(); }
+        if (m.role !== undefined) { $('role').value = m.role; if (m.freqout) $('freqout').value = m.freqout === 'none' ? '' : m.freqout; roleSeen = true; updateRoleControls(!!port); roleShow(); }
         updatePosControls(!!port);
       }
     }

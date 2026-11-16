@@ -421,12 +421,16 @@ ConsoleResult SettingsConsole::get(char* reply, size_t cap) {
     } else {
       snprintf(qthText, sizeof(qthText), "none");
     }
-    snprintf(reply, cap, "CFG callsign=%s freq=%u.%03u freqmsg=%u.%03u freqrange=%u.%03u power=%d volume=%d micfloor=%d profile=%s board=%s reboot=%d test=%d pos=%s qth=%s gps=%s role=%s freqout=%u.%03u freqdir=%u.%03u",
+    // L'uscita impostata, non quella effettiva: se non e' impostata (0, "come la frequenza del profilo") il log non deve far credere che sia uguale all'ingresso
+    char outText[12];
+    if (stored_.freqOutKhz == 0) snprintf(outText, sizeof(outText), "none");
+    else snprintf(outText, sizeof(outText), "%u.%03u", static_cast<unsigned>(stored_.freqOutKhz / 1000), static_cast<unsigned>(stored_.freqOutKhz % 1000));
+    snprintf(reply, cap, "CFG callsign=%s freq=%u.%03u freqmsg=%u.%03u freqrange=%u.%03u power=%d volume=%d micfloor=%d profile=%s board=%s reboot=%d test=%d pos=%s qth=%s gps=%s role=%s freqout=%s freqdir=%u.%03u",
              stored_.callsign, static_cast<unsigned>(stored_.freqKhz / 1000), static_cast<unsigned>(stored_.freqKhz % 1000),
              static_cast<unsigned>(stored_.freqMsgKhz / 1000), static_cast<unsigned>(stored_.freqMsgKhz % 1000),
              static_cast<unsigned>(stored_.rangeFreqKhz() / 1000), static_cast<unsigned>(stored_.rangeFreqKhz() % 1000),
              stored_.powerDbm, stored_.volume, stored_.micFloorDb, profileFor(stored_.profile).code, board_, stored_ != active_ ? 1 : 0, testMode_ ? 1 : 0, stored_.posTx ? "on" : "off", qthText, stored_.gpsOn ? "on" : "off", roleCode(stored_.role),
-             static_cast<unsigned>(stored_.outFreqKhz() / 1000), static_cast<unsigned>(stored_.outFreqKhz() % 1000),
+             outText,
              static_cast<unsigned>(stored_.directFreqKhz() / 1000), static_cast<unsigned>(stored_.directFreqKhz() % 1000));
   }
   return ConsoleResult::Ok;

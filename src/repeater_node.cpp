@@ -258,6 +258,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
   lcr::TxConfigSync txSync;
   txSync.setWanted(txWanted);
   txSync.enable(settings.freqOutKhz != 0);
+  Serial.printf("[ripetitore] RX: configurazione della TX dalla RX %s\n", txSync.enabled() ? "attiva (uscita impostata)" : "NON attiva: l'uscita non e' impostata sulla RX (CFG SET FREQOUT), la TX resta com'e'");
   bool txWasInSync = false;
   uint32_t lastSyncLogMs = 0;
 

@@ -403,7 +403,7 @@ static void testRoleNotOnTbeam() {
 
 static void testRepeaterRole() {
   Fixture f;
-  CHECK(f.run("CFG GET") == ConsoleResult::Ok && strstr(f.reply, "role=off") && strstr(f.reply, "freqout=433.900"));
+  CHECK(f.run("CFG GET") == ConsoleResult::Ok && strstr(f.reply, "role=off") && strstr(f.reply, "freqout=none"));  // non impostata: non si fa credere che sia uguale all'ingresso
   CHECK(f.run("CFG SET ROLE RPTRX") == ConsoleResult::Ok && strcmp(f.reply, "CFG OK role=rptrx") == 0);
   CHECK(f.st.data.role == kRoleRepeaterRx);
   CHECK(f.run("cfg set role rpttx") == ConsoleResult::Ok && f.st.data.role == kRoleRepeaterTx);
@@ -533,7 +533,7 @@ void testGpsSetting() {
 void testGet() {
   Fixture f;
   CHECK(f.run("CFG GET") == ConsoleResult::Ok);
-  CHECK(strcmp(f.reply, "CFG callsign=N0CALL freq=433.900 freqmsg=433.900 freqrange=433.900 power=10 volume=5 micfloor=-60 profile=std board=T3 reboot=0 test=0 pos=off qth=none gps=off role=off freqout=433.900 freqdir=433.900") == 0);
+  CHECK(strcmp(f.reply, "CFG callsign=N0CALL freq=433.900 freqmsg=433.900 freqrange=433.900 power=10 volume=5 micfloor=-60 profile=std board=T3 reboot=0 test=0 pos=off qth=none gps=off role=off freqout=none freqdir=433.900") == 0);
   CHECK(f.run("  cfg   get \r\n") == ConsoleResult::Ok);  // maiuscole, spazi e fine riga indifferenti
   CHECK(strncmp(f.reply, "CFG callsign=N0CALL", 19) == 0);
   CHECK(f.run("CFG GET extra") == ConsoleResult::Error);
