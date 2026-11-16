@@ -197,6 +197,7 @@
         <option value="msg">Messaggio: lungo raggio, registra e invia (SF12, 125 kHz)</option>
         <option value="dir">Diretta: voce in tempo reale, come lo Standard (SF7, 250 kHz, Codec2 3200)</option>
       </select>
+      <p class="hint" data-modes="node">Il nodo Internet lavora solo in Standard: gli altri profili non sono selezionabili.</p>
       <p class="hint" id="profilehint"><strong>Standard</strong>: voce in tempo reale con Codec2 3200, la più naturale: è il modo di base, quello da usare via ripetitore o nodo. <strong>Range</strong>: voce in tempo reale con Codec2 1200 (il vecchio &ldquo;Standard&rdquo; di prima del 12/11/2026), un po&rsquo; più di portata (circa 2,5 dB teorici in più, non misurati) ma meno fedele: da usare per i collegamenti in condizioni difficili, quando serve quel poco in più. <strong>Diretta</strong>: come lo Standard (stessa voce, stessi parametri radio) ma su una <strong>frequenza tutta sua</strong> e <strong>senza shift</strong>, per il traffico in simplex con un corrispondente vicino quando di solito lavori via ripetitore o nodo. <strong>Messaggio</strong>: tieni premuto il PTT e registra fino a 15 secondi (quanto ripete il ripetitore); un secondo dopo il rilascio la scheda trasmette il messaggio, molto più lentamente del parlato (circa 94 secondi in aria ogni 10 secondi di voce) e con circa 13 dB di sensibilità in più; chi riceve lo ascolta <strong>a ricezione conclusa</strong>. <strong>Le schede con profili diversi non si sentono</strong>: usa lo stesso profilo (e la stessa frequenza) su tutte. Vale dal riavvio.</p>
 
       <label for="freq">Frequenza (MHz)</label>
@@ -527,6 +528,9 @@
   let roleSeen = false;      // l'ultimo CFG GET conteneva role= (firmware piu' vecchi: no)
   function roleShow() {
     const r = roleSeen ? $('role').value : 'off';  // senza ruolo (firmware vecchio, scheda non collegata) si vedono le impostazioni della stazione
+    const nd = r === 'node';   // il nodo lavora solo in Standard: gli altri profili non si scelgono
+    for (const o of $('profile').options) { o.hidden = nd && o.value !== 'std'; o.disabled = nd && o.value !== 'std'; }
+    if (nd) $('profile').value = 'std';
     $('rxbox').hidden = r !== 'rptrx'; $('txbox').hidden = r !== 'rpttx'; $('nodebox').hidden = r !== 'node';
     for (const el of document.querySelectorAll('[data-modes]')) el.classList.toggle('nomode', !el.dataset.modes.split(' ').includes(r));
   }

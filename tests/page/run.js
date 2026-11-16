@@ -506,6 +506,11 @@ async function scenario(name, fn, opts = {}) {
           (await p.$eval('#role option[value=rpttx]', (o) => o.disabled)) && !(await p.$eval('#role option[value=node]', (o) => o.disabled)) && (await p.isVisible('#rolenote')));
     await p.fill('#callsign', 'IU5HJU');
     await p.selectOption('#role', 'node');
+    check('nodo: solo il profilo Standard e' + "'" + ' selezionabile (gli altri sono nascosti e disabilitati)', (await p.inputValue('#profile')) === 'std' &&
+          await p.$$eval('#profile option', (os) => os.every((o) => o.value === 'std' ? !o.disabled && !o.hidden : o.disabled && o.hidden)));
+    await p.selectOption('#role', 'off');
+    check('stazione normale: tutti i profili selezionabili', await p.$$eval('#profile option', (os) => os.length === 4 && os.every((o) => !o.disabled && !o.hidden)));
+    await p.selectOption('#role', 'node');
     await p.fill('#wifissid', 'CasaWifi'); await p.fill('#peer', '192.168.1.51:5400'); await p.fill('#nodeid', '1'); await p.fill('#nodekey', '000102030405060708090a0b0c0d0e0f');
     await p.click('#save');
     await until(p, () => window.__st.cmds.includes('CFG REBOOT'), null, 15000);

@@ -213,6 +213,8 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   check('nodo: Wi-Fi e rete, identificativo visibili; shift, volume, microfono, posizione, MeshCom, sysop, testi e altre frequenze nascosti',
         (await p.isVisible('#wifissid')) && (await p.isVisible('#peer')) && (await p.isVisible('#nodekey')) && (await p.isVisible('#idint')) && (await p.isVisible('#freq')) && (await p.isVisible('#power')) &&
         (await p.isHidden('#shiftdir')) && (await p.isHidden('#volume')) && (await p.isHidden('#micfloor')) && (await p.isHidden('#pos')) && (await p.isHidden('#mcfreq')) && (await p.isHidden('#sysopmode')) && (await p.isHidden('#text1')) && (await p.isHidden('#freqmsg')));
+  check('nodo: solo il profilo Standard e\' selezionabile (gli altri sono nascosti e disabilitati)', (await p.inputValue('#profile')) === 'std' &&
+        await p.$$eval('#profile option', (os) => os.every((o) => o.value === 'std' ? !o.disabled && !o.hidden : o.disabled && o.hidden)));
   check('nodo: i campi della rete partono dal reflector di base', (await p.inputValue('#peer')) === 'iu5hju.ddns.net:5400' && (await p.inputValue('#peerid')) === '1000' && (await p.inputValue('#nodeport')) === '5400' && (await p.inputValue('#wifissid')) === '');
   await p.click('#save');
   await p.waitForTimeout(400);
@@ -235,6 +237,7 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   check('rilettura: la password e la chiave non si mostrano, restano impostate', (await p.inputValue('#wifipass')) === '' && (await p.inputValue('#nodekey')) === '' && /impostata/.test(await p.textContent('#wifipasshint')) && /impostata/.test(await p.textContent('#nodekeyhint')) && (await p.inputValue('#wifissid')) === 'Casa Mia' && (await p.inputValue('#nodeid')) === '7');
   await p.selectOption('#role', 'off'); await p.click('#save');
   await p.waitForFunction(() => /Salvato/.test(document.getElementById('st').textContent));
+  check('torna stazione normale: tutti i profili di nuovo selezionabili', await p.$$eval('#profile option', (os) => os.length === 4 && os.every((o) => !o.disabled && !o.hidden)));
   check('torna stazione normale: i campi della stazione ricompaiono', st.cfg.role === 'off' && (await p.isVisible('#shiftdir')) && (await p.isHidden('#wifissid')));
 
   check('GPS nascosto sulla T3', await p.isHidden('#gps'));
