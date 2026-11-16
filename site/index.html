@@ -200,9 +200,11 @@
       <p class="hint" data-modes="node">Il nodo Internet lavora solo in Standard: gli altri profili non sono selezionabili.</p>
       <p class="hint" id="profilehint"><strong>Standard</strong>: voce in tempo reale con Codec2 3200, la più naturale: è il modo di base, quello da usare via ripetitore o nodo. <strong>Range</strong>: voce in tempo reale con Codec2 1200 (il vecchio &ldquo;Standard&rdquo; di prima del 12/11/2026), un po&rsquo; più di portata (circa 2,5 dB teorici in più, non misurati) ma meno fedele: da usare per i collegamenti in condizioni difficili, quando serve quel poco in più. <strong>Diretta</strong>: come lo Standard (stessa voce, stessi parametri radio) ma su una <strong>frequenza tutta sua</strong> e <strong>senza shift</strong>, per il traffico in simplex con un corrispondente vicino quando di solito lavori via ripetitore o nodo. <strong>Messaggio</strong>: tieni premuto il PTT e registra fino a 15 secondi (quanto ripete il ripetitore); un secondo dopo il rilascio la scheda trasmette il messaggio, molto più lentamente del parlato (circa 94 secondi in aria ogni 10 secondi di voce) e con circa 13 dB di sensibilità in più; chi riceve lo ascolta <strong>a ricezione conclusa</strong>. <strong>Le schede con profili diversi non si sentono</strong>: usa lo stesso profilo (e la stessa frequenza) su tutte. Vale dal riavvio.</p>
 
-      <label for="freq">Frequenza (MHz)</label>
+      <div id="freqbox" data-modes="off rptrx node">
+      <label for="freq" id="freqlabel">Frequenza (MHz)</label>
       <input id="freq" inputmode="decimal" pattern="[0-9]{3}(\.[0-9]{1,3})?" placeholder="433.475" disabled required>
-      <p class="hint">Da 430.000 a 440.000. Il valore predefinito è un segnaposto: scegli il canale con il band plan IARU Regione 1 / ARI. Le stazioni che si ascoltano devono usare la stessa frequenza.</p>
+      <p class="hint" id="freqhint">Da 430.000 a 440.000. Il valore predefinito è un segnaposto: scegli il canale con il band plan IARU Regione 1 / ARI. Le stazioni che si ascoltano devono usare la stessa frequenza.</p>
+      </div>
 
       <div id="shiftbox" data-modes="off">
         <label for="shiftdir">Shift (si applica solo alla frequenza del modo standard)</label>
@@ -211,7 +213,7 @@
         <input id="shiftmhz" inputmode="decimal" autocomplete="off" placeholder="per esempio 7.600" disabled>
         <p class="hint" id="shifthint">Come l'offset di un ripetitore su una radio: una <strong>direzione</strong> (+ o &minus;) e uno <strong>scostamento libero da 0 a 10 MHz</strong>, a passi di 1 kHz (per esempio 7.600). La scheda <strong>ascolta</strong> sulla frequenza qui sopra (l'uscita del ripetitore) e <strong>trasmette</strong> sulla frequenza + o &minus; lo scostamento (l'ingresso). Con &laquo;Nessuno&raquo; tutto come prima, ascolto e trasmissione sulla stessa frequenza. La frequenza di trasmissione deve restare tra 430.000 e 440.000 MHz (anche per le frequenze degli altri profili): altrimenti la scheda rifiuta lo shift. Vale dal riavvio; sul display e in seriale (<code>Via ripetitore: ...</code>) si vede la frequenza di trasmissione. Non vale per i ruoli ripetitore e nodo n&eacute; durante l'escursione MeshCom n&eacute; nel profilo <strong>Diretta</strong> (simplex).</p>
       </div>
-      <details class="falsi" id="otherfreq" data-modes="off rptrx rpttx">
+      <details class="falsi" id="otherfreq" data-modes="off rptrx">
       <summary>Frequenze degli altri profili (Range, Messaggio e Diretta)</summary>
       <label for="freqmsg">Frequenza del profilo Messaggio (MHz)</label>
       <input id="freqmsg" inputmode="decimal" pattern="[0-9]{3}(\.[0-9]{1,3})?" placeholder="433.475" disabled required>
@@ -528,6 +530,8 @@
   let roleSeen = false;      // l'ultimo CFG GET conteneva role= (firmware piu' vecchi: no)
   function roleShow() {
     const r = roleSeen ? $('role').value : 'off';  // senza ruolo (firmware vecchio, scheda non collegata) si vedono le impostazioni della stazione
+    $('freqlabel').textContent = r === 'rptrx' ? 'Frequenza di ingresso (MHz)' : 'Frequenza (MHz)';
+    $('freqhint').textContent = r === 'rptrx' ? "Da 430.000 a 440.000. È la frequenza su cui la scheda RX ascolta le stazioni (l'ingresso del ripetitore); l'uscita si imposta sulla scheda TX." : 'Da 430.000 a 440.000. Il valore predefinito è un segnaposto: scegli il canale con il band plan IARU Regione 1 / ARI. Le stazioni che si ascoltano devono usare la stessa frequenza.';
     const nd = r === 'node';   // il nodo lavora solo in Standard: gli altri profili non si scelgono
     for (const o of $('profile').options) { o.hidden = nd && o.value !== 'std'; o.disabled = nd && o.value !== 'std'; }
     if (nd) $('profile').value = 'std';

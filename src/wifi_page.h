@@ -67,14 +67,14 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <label for="profile">Profilo</label>
 <select id="profile"><option value="std">Standard (Codec2 3200)</option><option value="rng">Range (Codec2 1200, collegamenti difficili)</option><option value="msg">Messaggio</option><option value="dir">Diretta (Codec2 3200)</option></select>
 <p class="hint" data-modes="node">Il nodo Internet lavora solo in Standard: gli altri profili non sono selezionabili.</p>
-<label for="freq">Frequenza Standard (MHz)</label><input id="freq" inputmode="decimal" required>
-<p class="hint">Da 430.000 a 440.000.</p>
+<div data-modes="off rptrx node"><label for="freq">Frequenza Standard (MHz)</label><input id="freq" inputmode="decimal" required>
+<p class="hint">Da 430.000 a 440.000.</p></div>
 <div data-modes="off">
 <label for="shiftdir">Shift (si applica solo alla frequenza del modo standard)</label><select id="shiftdir"><option value="0">Nessuno (simplex, di base)</option><option value="+">+ (trasmetto sopra)</option><option value="-">- (trasmetto sotto)</option></select>
 <label for="shiftmhz">Scostamento dello shift (MHz, da 0 a 10)</label><input id="shiftmhz" inputmode="decimal" placeholder="7.600">
 <p class="hint">Come l'offset di un ripetitore: si ascolta sulla frequenza Standard e si trasmette sulla frequenza + o - lo scostamento (passi di 1 kHz, deve restare tra 430.000 e 440.000). Vale dal riavvio.</p>
 </div>
-<details data-modes="off rptrx rpttx"><summary>Frequenze degli altri modi (Messaggio, Range, Diretta)</summary>
+<details data-modes="off rptrx"><summary>Frequenze degli altri modi (Messaggio, Range, Diretta)</summary>
 <label for="freqmsg">Frequenza Messaggio (MHz)</label><input id="freqmsg" inputmode="decimal" required>
 <label for="freqrange">Frequenza Range (MHz)</label><input id="freqrange" inputmode="decimal" required>
 <label for="freqdir">Frequenza Diretta (MHz)</label><input id="freqdir" inputmode="decimal" required>

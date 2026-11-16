@@ -209,6 +209,8 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   check('stazione normale: shift, volume, microfono, posizione, MeshCom, sysop, testi visibili; rete e identificativo nascosti',
         (await p.isVisible('#shiftdir')) && (await p.isVisible('#volume')) && (await p.isVisible('#micfloor')) && (await p.isVisible('#pos')) && (await p.isVisible('#mcfreq')) && (await p.isVisible('#sysopmode')) && (await p.isVisible('#text1')) && (await p.isVisible('#freqmsg')) &&
         (await p.isHidden('#wifissid')) && (await p.isHidden('#idint')) && (await p.isHidden('#nodebox')));
+  await p.selectOption('#role', 'rpttx');
+  check('scheda TX: una sola frequenza (quella di uscita), non quella del profilo ne\' le altre', (await p.isVisible('#freqout')) && (await p.isHidden('#freq')) && (await p.isHidden('#freqmsg')) && (await p.isHidden('#freqrange')));
   await p.selectOption('#role', 'node');
   check('nodo: Wi-Fi e rete, identificativo visibili; shift, volume, microfono, posizione, MeshCom, sysop, testi e altre frequenze nascosti',
         (await p.isVisible('#wifissid')) && (await p.isVisible('#peer')) && (await p.isVisible('#nodekey')) && (await p.isVisible('#idint')) && (await p.isVisible('#freq')) && (await p.isVisible('#power')) &&

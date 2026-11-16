@@ -901,10 +901,11 @@ async function scenario(name, fn, opts = {}) {
     v = await vis(all);
     check('RX: nominativo, profilo, frequenze, potenza, volume e monitor; niente posizione, MeshCom, testi, sysop, microfono, uscita, identificativo',
           v.callsign && v.profile && v.freq && v.power && v.volume && v.monitor && !v.micfloor && !v.qthlat && !v.gps && !v.mcdest1 && !v.sysopmode && !v.text1 && !v.freqout && !v.idint, JSON.stringify(v));
+    check('RX: la frequenza e\' quella di ingresso', (await p.textContent('#freqlabel')) === 'Frequenza di ingresso (MHz)');
     await p.selectOption('#role', 'rpttx');
     v = await vis(all);
-    check('TX: uscita e identificativo; niente volume, monitor, microfono, posizione, MeshCom, testi, sysop',
-          v.callsign && v.freq && v.power && v.freqout && v.idint && v.idmorse && !v.volume && !v.monitor && !v.micfloor && !v.qthlat && !v.mcdest1 && !v.sysopmode && !v.text1, JSON.stringify(v));
+    check('TX: una sola frequenza (quella di uscita) e identificativo; niente frequenza del profilo, altre frequenze, volume, monitor, microfono, posizione, MeshCom, testi, sysop',
+          v.callsign && !v.freq && !v.freqmsg && v.power && v.freqout && v.idint && v.idmorse && !v.volume && !v.monitor && !v.micfloor && !v.qthlat && !v.mcdest1 && !v.sysopmode && !v.text1, JSON.stringify(v));
     await p.selectOption('#role', 'node');
     v = await vis(all);
     check('nodo: identificativo; niente uscita, monitor, volume, microfono, posizione, MeshCom, testi, sysop, frequenze degli altri profili',
