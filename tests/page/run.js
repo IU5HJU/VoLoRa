@@ -524,12 +524,12 @@ async function scenario(name, fn, opts = {}) {
     await until(p, () => !document.getElementById('role').disabled);
     await p.fill('#callsign', 'IR5XXX');
     await p.selectOption('#role', 'rptrx');
-    check('RX: compare il monitor, non la frequenza di uscita', (await p.isVisible('#rxbox')) && (await p.isHidden('#txbox')));
+    check('RX: compaiono il monitor e le impostazioni della TX (uscita)', (await p.isVisible('#rxbox')) && (await p.isVisible('#txbox')));
     await p.selectOption('#monitor', 'on');
     await p.click('#save');
     await until(p, () => window.__st.cmds.includes('CFG REBOOT'), null, 15000);
     const c = await cmds(p);
-    check('ROLE RPTRX e MONITOR, nessun FREQOUT/IDINT', c.includes('CFG SET ROLE rptrx') && c.includes('CFG SET MONITOR on') && !c.some((x) => /^CFG SET (FREQOUT|IDINT)/.test(x)), c.join(' | '));
+    check('ROLE RPTRX e MONITOR; uscita e identificativo salvati sulla RX (li manda lei alla TX)', c.includes('CFG SET ROLE rptrx') && c.includes('CFG SET MONITOR on') && c.some((x) => /^CFG SET FREQOUT /.test(x)) && c.some((x) => /^CFG SET IDINT /.test(x)) && c.some((x) => /^CFG SET IDMORSE /.test(x)), c.join(' | '));
   });
 
   await scenario('firmware senza ruolo: campi spenti e nessun comando', async (p) => {
@@ -900,9 +900,9 @@ async function scenario(name, fn, opts = {}) {
           !v.monitor && !v.freqout && !v.idint && !v.idmorse, JSON.stringify(v));
     await p.selectOption('#role', 'rptrx');
     v = await vis(all);
-    check('RX: nominativo, profilo, frequenze, potenza, volume e monitor; niente posizione, MeshCom, testi, sysop, microfono, uscita, identificativo',
-          v.callsign && v.profile && v.freq && v.power && v.volume && v.monitor && !v.micfloor && !v.qthlat && !v.gps && !v.mcdest1 && !v.sysopmode && !v.text1 && !v.freqout && !v.idint, JSON.stringify(v));
-    check('RX: la frequenza e\' quella di ingresso', (await p.textContent('#freqlabel')) === 'Frequenza di ingresso (MHz)');
+    check('RX: nominativo, profilo, frequenze, potenza (della TX), volume, monitor, uscita e identificativo (li manda alla TX); niente posizione, MeshCom, testi, sysop, microfono',
+          v.callsign && v.profile && v.freq && v.power && v.volume && v.monitor && v.freqout && v.idint && v.idmorse && !v.micfloor && !v.qthlat && !v.gps && !v.mcdest1 && !v.sysopmode && !v.text1, JSON.stringify(v));
+    check('RX: la frequenza e\' quella di ingresso e la potenza e\' quella della TX', (await p.textContent('#freqlabel')) === 'Frequenza di ingresso (MHz)' && (await p.textContent('#powerlabel')) === 'Potenza della scheda TX (dBm)');
     await p.selectOption('#role', 'rpttx');
     v = await vis(all);
     check('TX: una sola frequenza (quella di uscita) e identificativo; niente frequenza del profilo, altre frequenze, volume, monitor, microfono, posizione, MeshCom, testi, sysop',

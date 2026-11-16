@@ -11,6 +11,7 @@
 #include "board_pins.h"
 #include "packet.h"
 #include "profile.h"
+#include "repeater_config.h"
 #include "radio_lora.h"
 #include "repeater.h"
 #include "repeater_link.h"
@@ -144,6 +145,13 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
   auth.setSysop(settings.sysopCall);
   auth.setLastCounter(loadSysopCounter());
   uint32_t restartAtMs = 0;
+  // Configurazione della TX: la RX la manda quando la TX dice (nella firma del suo stato) di averne una diversa. Serve l'uscita impostata sulla RX.
+  lcr::TxConfig txWanted = lcr::txConfigFrom(settings);
+  lcr::TxConfigSync txSync;
+  txSync.setWanted(txWanted);
+  txSync.enable(settings.freqOutKhz != 0);
+  bool txWasInSync = false;
+  uint32_t lastSyncLogMs = 0;
 
   uint32_t received = 0, badPackets = 0, sent = 0, discarded = 0;
   uint8_t txQueue = 0, txDropped = 0;
@@ -190,6 +198,16 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
           const lcr::SysopAuth::Verdict v = auth.check(p, cmd);
           if (v == lcr::SysopAuth::Verdict::Ok) {
             saveSysopCounter(auth.lastCounter());
+            if (cmd.code == lcr::kSysopPower && static_cast<int>(cmd.param) >= lcr::kMinPowerDbm && static_cast<int>(cmd.param) <= lcr::kMaxPowerDbm) {
+              NvsSettingsStorage storage;  // la potenza scelta dal sysop e' permanente anche sulla RX: cosi' non e' lei a riportare la TX al valore di prima
+              lcr::Settings saved;
+              if (storage.load(saved)) {
+                saved.powerDbm = static_cast<int>(cmd.param);
+                storage.save(saved);
+              }
+              txWanted.powerDbm = static_cast<int8_t>(cmd.param);
+              txSync.setWanted(txWanted);
+            }
             uint8_t d[7] = {cmd.code, static_cast<uint8_t>(cmd.param >> 8), static_cast<uint8_t>(cmd.param), static_cast<uint8_t>(cmd.counter >> 24),
                             static_cast<uint8_t>(cmd.counter >> 16), static_cast<uint8_t>(cmd.counter >> 8), static_cast<uint8_t>(cmd.counter)};
             sendFrame(lcr::kLinkControl, d, sizeof(d));
@@ -280,8 +298,30 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
           txDropped = parser.frame().data[1];
           lastStatusMs = now;
           gLink.statusIn++;
+          const bool hasDigest = parser.frame().len >= 6;  // una TX con il firmware di prima non manda la firma della configurazione
+          const uint8_t* d = parser.frame().data;
+          txSync.onStatus(now, hasDigest, hasDigest ? (static_cast<uint32_t>(d[2]) << 24) | (static_cast<uint32_t>(d[3]) << 16) | (static_cast<uint32_t>(d[4]) << 8) | d[5] : 0);
+        } else if (parser.frame().type == lcr::kLinkConfigAck && parser.frame().len >= 1) {
+          txSync.onAck(parser.frame().data[0]);
+          Serial.printf("[ripetitore] RX: la TX risponde alla configurazione: %s\n", parser.frame().data[0] == 0 ? "applicata (si riavvia)" : parser.frame().data[0] == 1 ? "NON VALIDA" : "non salvata");
         }
       }
+    }
+    if (txSync.due(now)) {
+      uint8_t cf[lcr::kTxConfigBytes];
+      const size_t cn = txSync.frame(now, cf, sizeof(cf));
+      if (cn) {
+        sendFrame(lcr::kLinkConfig, cf, cn);
+        Serial.printf("[ripetitore] RX: configurazione mandata alla TX (tentativo %d di %d): uscita %.3f MHz, potenza %d dBm, profilo %u, identificativo ogni %u min%s, nominativo %s%s\n", txSync.tries(),
+                      lcr::TxConfigSync::kMaxTries, static_cast<double>(txWanted.freqOutKhz) / 1000.0, static_cast<int>(txWanted.powerDbm), static_cast<unsigned>(txWanted.profile),
+                      static_cast<unsigned>(txWanted.idIntervalMin), txWanted.idMorse ? " e Morse" : "", txWanted.callsign, txWanted.sysopKeySet ? ", chiave del sysop" : "");
+      }
+    }
+    if (txSync.enabled() && txSync.inSync() && !txWasInSync) Serial.printf("[ripetitore] RX: la TX ha la configurazione giusta (firma %08lX)\n", static_cast<unsigned long>(txSync.wantedDigest()));
+    txWasInSync = txSync.inSync();
+    if (txSync.gaveUp() && now - lastSyncLogMs >= 30000) {
+      lastSyncLogMs = now;
+      Serial.printf("[ripetitore] RX: la TX non accetta la configurazione dopo %d tentativi (ultima risposta %d): controlla con CFG sulla TX; si riprova se la cambi\n", txSync.tries(), txSync.lastAck());
     }
     logLink("RX", "TX", lastStatusMs != 0 && now - lastStatusMs < kLinkDeadMs, parser, now);
 
@@ -298,7 +338,8 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
       else if (mon) snprintf(l4, sizeof(l4), "Scarti %lu  Vol %d/10", static_cast<unsigned long>(discarded), audio->volumeStep());
       else snprintf(l4, sizeof(l4), "Scarti %lu  Altri %lu", static_cast<unsigned long>(discarded), static_cast<unsigned long>(badPackets));
       const bool linkOk = lastStatusMs != 0 && now - lastStatusMs < kLinkDeadMs;
-      snprintf(l5, sizeof(l5), "TX %s coda %u", linkOk ? "ok" : "NON RISPONDE", static_cast<unsigned>(txQueue));
+      if (linkOk && txSync.enabled() && txSync.known() && !txSync.inSync()) snprintf(l5, sizeof(l5), "TX config %s", txSync.gaveUp() ? "RIFIUTATA" : "in invio");
+      else snprintf(l5, sizeof(l5), "TX %s coda %u", linkOk ? "ok" : "NON RISPONDE", static_cast<unsigned>(txQueue));
       ui.showLines(l1, l2, l3, l4, l5);
     }
     (void)txDropped;
@@ -334,6 +375,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
   UsbConsole usb(handler);
   const bool mayTransmit = !lcr::isPlaceholderCallsign(settings.callsign);  // come le altre schede: con N0CALL non si trasmette
 
+  lcr::TxConfig cfgNow = lcr::txConfigFrom(settings);  // quello che ha la TX: la firma va alla RX in ogni stato, la RX manda la configurazione se e' diversa
   uint32_t rxCount = 0;
   uint32_t lastHbMs = 0, lastStatusMs = 0, lastDispMs = 0;
   Serial.printf("[ripetitore] TX: uscita %.3f MHz, profilo %s, nominativo %s%s\n", static_cast<double>(out.freqMhz()), prof.name, settings.callsign,
@@ -363,11 +405,32 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
             saved.powerDbm = fx.power;
             storage.save(saved);
           }
+          cfgNow.powerDbm = static_cast<int8_t>(fx.power);
         }
         if (fx.restart) restartAtMs = millis() + 500;
       } else if (f.type == lcr::kLinkControlStale && f.len >= 5) {
         const uint32_t last = (static_cast<uint32_t>(f.data[1]) << 24) | (static_cast<uint32_t>(f.data[2]) << 16) | (static_cast<uint32_t>(f.data[3]) << 8) | f.data[4];
         sched.onStaleCommand(f.data[0], last, millis());
+      } else if (f.type == lcr::kLinkConfig) {
+        // Configurazione dalla RX: controllata, salvata come se fosse stata scritta con CFG SET, poi la TX si riavvia da sola per usarla
+        uint8_t res = 1;
+        lcr::TxConfig c;
+        if (lcr::decodeTxConfig(f.data, f.len, c)) {
+          if (lcr::txConfigDigest(c) == lcr::txConfigDigest(cfgNow)) {
+            res = 0;  // gia' uguale
+          } else {
+            NvsSettingsStorage storage;
+            lcr::Settings saved;
+            if (storage.load(saved) && lcr::applyTxConfig(c, saved) && storage.save(saved)) {
+              res = 0;
+              restartAtMs = millis() + 1500;  // il tempo di mandare la risposta
+            } else {
+              res = 2;
+            }
+          }
+        }
+        sendFrame(lcr::kLinkConfigAck, &res, 1);
+        Serial.printf("[ripetitore] TX: configurazione dalla RX %s\n", res == 0 ? (restartAtMs ? "applicata e salvata (riavvio fra poco)" : "gia' uguale") : res == 1 ? "NON VALIDA, scartata" : "non salvata");
       } else if (f.type == lcr::kLinkHeartbeat && f.len >= 4) {
         rxCount = (static_cast<uint32_t>(f.data[0]) << 24) | (static_cast<uint32_t>(f.data[1]) << 16) | (static_cast<uint32_t>(f.data[2]) << 8) | f.data[3];
         lastHbMs = now;
@@ -383,7 +446,8 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
     if (now - lastStatusMs >= kHeartbeatMs) {
       lastStatusMs = now;
       const uint32_t d = queue.dropped();
-      uint8_t st[2] = {static_cast<uint8_t>(queue.size()), static_cast<uint8_t>(d > 255 ? 255 : d)};
+      const uint32_t dg = lcr::txConfigDigest(cfgNow);
+      uint8_t st[6] = {static_cast<uint8_t>(queue.size()), static_cast<uint8_t>(d > 255 ? 255 : d), static_cast<uint8_t>(dg >> 24), static_cast<uint8_t>(dg >> 16), static_cast<uint8_t>(dg >> 8), static_cast<uint8_t>(dg)};
       sendFrame(lcr::kLinkStatus, st, sizeof(st));
     }
 

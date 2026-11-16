@@ -22,7 +22,9 @@ enum LinkType : uint8_t {
   kLinkHeartbeat = 2,  // dati: 4 byte, numero di pacchetti ricevuti dalla RX (big endian); la TX sa che il collegamento vive
   kLinkControl = 4,    // dati: 7 byte [codice][parametro 2][contatore 4], un comando del sysop gia' verificato dalla RX (dalla RX alla TX)
   kLinkControlStale = 5,  // dati: 5 byte [codice][ultimo contatore accettato 4]: comando con firma valida e contatore troppo basso (dalla RX alla TX)
-  kLinkStatus = 3,     // dati: 2 byte, pacchetti in coda e pacchetti persi per coda piena (dalla TX alla RX)
+  kLinkStatus = 3,     // dati: 2 byte, pacchetti in coda e pacchetti persi per coda piena (dalla TX alla RX); dal 16/11/2026 altri 4 byte: la firma della sua configurazione (repeater_config.h)
+  kLinkConfig = 6,     // dati: kTxConfigBytes byte, la configurazione della TX (dalla RX alla TX, repeater_config.h)
+  kLinkConfigAck = 7,  // dati: 1 byte, 0 applicata (la TX si riavvia) o gia' uguale, 1 non valida, 2 non salvata (dalla TX alla RX)
 };
 constexpr size_t kLinkMaxData = kMaxWireBytes;                // un pacchetto radio
 constexpr size_t kLinkMaxFrame = 3 + kLinkMaxData + 2;

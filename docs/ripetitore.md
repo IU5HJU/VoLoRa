@@ -72,3 +72,25 @@ Se il display della RX dice **"TX NON RISPONDE"** (o quello della TX "RX NO"), l
 Mandare le due righe (RX e TX) permette di capire da che parte è il guasto.
 
 **Lo shift non riguarda il ripetitore (16/11/2026).** Lo shift è della stazione normale: ripetitore (RX e TX) e nodo lo ignorano. Il firmware non lo controlla più contro la banda quando il ruolo non è stazione normale, e le pagine di configurazione **non mandano comandi SHIFT** né lo mostrano in quei ruoli, e mandano il ruolo **prima** delle frequenze. Prima, una RX a 440.000 MHz con uno shift rimasto dalla stazione normale rifiutava il salvataggio (`CFG ERR shift la frequenza di trasmissione uscirebbe da 430-440 MHz`). Tornando stazione normale lo shift conta di nuovo: se non sta in banda con le frequenze, `CFG SET ROLE OFF` si rifiuta e chiede `CFG SET SHIFT 0`.
+
+## La RX configura la TX sul filo seriale (16/11/2026)
+
+**Perché.** Salvare le impostazioni sulla TX con il cavo USB, con le due schede collegate, bloccava una delle due (prova del 16/11/2026). Ora la TX **non si configura più a parte**: si dà tutto sulla RX (sito o pagina della scheda) e la RX lo manda alla TX.
+
+**Cosa viaggia:** frequenza di uscita (obbligatoria sulla RX per partire), potenza (della TX), profilo, identificativo ogni N minuti e Morse, nominativo, chiave del sysop. Il resto (ruolo, frequenze del profilo, Wi-Fi, impostazioni della stazione) resta com'è sulla TX. **Sulla TX con il cavo USB si imposta una volta sola il ruolo "scheda TX"** (e, se serve, nient'altro).
+
+**Come funziona** (`repeater_config.h`, provato sul PC in `test_repeater_config`):
+1. Ogni secondo la TX manda alla RX il suo **stato**; dal 16/11/2026 lo stato porta anche la **firma** (FNV-1a a 32 bit) della configurazione che la TX ha adesso.
+2. La RX confronta quella firma con la propria. Se è diversa (e lo stato è recente) manda un frame **configurazione** (tipo 6, 34 byte: versione, profilo, potenza, identificativo, Morse, uscita, nominativo, chiave).
+3. La TX **controlla** (versione, intervalli, nominativo, banda 430-440), **salva** nella memoria come se fosse un `CFG SET`, risponde con un frame di conferma (tipo 7: 0 applicata, 1 non valida, 2 non salvata) e si **riavvia da sola** dopo 1,5 s.
+4. Dopo il riavvio la TX riparte con la firma giusta: la RX stampa "la TX ha la configurazione giusta" e smette.
+
+**Sicurezza.** Se la TX non accetta (non valida o non salvata), la RX riprova ogni 4 s per **5 volte** e poi si ferma e lo scrive ogni 30 s: una TX che non applica la configurazione non si riavvia all'infinito. Cambiando la configurazione sulla RX il conteggio riparte. Con la **TX con firmware vecchio** (che non manda la firma) la RX non manda niente. Se sulla RX l'uscita è 0 (non impostata) la RX **non tocca** la TX.
+
+**Potenza e comandi del sysop.** Un comando `POTENZA` del sysop passa dalla RX, che lo verifica e lo gira alla TX: la RX aggiorna **anche la sua** potenza salvata, così non è lei a riportare la TX al valore di prima.
+
+**Sui display.** La RX mostra "TX config in invio" finché la TX non ha la configurazione giusta, "TX config RIFIUTATA" se si è fermata dopo i tentativi.
+
+**Sulla seriale USB** (RX): `configurazione mandata alla TX (tentativo n di 5): uscita ... potenza ... identificativo ...`, `la TX risponde alla configurazione: ...`, `la TX ha la configurazione giusta`. (TX): `configurazione dalla RX applicata e salvata (riavvio fra poco)` / `gia' uguale` / `NON VALIDA`.
+
+**Da provare sulla scheda vera:** il riavvio della TX dopo la configurazione e il ritorno al collegamento; la RX che non riprova all'infinito; la potenza cambiata dal sysop che non viene sovrascritta. Aggiornare **prima la TX**, poi la RX (una TX con il firmware di prima ignora il frame e non cambia).

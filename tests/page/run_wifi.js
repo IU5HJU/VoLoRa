@@ -193,7 +193,7 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   await p.selectOption('#role', 'rpttx');
   check('rilettura: ruolo TX e riquadro visibile', (await p.inputValue('#role')) === 'rpttx' && (await p.isVisible('#txbox')) && (await p.inputValue('#idint')) === '3');
   await p.selectOption('#role', 'rptrx');
-  check('scheda RX: compare il monitor, non la frequenza di uscita', (await p.isVisible('#rxbox')) && (await p.isHidden('#txbox')));
+  check('scheda RX: compaiono il monitor e le impostazioni della TX (uscita, identificativo, potenza della TX)', (await p.isVisible('#rxbox')) && (await p.isVisible('#txbox')) && (await p.isVisible('#idint')) && (await p.textContent('#powerlabel')) === 'Potenza della scheda TX (dBm)');
   await p.selectOption('#monitor', 'on'); await p.click('#save');
   await p.waitForFunction(() => /Salvato/.test(document.getElementById('st').textContent));
   check('RX salvata: ruolo e monitor', st.cfg.role === 'rptrx' && st.monitor === 'on' && st.cmds.includes('CFG SET MONITOR on'));

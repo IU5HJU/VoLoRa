@@ -57,8 +57,9 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <div id="txbox" hidden>
 <label for="freqout">Frequenza di uscita (MHz)</label><input id="freqout" inputmode="decimal">
 <p class="hint">Da 430.000 a 440.000. Sulla scheda TX sono anche la frequenza dei messaggi.</p>
+<p class="hint" data-modes="rptrx"><strong>Le impostazioni della TX si danno qui, sulla RX</strong>: uscita, potenza, identificativo, Morse, nominativo e chiave del sysop. Dopo il salvataggio la RX le manda da sola alla TX attraverso i fili; la TX le salva e si riavvia. Sulla TX si imposta una volta sola, con il cavo USB, il ruolo "scheda TX".</p>
 </div>
-<div data-modes="rpttx node">
+<div data-modes="rpttx rptrx node">
 <label for="idint">Identificativo ogni (minuti, 1-10)</label><input id="idint" type="number" min="1" max="10">
 <p class="hint">Ogni quanti minuti la scheda trasmette il proprio identificativo (il nominativo qui sopra, in modo testo: le stazioni lo vedono passare senza suoni). Di base 10.</p>
 <label for="idmorse">Identificativo anche in Morse (FM)</label><select id="idmorse"><option value="on">Sì</option><option value="off">No</option></select>
@@ -80,7 +81,7 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <label for="freqdir">Frequenza Diretta (MHz)</label><input id="freqdir" inputmode="decimal" required>
 <p class="hint">Da 430.000 a 440.000. Di base seguono la frequenza dello Standard finché non le cambi a mano; possono essere uguali o diverse. La Diretta è in simplex, senza shift.</p>
 </details>
-<label for="power">Potenza (dBm)</label><input id="power" type="number" min="2" max="17" required>
+<label for="power" id="powerlabel">Potenza (dBm)</label><input id="power" type="number" min="2" max="17" required>
 <div data-modes="off rptrx"><label for="volume">Volume (0-10)</label><input id="volume" type="number" min="0" max="10" required></div>
 <div data-modes="off">
 <label for="micfloor">Fondo del microfono (dBFS)</label><input id="micfloor" type="number" min="-80" max="-36" required>
@@ -131,8 +132,8 @@ let board='';
 let fp='';
 function fill(m){if(m.board!==undefined){board=m.board;$('gpsbox').hidden=board!=='tbeam';for(const o of $('role').options)if(o.value==='rptrx'||o.value==='rpttx')o.disabled=board==='tbeam';$('rolenote').hidden=board!=='tbeam';}for(const k of ['callsign','profile','freq','freqmsg','freqrange','freqdir','power','volume','micfloor','pos','qth','gps','role','freqout'])if(m[k]!==undefined&&$(k))$(k).value=m[k];fp=$('freq').value.trim();}
 $('freq').addEventListener('input',()=>{const v=$('freq').value.trim();for(const id of ['freqmsg','freqrange','freqdir'])if($(id).value.trim()===fp)$(id).value=v;fp=v;});   // le frequenze uguali a quella dello Standard la seguono; quelle cambiate a mano restano
-function roleShow(){const r=$('role').value;const nd=r==='node';for(const o of $('profile').options){o.hidden=nd&&o.value!=='std';o.disabled=nd&&o.value!=='std';}if(nd)$('profile').value='std';   // il nodo lavora solo in Standard: gli altri profili non si scelgono
-$('rxbox').hidden=r!=='rptrx';$('txbox').hidden=r!=='rpttx';for(const e of document.querySelectorAll('[data-modes]'))e.classList.toggle('nomode',!e.dataset.modes.split(' ').includes(r));}   // di ogni modalità si vedono solo i suoi campi
+function roleShow(){const r=$('role').value;$('powerlabel').textContent=r==='rptrx'?'Potenza della scheda TX (dBm)':'Potenza (dBm)';const nd=r==='node';for(const o of $('profile').options){o.hidden=nd&&o.value!=='std';o.disabled=nd&&o.value!=='std';}if(nd)$('profile').value='std';   // il nodo lavora solo in Standard: gli altri profili non si scelgono
+$('rxbox').hidden=r!=='rptrx';$('txbox').hidden=r!=='rpttx'&&r!=='rptrx';for(const e of document.querySelectorAll('[data-modes]'))e.classList.toggle('nomode',!e.dataset.modes.split(' ').includes(r));}   // di ogni modalità si vedono solo i suoi campi
 $('role').addEventListener('change',roleShow);
 async function loadRole(){try{const r=await cmd('CFG GET MONITOR');if(r.startsWith('CFG MONITOR='))$('monitor').value=r.slice(12)==='on'?'on':'off';}catch(e){}roleShow();}
 function sysopShow(){const on=$('sysopmode').value==='on';$('sysopbox').hidden=!on;$('textsbox').hidden=on;}
@@ -155,7 +156,7 @@ $('f').addEventListener('submit',async ev=>{
   ev.preventDefault();st('Salvataggio…','');
   const want={callsign:$('callsign').value.trim().toUpperCase(),profile:$('profile').value,freq:$('freq').value.trim(),freqmsg:$('freqmsg').value.trim(),freqrange:$('freqrange').value.trim(),freqdir:$('freqdir').value.trim(),power:$('power').value,volume:$('volume').value,micfloor:$('micfloor').value,pos:$('pos').value,qth:$('qth').value.trim()||'none',role:$('role').value};
   if(board==='tbeam')want.gps=$('gps').value;
-  if(want.role==='rpttx'){const fo=$('freqout').value.trim();const k=Math.round(parseFloat(fo)*1000);if(!/^\d{3}(\.\d{1,3})?$/.test(fo)||!(k>=430000&&k<=440000)){st('La frequenza di uscita deve essere tra 430.000 e 440.000 MHz.','err');return;}want.freqout=fo;}   // la T3 non ha il GPS: il comando non si manda
+  if(want.role==='rpttx'||want.role==='rptrx'){const fo=$('freqout').value.trim();const k=Math.round(parseFloat(fo)*1000);if(!/^\d{3}(\.\d{1,3})?$/.test(fo)||!(k>=430000&&k<=440000)){st('La frequenza di uscita deve essere tra 430.000 e 440.000 MHz.','err');return;}want.freqout=fo;}   // la T3 non ha il GPS: il comando non si manda
   const net=netPlan(want.role);if(net&&net.err){st(net.err,'err');return;}
   const keys={callsign:'CALLSIGN',role:'ROLE',freq:'FREQ',freqmsg:'FREQMSG',freqrange:'FREQRANGE',freqdir:'FREQDIR',power:'POWER',volume:'VOLUME',micfloor:'MICFLOOR',profile:'PROFILE',pos:'POS',qth:'QTH',gps:'GPS',freqout:'FREQOUT'};  // il GPS e' in want solo sulla T-Beam
   const texts=[];for(let i=1;i<=5;i++){const v=$('text'+i).value.trim();if(v!==''&&!/^[\x20-\x7A\x7C\x7E]+$/.test(v)){st('Il testo '+i+' ha caratteri non ammessi: solo ASCII, senza accenti.','err');return;}texts.push(v);}
@@ -168,7 +169,7 @@ $('f').addEventListener('submit',async ev=>{
     const mcw=+$('mcwindow').value;if(!(mcw>=30&&mcw<=1800)){st("L'ascolto dopo l'invio deve durare da 30 a 1800 secondi.",'err');return;}
     for(const c of ['CFG SET FREQMC '+$('mcfreq').value.trim(),'CFG SET MCSSID '+$('mcssid').value.trim(),'CFG SET MCWINDOW '+mcw].concat(mcds.map((d,i)=>'CFG SET MCDEST'+(i+1)+' '+(d||'NONE')))){const r=await cmd(c);if(!r.startsWith('CFG OK')){st('Rifiutato ('+c+'): '+r,'err');return;}}
     if(net)await saveNet(net);
-    if(want.role==='rpttx'||want.role==='node'){const idn=+$('idint').value;if(!(idn>=1&&idn<=10)){st('Il tempo dell\'identificativo deve essere da 1 a 10 minuti.','err');return;}
+    if(want.role==='rpttx'||want.role==='rptrx'||want.role==='node'){const idn=+$('idint').value;if(!(idn>=1&&idn<=10)){st('Il tempo dell\'identificativo deve essere da 1 a 10 minuti.','err');return;}
     for(const c of ['CFG SET IDINT '+idn,'CFG SET IDMORSE '+$('idmorse').value]){const r=await cmd(c);if(!r.startsWith('CFG OK')){st('Rifiutato ('+c+'): '+r,'err');return;}}}
     if(want.role==='rptrx'){const r=await cmd('CFG SET MONITOR '+$('monitor').value);if(!r.startsWith('CFG OK')){st('Rifiutato (MONITOR): '+r,'err');return;}}
     const sy=$('sysop').value.trim().toUpperCase();if(sy!==''&&!/^[A-Z0-9\/]{1,8}$/.test(sy)){st('Il nominativo del sysop non è valido.','err');return;}
