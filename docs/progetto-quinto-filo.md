@@ -74,3 +74,46 @@ Il pin **RST** della T3 sta sul connettore (fila destra, dopo IO34). La RX potre
 4. `repeater_node.cpp`: la RX tira giù IO0; la TX stampa e mostra "forzata".
 5. Sito, pagina della scheda, `docs/ripetitore.md`, `docs/pinout.md`, disegno dei collegamenti.
 6. Prova: la TX appena uscita dalla scatola, la TX che si accende prima della RX e dopo, la RX che si riavvia, la RX scollegata.
+
+---
+
+## Aggiornamento del 16/11/2026: con le schede cablate come stazioni normali
+
+Il progetto sopra usava **IO0** sulla RX e **IO13** sulla TX. Con le due schede cablate come stazioni normali (microfono, altoparlante, PTT, volume, batteria, OLED, radio, seriale del ripetitore) quei pin sono **occupati**: IO13 è il word select dell'I2S, IO0 il PTT. Pin davvero liberi sul connettore: **IO39 (S_VN)** e **IO12**.
+
+**Fatto decisivo: IO39 è solo ingresso.** Non ha il driver di uscita e non ha pull-up né pull-down interni. Quindi la RX **non può** tirarlo a massa: il filo IO39 con IO39 non funziona. Sulla TX va bene come ingresso; sulla RX serve un'uscita.
+
+### Variante A: filo dalla RX (IO12) alla TX (IO39)
+
+- **TX:** IO39 come ingresso + **resistenza da 10 kΩ verso massa** (pull-down esterno, perché IO39 non ha pull interno). Senza filo o con la RX spenta il pin è **basso = non forzata**.
+- **RX:** **IO12 come uscita** che porta il filo **alto (3,3 V)** solo dopo l'avvio. Logica **attiva alta**, scelta apposta per l'IO12.
+- **IO12 è un pin di boot** (tensione della flash): **alto durante il reset = la scheda non parte**. Per questo:
+  - l'RX **non porta mai** il pin alto prima che il firmware sia partito, e lo **rilascia** (ingresso) prima di ogni riavvio;
+  - il pull-down da 10 kΩ sul filo (sulla TX) tiene il pin **basso** quando la RX non lo guida, anche durante il suo reset;
+  - **da provare sul banco**: reset, riavvio da `CFG REBOOT`, watchdog e aggiornamento dell'RX con il cavo USB, con il filo collegato. Un errore qui lascia la RX in un ciclo di avvii.
+- **Protezione:** una resistenza da 1 kΩ in serie sul filo dal lato RX.
+- **Costo:** un filo, due resistori, una prova accurata sull'IO12.
+
+### Variante B: interruttore sulla TX (IO39)
+
+Invariata rispetto al messaggio precedente: DIP switch a massa + **10 kΩ verso 3,3 V** su IO39 (attivo basso), nessun filo fra le schede, nessun rischio per l'avvio, ma un gesto manuale per ogni TX.
+
+### Variante C (da preferire): rilevamento sulla seriale, **nessun filo e nessun pin in più**
+
+Le due schede hanno già i fili della seriale (IO36 ingresso, IO2 uscita, incrociati). La RX manda ogni secondo il suo battito. Una scheda **in ruolo normale (o nodo)** con firmware nuovo **ascolta passivamente** IO36; se per 3 s riceve frame validi di una **RX del ripetitore** (CRC giusto, tipo "battito RX"), **si forza TX** e si riavvia in quel modo, senza scrivere il ruolo.
+- **Perché va bene:** non serve né IO12 né IO39, né resistori, né il quinto filo. Solo i quattro fili di prima.
+- **Rischi:** una stazione normale con IO36 collegato a qualcos'altro che manda frame del progetto con CRC valido: impossibile in pratica. IO36 è un ingresso senza pull-up: a vuoto legge rumore, ma il CRC16 e il byte iniziale `0x7E` bastano a scartarlo. In ruolo normale si apre **solo la ricezione** della seriale (IO36), **non** la trasmissione (IO2 resta libero come ora).
+- **Accensione:** se l'ultima volta la scheda era stata forzata (flag `fz` in memoria), all'avvio **aspetta fino a 4 s** il battito della RX prima di scegliere il ruolo; se non arriva torna al ruolo salvato e cancella il flag.
+- **Limite:** se la RX è spenta, la TX non sa di essere TX e si comporta da stazione normale (come per ogni variante a livello dinamico): è il comportamento voluto.
+
+### Scelta
+
+| | A (filo IO12→IO39) | B (interruttore IO39) | C (seriale) |
+|---|---|---|---|
+| Fili fra le schede | 5 | 4 | **4** |
+| Componenti | 2 resistori | 1 resistore + interruttore | **nessuno** |
+| Rischio per l'avvio | **sì (IO12)** | no | **no** |
+| Gesto manuale | no | sì | **no** |
+| Modifiche al firmware della RX | sì | no | no |
+
+Raccomandazione: **C**, e se non basta **B**; **A** solo dopo la prova di IO12.
