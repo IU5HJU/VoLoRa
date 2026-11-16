@@ -85,10 +85,39 @@ class UsbConsole {
   for (;;) delay(1000);
 }
 
+// Contatori del collegamento seriale fra le due schede, per il log di diagnosi ("il TX non risponde")
+struct LinkDiag {
+  uint32_t bytesIn = 0;    // byte arrivati sulla seriale
+  uint32_t framesIn = 0;   // frame validi (CRC giusto)
+  uint32_t statusIn = 0;   // di cui: stato dalla TX (sulla RX) o battito dalla RX (sulla TX)
+  uint32_t framesOut = 0;  // frame mandati
+  uint32_t lastLogMs = 0;
+  bool wasOk = false;
+};
+static LinkDiag gLink;
+
 void sendFrame(uint8_t type, const uint8_t* data, size_t len) {
   uint8_t frame[lcr::kLinkMaxFrame];
   const size_t n = lcr::encodeLinkFrame(type, data, len, frame, sizeof(frame));
-  if (n) Serial2.write(frame, n);
+  if (n) {
+    Serial2.write(frame, n);
+    gLink.framesOut++;
+  }
+}
+
+// Una riga sulla seriale USB: subito a ogni cambio (collegato/perso), poi ogni 5 s finche' il collegamento non c'e', ogni 30 s quando c'e'.
+// Dice anche dove guardare: nessun byte = fili o massa (o l'altra scheda spenta / con un altro ruolo); byte ma nessun frame = velocita' o disturbi.
+void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser& parser, uint32_t now) {
+  const bool changed = ok != gLink.wasOk;
+  if (!changed && now - gLink.lastLogMs < (ok ? 30000u : 5000u)) return;
+  gLink.wasOk = ok;
+  gLink.lastLogMs = now;
+  const char* hint = ok ? "" : gLink.bytesIn == 0 ? " -> nessun byte: controlla i fili (IO36 <- IO2 dell'altra scheda, incrociati) e la massa in comune, e che l'altra scheda sia accesa e nel suo ruolo"
+                     : gLink.framesIn == 0     ? " -> arrivano byte ma nessun frame valido: disturbi, fili lunghi o velocita' diversa"
+                                               : " -> frame validi ma non piu' recenti: l'altra scheda si e' fermata?";
+  Serial.printf("[ripetitore] %s: seriale con la %s %s (ricezione IO%d, trasmissione IO%d, 115200): byte ricevuti %lu, frame validi %lu (battiti/stati %lu), CRC errati %lu, frame mandati %lu%s\n",
+                who, other, ok ? "ATTIVA" : "SILENZIOSA", pins::kLinkRx, pins::kLinkTx, static_cast<unsigned long>(gLink.bytesIn), static_cast<unsigned long>(gLink.framesIn),
+                static_cast<unsigned long>(gLink.statusIn), static_cast<unsigned long>(parser.crcErrors()), static_cast<unsigned long>(gLink.framesOut), hint);
 }
 
 // ---- Scheda RX: ascolta l'ingresso, decide, manda alla TX ----
@@ -243,12 +272,18 @@ void sendFrame(uint8_t type, const uint8_t* data, size_t len) {
 
     // 3. stato dalla TX
     while (Serial2.available() > 0) {
-      if (parser.feed(static_cast<uint8_t>(Serial2.read())) && parser.frame().type == lcr::kLinkStatus && parser.frame().len >= 2) {
-        txQueue = parser.frame().data[0];
-        txDropped = parser.frame().data[1];
-        lastStatusMs = now;
+      gLink.bytesIn++;
+      if (parser.feed(static_cast<uint8_t>(Serial2.read()))) {
+        gLink.framesIn++;
+        if (parser.frame().type == lcr::kLinkStatus && parser.frame().len >= 2) {
+          txQueue = parser.frame().data[0];
+          txDropped = parser.frame().data[1];
+          lastStatusMs = now;
+          gLink.statusIn++;
+        }
       }
     }
+    logLink("RX", "TX", lastStatusMs != 0 && now - lastStatusMs < kLinkDeadMs, parser, now);
 
     // 4. display
     if (now - lastDispMs >= kDisplayMs) {
@@ -309,7 +344,9 @@ void sendFrame(uint8_t type, const uint8_t* data, size_t len) {
 
     // 1. dalla RX: pacchetti e battito
     while (Serial2.available() > 0) {
+      gLink.bytesIn++;
       if (!parser.feed(static_cast<uint8_t>(Serial2.read()))) continue;
+      gLink.framesIn++;
       const lcr::LinkParser::Frame& f = parser.frame();
       if (f.type == lcr::kLinkPacket) {
         sched.onLinkPacket(f.data, f.len);  // se la coda e' piena il pacchetto si perde e si conta
@@ -334,8 +371,10 @@ void sendFrame(uint8_t type, const uint8_t* data, size_t len) {
       } else if (f.type == lcr::kLinkHeartbeat && f.len >= 4) {
         rxCount = (static_cast<uint32_t>(f.data[0]) << 24) | (static_cast<uint32_t>(f.data[1]) << 16) | (static_cast<uint32_t>(f.data[2]) << 8) | f.data[3];
         lastHbMs = now;
+        gLink.statusIn++;
       }
     }
+    logLink("TX", "RX", lastHbMs != 0 && now - lastHbMs < kLinkDeadMs, parser, now);
 
     // 2. il regista: voce, ascolto dei messaggi, ritrasmissione (al piu' un pacchetto, bloccante: dura il tempo in aria)
     sched.tick(now, mayTransmit);

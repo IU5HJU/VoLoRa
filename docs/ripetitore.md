@@ -55,3 +55,18 @@ La scheda **RX** si può collegare a un reflector ([reflector.md](reflector.md))
 
 ## Dove leggere
 [banco-ripetitore.md](banco-ripetitore.md) (prova a banco) · [studio-ripetitore.md](studio-ripetitore.md) (studio e decisioni) · [studio-identificativo-fm.md](studio-identificativo-fm.md) (Morse in FM) · [firmware.md](firmware.md) (comandi e collegamenti) · [protocollo.md](protocollo.md) (modi 5, 6, 7) · [pinout.md](pinout.md) (pin e schemi).
+
+## Diagnosi del collegamento seriale RX-TX (16/11/2026)
+
+Se il display della RX dice **"TX NON RISPONDE"** (o quello della TX "RX NO"), le due schede stampano sulla **seriale USB** una riga di diagnosi (subito a ogni cambio, poi ogni 5 s finché il collegamento manca, ogni 30 s quando c'è):
+
+```
+[ripetitore] RX: seriale con la TX SILENZIOSA (ricezione IO36, trasmissione IO2, 115200): byte ricevuti 0, frame validi 0 (battiti/stati 0), CRC errati 0, frame mandati 12 -> nessun byte: controlla i fili ...
+```
+
+- **byte ricevuti 0**: non arriva niente: fili (la RX della scheda va all'IO2 dell'altra e viceversa, **incrociati**: IO36 di una con IO2 dell'altra), **massa in comune**, l'altra scheda accesa e nel suo ruolo (TX o RX), cavo non troppo lungo. "Frame mandati" che cresce dice che questa scheda sta trasmettendo.
+- **byte ricevuti > 0 ma frame validi 0**: i byte arrivano ma non sono frame (disturbi, fili lunghi, velocità diversa).
+- **frame validi > 0 ma "SILENZIOSA"**: il collegamento c'era e si è fermato (l'altra scheda riavviata o spenta).
+- **ATTIVA**: tutto bene; "battiti/stati" è il numero di battiti (sulla TX) o di stati (sulla RX) ricevuti.
+
+Mandare le due righe (RX e TX) permette di capire da che parte è il guasto.
