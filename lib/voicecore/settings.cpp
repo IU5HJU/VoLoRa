@@ -114,6 +114,7 @@ static bool validMcDests(const Settings& s) {
 static bool validShift(const Settings& s) {
   if (s.shiftKhz == 0) return true;
   if (s.shiftKhz > kMaxShiftKhz || s.shiftKhz < -kMaxShiftKhz) return false;
+  if (s.role != kRoleNormal) return true;  // ripetitore e nodo ignorano lo shift (txShiftKhz_ vale solo per la stazione normale): quello di prima non deve bloccarli
   const int64_t f[3] = {s.freqKhz, s.freqMsgKhz, s.rangeFreqKhz()};
   for (int64_t v : f) {
     const int64_t t = v + s.shiftKhz;
@@ -572,6 +573,10 @@ ConsoleResult SettingsConsole::set(const char* key, const char* value, char* rep
       next.role = kRoleNode;
     } else {
       say(reply, cap, "CFG ERR role %s", "usa OFF, RPTRX, RPTTX oppure NODE");
+      return ConsoleResult::Error;
+    }
+    if (!validShift(next)) {  // tornando stazione normale lo shift di prima conta di nuovo: deve stare in banda con le frequenze
+      say(reply, cap, "CFG ERR role %s", "con lo shift impostato la frequenza di trasmissione uscirebbe da 430-440 MHz (prima CFG SET SHIFT 0)");
       return ConsoleResult::Error;
     }
     snprintf(shown, sizeof(shown), "role=%s", roleCode(next.role));

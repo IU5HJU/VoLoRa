@@ -515,6 +515,7 @@ async function scenario(name, fn, opts = {}) {
     await p.click('#save');
     await until(p, () => window.__st.cmds.includes('CFG REBOOT'), null, 15000);
     const c = await cmds(p);
+    check('ROLE node: nessun comando SHIFT (e\' della stazione normale) e il ruolo va prima delle frequenze', !c.some((x) => x.startsWith('CFG SET SHIFT')) && c.indexOf('CFG SET ROLE node') >= 0 && c.indexOf('CFG SET ROLE node') < c.findIndex((x) => x.startsWith('CFG SET FREQ ')));
     check('ROLE node sulla T-Beam: identificativo del nodo (IDINT, IDMORSE), nessun comando del ripetitore', c.includes('CFG SET ROLE node') && c.includes('CFG SET IDINT 10') && c.includes('CFG SET IDMORSE on') && !c.some((x) => /^CFG SET (FREQOUT|MONITOR)/.test(x)), c.join(' | '));
   });
 

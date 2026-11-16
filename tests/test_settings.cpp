@@ -809,9 +809,35 @@ void testSmallBuffer() {
 
 }  // namespace
 
+// Lo shift e' della stazione normale: ripetitore e nodo lo ignorano, quindi quello di prima non deve bloccare la loro configurazione
+// (16/11/2026: la RX a 440.000 MHz con uno shift di prima rifiutava la frequenza e il salvataggio)
+static void testShiftIgnoredByOtherRoles() {
+  Fixture f;
+  CHECK(f.run("CFG SET FREQ 440.000") == ConsoleResult::Ok);
+  CHECK(f.run("CFG SET SHIFT -7600") == ConsoleResult::Ok);  // 440.000 - 7.6 MHz = 432.4: in banda
+  CHECK(f.con.stored().shiftKhz == -7600);
+  CHECK(f.run("CFG SET SHIFT +1000") == ConsoleResult::Error && f.con.stored().shiftKhz == -7600);  // 441.000: fuori banda
+  // stazione normale a 440 MHz con shift positivo non e' accettabile; con il ruolo RX si'
+  CHECK(f.run("CFG SET SHIFT 0") == ConsoleResult::Ok && f.run("CFG SET SHIFT +5000") == ConsoleResult::Error);
+  CHECK(f.run("CFG SET FREQ 433.900") == ConsoleResult::Ok && f.run("CFG SET SHIFT +5000") == ConsoleResult::Ok);
+  CHECK(f.run("CFG SET ROLE RPTRX") == ConsoleResult::Ok && f.con.stored().role == kRoleRepeaterRx);
+  CHECK(f.run("CFG SET FREQ 440.000") == ConsoleResult::Ok && f.con.stored().freqKhz == 440000 && f.con.stored().shiftKhz == 5000);   // l'RX non si porta dietro lo shift
+  CHECK(f.run("CFG SET FREQMSG 440.000") == ConsoleResult::Ok && f.run("CFG SET FREQRANGE 440.000") == ConsoleResult::Ok);
+  CHECK(isValidSettings(f.con.stored()));
+  CHECK(f.run("CFG SET SHIFT 10000") == ConsoleResult::Ok);  // anche cambiare lo shift e' possibile, ma resta nei limiti di +-10 MHz
+  CHECK(f.run("CFG SET SHIFT 10001") == ConsoleResult::Error);
+  // tornando stazione normale lo shift conta di nuovo: con uno shift incompatibile il ruolo si rifiuta, con uno compatibile si accetta
+  CHECK(f.run("CFG SET ROLE OFF") == ConsoleResult::Error && f.con.stored().role == kRoleRepeaterRx);
+  CHECK(f.run("CFG SET SHIFT 0") == ConsoleResult::Ok && f.run("CFG SET ROLE OFF") == ConsoleResult::Ok && f.con.stored().role == kRoleNormal);
+  // lo stesso per il nodo
+  CHECK(f.run("CFG SET SHIFT -10000") == ConsoleResult::Ok);
+  CHECK(f.run("CFG SET ROLE NODE") == ConsoleResult::Ok && f.run("CFG SET FREQ 433.900") == ConsoleResult::Ok);
+}
+
 int main() {
   testVolumeMigration();
   testRepeaterRole();
+  testShiftIgnoredByOtherRoles();
   testRoleNotOnTbeam();
   testTexts();
   testMonitor();

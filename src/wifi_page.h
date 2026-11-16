@@ -157,10 +157,10 @@ $('f').addEventListener('submit',async ev=>{
   if(board==='tbeam')want.gps=$('gps').value;
   if(want.role==='rpttx'){const fo=$('freqout').value.trim();const k=Math.round(parseFloat(fo)*1000);if(!/^\d{3}(\.\d{1,3})?$/.test(fo)||!(k>=430000&&k<=440000)){st('La frequenza di uscita deve essere tra 430.000 e 440.000 MHz.','err');return;}want.freqout=fo;}   // la T3 non ha il GPS: il comando non si manda
   const net=netPlan(want.role);if(net&&net.err){st(net.err,'err');return;}
-  const keys={callsign:'CALLSIGN',freq:'FREQ',freqmsg:'FREQMSG',freqrange:'FREQRANGE',freqdir:'FREQDIR',power:'POWER',volume:'VOLUME',micfloor:'MICFLOOR',profile:'PROFILE',pos:'POS',qth:'QTH',gps:'GPS',role:'ROLE',freqout:'FREQOUT'};  // il GPS e' in want solo sulla T-Beam
+  const keys={callsign:'CALLSIGN',role:'ROLE',freq:'FREQ',freqmsg:'FREQMSG',freqrange:'FREQRANGE',freqdir:'FREQDIR',power:'POWER',volume:'VOLUME',micfloor:'MICFLOOR',profile:'PROFILE',pos:'POS',qth:'QTH',gps:'GPS',freqout:'FREQOUT'};  // il GPS e' in want solo sulla T-Beam
   const texts=[];for(let i=1;i<=5;i++){const v=$('text'+i).value.trim();if(v!==''&&!/^[\x20-\x7A\x7C\x7E]+$/.test(v)){st('Il testo '+i+' ha caratteri non ammessi: solo ASCII, senza accenti.','err');return;}texts.push(v);}
   try{
-    let shk=null;if(!$('shiftdir').disabled){const sf=shiftKhz();if(sf.err){st(sf.err,'err');return;}shk=sf.k;}
+    let shk=null;if(!$('shiftdir').disabled&&want.role==='off'){const sf=shiftKhz();if(sf.err){st(sf.err,'err');return;}shk=sf.k;}
     if(shk!==null){const r0=await cmd('CFG SET SHIFT 0');if(!r0.startsWith('CFG OK')){st('Rifiutato (SHIFT): '+r0,'err');return;}}   // prima a 0: la scheda controlla che FREQ + shift resti in banda
     for(const k of Object.keys(keys)){if(want[k]===undefined)continue;const r=await cmd('CFG SET '+keys[k]+' '+want[k]);if(!r.startsWith('CFG OK')){st('Rifiutato ('+keys[k]+'): '+r,'err');return;}}
     if(shk!==null){const rs=await cmd('CFG SET SHIFT '+shk);if(!rs.startsWith('CFG OK')){st('Rifiutato (SHIFT): '+rs,'err');return;}}

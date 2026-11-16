@@ -230,8 +230,13 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   await p.click('#gennodekey');
   const newKey = await p.inputValue('#nodekey');
   check('chiave generata: 32 cifre e riga per il sysop', /^[0-9a-f]{32}$/.test(newKey) && (await p.isVisible('#regline')) && (await p.textContent('#regline')).includes(newKey) && (await p.textContent('#regline')).includes('IU5HJU'));
+  st.shift = -5000;   // lo shift della stazione normale resta salvato: il nodo non lo tocca
+  const n0 = st.cmds.length;
   await p.fill('#nodeid', '7'); await p.click('#save');
   await p.waitForFunction(() => /Salvato/.test(document.getElementById('st').textContent));
+  { const c = st.cmds.slice(n0);
+    check('nodo: nessun comando SHIFT e il ruolo prima delle frequenze', !c.some((x) => x.startsWith('CFG SET SHIFT')) && c.indexOf('CFG SET ROLE node') > 0 && c.indexOf('CFG SET ROLE node') < c.findIndex((x) => x.startsWith('CFG SET FREQ '))); }
+  st.shift = 0;
   check('nodo salvato: rete, password, reflector, id, chiave, porta, ruolo',
         st.node.ssid === 'Casa Mia' && st.node.pass === '12345678' && st.node.ip === 'iu5hju.ddns.net' && st.node.port === 5400 && st.node.peerid === 1000 && st.node.id === 7 && st.node.key === newKey && st.node.listen === 5400 && st.cfg.role === 'node');
   check('nodo salvato: identificativo e Morse mandati, niente comandi della stazione (shift, microfono, volume)',

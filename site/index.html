@@ -939,7 +939,7 @@
       sysop = { call: sy, mode: $('sysopmode').value, key: sk };
     }
     let shift = null;
-    if (!$('shiftdir').disabled) {
+    if (!$('shiftdir').disabled && (role === null || role === 'off')) {   // lo shift e' della stazione normale: ripetitore e nodo non lo toccano
       const sf = shiftFromFields();
       if (sf.err) return { err: sf.err };
       shift = sf.khz;
@@ -991,6 +991,7 @@
       const replies = [];
       replies.push(await send('CFG SET CALLSIGN ' + v.cs, /^CFG (OK|ERR)/));
       if (v.shift !== null) replies.push(await send('CFG SET SHIFT 0', /^CFG (OK|ERR)/));  // prima a 0: la scheda controlla che FREQ + shift resti in banda
+      if (v.role !== null) replies.push(await send('CFG SET ROLE ' + v.role, /^CFG (OK|ERR)/));   // prima delle frequenze: il controllo dello shift dipende dal ruolo
       replies.push(await send('CFG SET FREQ ' + v.freq, /^CFG (OK|ERR)/));
       if (v.fmsg !== null) replies.push(await send('CFG SET FREQMSG ' + v.fmsg, /^CFG (OK|ERR)/));
       if (v.frng !== null) replies.push(await send('CFG SET FREQRANGE ' + v.frng, /^CFG (OK|ERR)/));
@@ -1009,7 +1010,6 @@
         replies.push(await send('CFG SET MCWINDOW ' + v.mc.window, /^CFG (OK|ERR)/));
         for (let i = 0; i < 5; i++) replies.push(await send('CFG SET MCDEST' + (i + 1) + ' ' + (v.mc.dests[i] || 'NONE'), /^CFG (OK|ERR)/));
       }
-      if (v.role !== null) replies.push(await send('CFG SET ROLE ' + v.role, /^CFG (OK|ERR)/));
       if (v.freqout !== null) replies.push(await send('CFG SET FREQOUT ' + v.freqout, /^CFG (OK|ERR)/));
       if (v.net) {
         const O = /^CFG (OK|ERR)/;

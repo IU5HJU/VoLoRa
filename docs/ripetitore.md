@@ -70,3 +70,5 @@ Se il display della RX dice **"TX NON RISPONDE"** (o quello della TX "RX NO"), l
 - **ATTIVA**: tutto bene; "battiti/stati" è il numero di battiti (sulla TX) o di stati (sulla RX) ricevuti.
 
 Mandare le due righe (RX e TX) permette di capire da che parte è il guasto.
+
+**Lo shift non riguarda il ripetitore (16/11/2026).** Lo shift è della stazione normale: ripetitore (RX e TX) e nodo lo ignorano. Il firmware non lo controlla più contro la banda quando il ruolo non è stazione normale, e le pagine di configurazione **non mandano comandi SHIFT** né lo mostrano in quei ruoli, e mandano il ruolo **prima** delle frequenze. Prima, una RX a 440.000 MHz con uno shift rimasto dalla stazione normale rifiutava il salvataggio (`CFG ERR shift la frequenza di trasmissione uscirebbe da 430-440 MHz`). Tornando stazione normale lo shift conta di nuovo: se non sta in banda con le frequenze, `CFG SET ROLE OFF` si rifiuta e chiede `CFG SET SHIFT 0`.
