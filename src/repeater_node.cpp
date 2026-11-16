@@ -4,6 +4,8 @@
 #include <WiFi.h>
 #include <WiFiUdp.h>
 #include <esp_system.h>
+#include <Preferences.h>
+#include <driver/uart.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
@@ -14,6 +16,7 @@
 #include "repeater_config.h"
 #include "radio_lora.h"
 #include "repeater.h"
+#include "repeater_force.h"
 #include "repeater_link.h"
 #include "repeater_uplink.h"
 #include "rx_monitor.h"
@@ -27,6 +30,110 @@
 #include <ESPmDNS.h>
 
 #include "wifi_config.h"
+
+// ---- Riconoscimento della RX sul filo seriale (variante C del quinto filo) ----
+namespace {
+bool gForcedTx = false;
+}  // namespace
+
+#if defined(BOARD_TBEAM_V12)
+bool repeaterForceBegin(UiNotifier&) { return false; }
+bool repeaterRxPresent(uint32_t) { return false; }
+[[noreturn]] void repeaterForceRestart(UiNotifier& ui) {
+  (void)ui;
+  ESP.restart();
+  for (;;) delay(1000);
+}
+bool repeaterForcedTx() { return false; }
+void repeaterListenEnd() {}
+#else
+namespace {
+lcr::RxPresence gPresence;
+bool gListening = false;
+constexpr uart_port_t kListenUart = UART_NUM_2;
+
+bool forceFlag() {
+  Preferences p;
+  if (!p.begin("lcr", true)) return false;
+  const bool v = p.getBool("fz", false);
+  p.end();
+  return v;
+}
+void forceFlagSet(bool on) {
+  Preferences p;
+  if (!p.begin("lcr", false)) return;
+  if (on) p.putBool("fz", true);
+  else if (p.isKey("fz")) p.remove("fz");
+  p.end();
+}
+// Solo ricezione su IO36 con il driver IDF: la seriale Arduino (Serial2) assegnerebbe anche un pin di trasmissione, e IO2 puo' avere un pulsante.
+void listenBegin() {
+  if (gListening) return;
+  uart_config_t cfg = {};
+  cfg.baud_rate = 115200;
+  cfg.data_bits = UART_DATA_8_BITS;
+  cfg.parity = UART_PARITY_DISABLE;
+  cfg.stop_bits = UART_STOP_BITS_1;
+  cfg.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
+  if (uart_driver_install(kListenUart, 512, 0, 0, nullptr, 0) != ESP_OK) return;
+  uart_param_config(kListenUart, &cfg);
+  uart_set_pin(kListenUart, UART_PIN_NO_CHANGE, pins::kLinkRx, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+  gPresence.reset();
+  gListening = true;
+}
+void listenDrain(uint32_t nowMs) {
+  uint8_t b[64];
+  int n;
+  while ((n = uart_read_bytes(kListenUart, b, sizeof(b), 0)) > 0)
+    for (int i = 0; i < n; i++) gPresence.feed(b[i], nowMs);
+}
+}  // namespace
+
+void repeaterListenEnd() {
+  if (!gListening) return;
+  uart_driver_delete(kListenUart);
+  gListening = false;
+}
+
+bool repeaterForceBegin(UiNotifier& ui) {
+  listenBegin();
+  if (!gListening || !forceFlag()) return false;
+  ui.showMessage("ATTENDO RX", "ripetitore");
+  Serial.println("[ripetitore] la scheda era una TX forzata dalla RX: aspetto i battiti della RX (fino a 6 s)");
+  const uint32_t t0 = millis();
+  while (millis() - t0 < 6000) {
+    delay(20);
+    const uint32_t now = millis();
+    listenDrain(now);
+    if (gPresence.present(now, lcr::RxPresence::kNeededBoot)) {
+      gForcedTx = true;
+      Serial.println("[ripetitore] RX riconosciuta sul filo seriale: la scheda parte come TX del ripetitore (il ruolo salvato non cambia)");
+      return true;
+    }
+  }
+  forceFlagSet(false);  // la RX non c'e': torna come prima
+  Serial.println("[ripetitore] nessuna RX sul filo seriale: la scheda parte con il suo ruolo");
+  return false;
+}
+
+bool repeaterRxPresent(uint32_t nowMs) {
+  if (!gListening) return false;
+  listenDrain(nowMs);
+  return gPresence.present(nowMs);
+}
+
+[[noreturn]] void repeaterForceRestart(UiNotifier& ui) {
+  Serial.println("[ripetitore] RX riconosciuta sul filo seriale: la scheda si riavvia come TX del ripetitore");
+  ui.showMessage("RX RIPETITORE", "divento TX...");
+  forceFlagSet(true);
+  delay(800);
+  ESP.restart();
+  for (;;) delay(1000);
+}
+
+bool repeaterForcedTx() { return gForcedTx; }
+#endif
+
 
 namespace {
 
@@ -123,6 +230,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
 
 // ---- Scheda RX: ascolta l'ingresso, decide, manda alla TX ----
 [[noreturn]] void runRx(const lcr::Settings& settings, UiNotifier& ui, CfgHandler handler, AudioIo* audio, lcr::ICodec* codec) {
+  repeaterListenEnd();
   RadioLora radio;
   if (!radio.begin(settings)) stopWithError(ui, "radio", radio.lastError());
   // La seriale verso la TX usa GPIO36 (RX, S_VP) e GPIO2 (TX), fuori dal cablaggio normale (il microfono resta su IO34): l'altoparlante (I2S su 14 e 13) e il pulsante del
@@ -354,6 +462,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
 [[noreturn]] void runTx(const lcr::Settings& settings, UiNotifier& ui, CfgHandler handler) {
   // La radio lavora sulla frequenza di uscita al posto di quella del profilo.
   const lcr::Settings out = settings.withProfileFreqKhz(settings.outFreqKhz());
+  repeaterListenEnd();
   RadioLora radio;
   if (!radio.begin(out)) stopWithError(ui, "radio", radio.lastError());
   // Un pacchetto del Messaggio a SF12 dura circa 3,4 s e la trasmissione e' bloccante: intanto la voce dalla RX si accumula
@@ -378,6 +487,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
   lcr::TxConfig cfgNow = lcr::txConfigFrom(settings);  // quello che ha la TX: la firma va alla RX in ogni stato, la RX manda la configurazione se e' diversa
   uint32_t rxCount = 0;
   uint32_t lastHbMs = 0, lastStatusMs = 0, lastDispMs = 0;
+  if (gForcedTx) Serial.println("[ripetitore] TX forzata dalla RX (riconosciuta dal filo seriale): il ruolo salvato nella scheda non cambia");
   Serial.printf("[ripetitore] TX: uscita %.3f MHz, profilo %s, nominativo %s%s\n", static_cast<double>(out.freqMhz()), prof.name, settings.callsign,
                 mayTransmit ? "" : " (N0CALL: non trasmette)");
 
@@ -455,7 +565,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
     if (now - lastDispMs >= kDisplayMs) {
       lastDispMs = now;
       char l1[24], l2[24], l3[24], l4[24], l5[24];
-      snprintf(l1, sizeof(l1), "RIPETITORE  TX");
+      snprintf(l1, sizeof(l1), gForcedTx ? "RIPETITORE TX forz." : "RIPETITORE  TX");
       snprintf(l2, sizeof(l2), "Out %.3f MHz %s", static_cast<double>(out.freqMhz()), prof.code);
       snprintf(l3, sizeof(l3), "Voce %lu  Coda %u", static_cast<unsigned long>(sched.stats().voiceSent), static_cast<unsigned>(queue.size()));
       snprintf(l4, sizeof(l4), "Persi %lu  da RX %lu", static_cast<unsigned long>(queue.dropped()), static_cast<unsigned long>(rxCount));
@@ -581,6 +691,7 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
   size_t dgramLen = 0;
   for (;;) {
     const uint32_t now = millis();
+    if (!core.morseActive() && repeaterRxPresent(now)) repeaterForceRestart(ui);  // una RX del ripetitore e' collegata: questa scheda diventa la sua TX
     int guard = 8;
     while (guard-- > 0 && net.receive(dgram, sizeof(dgram), dgramLen)) core.onDatagram(dgram, dgramLen, now);
     core.setPublicAddress(net.publicAddress());  // l'indirizzo pubblico, per il reflector

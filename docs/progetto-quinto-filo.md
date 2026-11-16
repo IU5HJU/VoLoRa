@@ -1,6 +1,8 @@
 # Progetto: il quinto filo che forza la scheda TX del ripetitore (16/11/2026)
 
-**Stato: progetto, niente è ancora nel firmware.** Nasce dalle prove del 16/11/2026: aggiornare o salvare le impostazioni su una scheda con l'altra collegata blocca una delle due, e la TX si doveva configurare a parte con il cavo USB (ruolo "scheda TX"). Con il quinto filo la TX non ha bisogno di nessuna configurazione preventiva.
+**Stato (16/11/2026): scelta la variante C (rilevamento sulla seriale, nessun filo in più), realizzata nel firmware: vedi "La TX si forza da sola" in `ripetitore.md`. Le varianti A e B restano come alternative non realizzate.** Il resto del documento è il progetto iniziale.
+
+**(Stato iniziale: progetto, niente era ancora nel firmware.)** Nasce dalle prove del 16/11/2026: aggiornare o salvare le impostazioni su una scheda con l'altra collegata blocca una delle due, e la TX si doveva configurare a parte con il cavo USB (ruolo "scheda TX"). Con il quinto filo la TX non ha bisogno di nessuna configurazione preventiva.
 
 ## Idea
 

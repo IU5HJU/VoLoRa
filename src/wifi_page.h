@@ -57,7 +57,7 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <div id="txbox" hidden>
 <label for="freqout">Frequenza di uscita (MHz)</label><input id="freqout" inputmode="decimal">
 <p class="hint">Da 430.000 a 440.000. Sulla scheda TX sono anche la frequenza dei messaggi.</p>
-<p class="hint" data-modes="rptrx"><strong>Le impostazioni della TX si danno qui, sulla RX</strong>: uscita, potenza, identificativo, Morse, nominativo e chiave del sysop. Dopo il salvataggio la RX le manda da sola alla TX attraverso i fili; la TX le salva e si riavvia. Sulla TX si imposta una volta sola, con il cavo USB, il ruolo "scheda TX".</p>
+<p class="hint" data-modes="rptrx"><strong>Le impostazioni della TX si danno qui, sulla RX</strong>: uscita, potenza, identificativo, Morse, nominativo e chiave del sysop. Dopo il salvataggio la RX le manda da sola alla TX attraverso i fili; la TX le salva e si riavvia. La scheda TX non si imposta: basta caricarvi lo stesso firmware e collegarla alla RX con i quattro fili (5 V, massa, seriale incrociata); riconosce la RX dai suoi battiti e si forza TX da sola, senza cambiare il ruolo salvato.</p>
 </div>
 <div data-modes="rpttx rptrx node">
 <label for="idint">Identificativo ogni (minuti, 1-10)</label><input id="idint" type="number" min="1" max="10">

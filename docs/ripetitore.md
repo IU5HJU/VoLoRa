@@ -77,7 +77,7 @@ Mandare le due righe (RX e TX) permette di capire da che parte è il guasto.
 
 **Perché.** Salvare le impostazioni sulla TX con il cavo USB, con le due schede collegate, bloccava una delle due (prova del 16/11/2026). Ora la TX **non si configura più a parte**: si dà tutto sulla RX (sito o pagina della scheda) e la RX lo manda alla TX.
 
-**Cosa viaggia:** frequenza di uscita (obbligatoria sulla RX per partire), potenza (della TX), profilo, identificativo ogni N minuti e Morse, nominativo, chiave del sysop. Il resto (ruolo, frequenze del profilo, Wi-Fi, impostazioni della stazione) resta com'è sulla TX. **Sulla TX con il cavo USB si imposta una volta sola il ruolo "scheda TX"** (e, se serve, nient'altro).
+**Cosa viaggia:** frequenza di uscita (obbligatoria sulla RX per partire), potenza (della TX), profilo, identificativo ogni N minuti e Morse, nominativo, chiave del sysop. Il resto (ruolo, frequenze del profilo, Wi-Fi, impostazioni della stazione) resta com'è sulla TX. **La scheda TX non si imposta**: vedi la sezione "La TX si forza da sola" qui sotto (dal 16/11/2026).
 
 **Come funziona** (`repeater_config.h`, provato sul PC in `test_repeater_config`):
 1. Ogni secondo la TX manda alla RX il suo **stato**; dal 16/11/2026 lo stato porta anche la **firma** (FNV-1a a 32 bit) della configurazione che la TX ha adesso.
@@ -94,3 +94,13 @@ Mandare le due righe (RX e TX) permette di capire da che parte è il guasto.
 **Sulla seriale USB** (RX): `configurazione mandata alla TX (tentativo n di 5): uscita ... potenza ... identificativo ...`, `la TX risponde alla configurazione: ...`, `la TX ha la configurazione giusta`. (TX): `configurazione dalla RX applicata e salvata (riavvio fra poco)` / `gia' uguale` / `NON VALIDA`.
 
 **Da provare sulla scheda vera:** il riavvio della TX dopo la configurazione e il ritorno al collegamento; la RX che non riprova all'infinito; la potenza cambiata dal sysop che non viene sovrascritta. Aggiornare **prima la TX**, poi la RX (una TX con il firmware di prima ignora il frame e non cambia).
+
+## La TX si forza da sola, senza ruolo e senza quinto filo (16/11/2026)
+
+**Procedura:** carica **lo stesso firmware** sulle due schede (una alla volta, staccate dai fili), imposta il ruolo **"scheda RX"** (e tutti i parametri) **solo sulla RX**, collega i **quattro fili** (5 V, massa, seriale TX e RX incrociate: IO2 di una con IO36 dell'altra) e accendi. La scheda che non è la RX resta in ruolo normale (o nodo): ascolta passivamente IO36, riconosce i **battiti** della RX (un frame al secondo con il CRC giusto) e dopo circa 3 secondi **si riavvia come TX del ripetitore**. La RX le manda poi la configurazione (sezione precedente).
+
+- **Il ruolo salvato non cambia.** Se scolleghi la RX la scheda torna com'era al riavvio. `CFG GET` mostra ancora `role=off` (o `node`): la scheda è TX solo mentre i battiti arrivano. Sul display compare "RIPETITORE TX forz." e la seriale scrive `TX forzata dalla RX`.
+- **Come ricorda di esserlo:** un flag `fz` nella memoria dice "la volta scorsa ero forzata": al riavvio aspetta la RX fino a 6 s (2 battiti), poi parte TX. Se la RX non c'è, cancella il flag e parte con il suo ruolo.
+- **Ascolto passivo:** solo la ricezione di IO36 (con il driver IDF; **IO2 non si tocca**). Il rumore a vuoto non forza niente: servono frame con il CRC giusto e un battito di tipo "battito RX"; una pausa di oltre 50 ms nel frame fa scartare quanto stava arrivando (un `0x7E` casuale non nasconde i battiti veri). Lo stato e i pacchetti che manda una TX non contano.
+- **Quando non si forza:** durante una trasmissione o una ricezione, con il menu aperto o il PTT premuto; la RX e la TX già configurate non ascoltano. **T-Beam:** niente (il ripetitore è solo T3).
+- **Provato sul PC** (`test_repeater_force`); l'ascolto vero della seriale è codice per la scheda: **da provare**: TX appena uscita dalla scatola, TX accesa prima e dopo la RX, RX riavviata, RX scollegata, aggiornamento di una scheda con l'altra collegata.

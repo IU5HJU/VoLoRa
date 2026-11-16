@@ -161,7 +161,17 @@ void setup() {
     WifiConfig::setBootRequest(false);
     runWifiConfigMode();
   }
-  if (settings.role != lcr::kRoleNormal) {  // scheda RX o TX del ripetitore: non ritorna
+  // Una scheda collegata a una RX del ripetitore (i fili della seriale) si forza TX: il ruolo salvato non cambia (docs/progetto-quinto-filo.md, variante C).
+  // La RX e la TX gia' configurate non ascoltano. Se la scheda era stata forzata aspetta la RX per qualche secondo all'accensione.
+  // Il ruolo forzato vale per una copia delle impostazioni: quelle in uso e salvate (CFG GET, reboot=) restano com'erano.
+  static lcr::Settings forcedTx;
+  const lcr::Settings* roleSettings = &settings;
+  if (settings.role != lcr::kRoleRepeaterRx && settings.role != lcr::kRoleRepeaterTx && repeaterForceBegin(ui)) {
+    forcedTx = settings;
+    forcedTx.role = lcr::kRoleRepeaterTx;
+    roleSettings = &forcedTx;
+  }
+  if (roleSettings->role != lcr::kRoleNormal) {  // scheda RX o TX del ripetitore: non ritorna
     // Scheda RX con l'altoparlante di monitor (CFG SET MONITOR ON): solo uscita audio, per ascoltare la voce che riceve.
     AudioIo* monAudio = nullptr;
     lcr::ICodec* monCodec = nullptr;
@@ -175,7 +185,7 @@ void setup() {
         Serial.println("[ripetitore] ERRORE: audio o Codec2 del monitor non partiti: si prosegue senza altoparlante");
       }
     }
-    runRepeaterRole(settings, ui, [](const char* line, char* reply, size_t cap) {
+    runRepeaterRole(*roleSettings, ui, [](const char* line, char* reply, size_t cap) {
       return console->handleLine(line, reply, cap) == lcr::ConsoleResult::Reboot;
     }, monAudio, monCodec);
   }
@@ -862,6 +872,8 @@ void loop() {
     volEvent = lcr::ButtonGesture::Event::None;
   }
   const bool nodeIdle = node->state() == lcr::VoiceNode::State::Idle && node->recPhase() == lcr::VoiceNode::RecPhase::None;
+  // Una RX del ripetitore sul filo seriale: questa scheda diventa la sua TX (solo a scheda ferma, senza menu aperti e con il PTT rilasciato)
+  if (nodeIdle && !raw && !menu->isOpen() && !textPicker.isOpen() && !mcPicker.isOpen() && repeaterRxPresent(now)) repeaterForceRestart(ui);
   lcr::MenuFlow::Actions act;  // niente di fatto finche' e' aperta la scelta del testo (i tasti vanno a lei)
   if (textPicker.isOpen()) {
     const lcr::TextPicker::Actions pa = textPicker.update(pttEvent, volEvent, nodeIdle, now);
