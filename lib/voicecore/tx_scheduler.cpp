@@ -144,12 +144,16 @@ void TxScheduler::morseStep(uint32_t nowMs) {
     return;
   }
   const MorseBurst& b = morseBursts_[morseIdx_++];
-  // ogni elemento e' un pacchetto con la nota al centro: la portante non si ferma mai
-  if (b.bytes == 0 ? !carrier(b.ms) : !sendMorseBurst(radio_, b, radioTestPattern(morseReq_))) {
+  if (!b.tone) {  // pausa: la portante continua
+    if (!carrier(b.ms)) endMorse(true);
+    else morseNextMs_ = nowMs;
+    return;
+  }
+  if (!radio_.fskSend(radioTestPattern(morseReq_), b.bytes)) {
     endMorse(true);
     return;
   }
-  if (b.bytes != 0 && control_) control_->noteTx(nowMs, static_cast<uint32_t>(burstAirMs(b.bytes, morseKbps_) + 0.5f), false);
+  if (control_) control_->noteTx(nowMs, static_cast<uint32_t>(burstAirMs(b.bytes, morseKbps_) + 0.5f), false);
   morseNextMs_ = nowMs;
 }
 

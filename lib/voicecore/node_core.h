@@ -72,7 +72,7 @@ class NodeCore {
   void setIdentification(const char* callsign, uint32_t intervalMs, uint32_t freqKhz);
   // Dopo il testo, il nominativo in Morse a tono in FM stretta (docs/studio-identificativo-fm.md): 'wpm' parole al minuto, 'toneHz', 'devKhz'.
   // Un pacchetto di rete in coda lo interrompe tra un elemento e l'altro (l'identificativo in testo e' gia' uscito).
-  void setMorseId(bool on, int wpm = 20, float toneHz = 700.0f, float devKhz = 2.5f);
+  void setMorseId(bool on, int wpm = 15, float toneHz = 700.0f, float devKhz = 2.5f);
   bool morseActive() const { return morseActive_; }
 
   bool linkUp(uint32_t nowMs) const { return link_.linkUp(nowMs); }

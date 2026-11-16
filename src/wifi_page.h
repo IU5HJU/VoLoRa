@@ -62,7 +62,7 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <label for="idint">Identificativo ogni (minuti, 1-10)</label><input id="idint" type="number" min="1" max="10">
 <p class="hint">Ogni quanti minuti la scheda trasmette il proprio identificativo (il nominativo qui sopra, in modo testo: le stazioni lo vedono passare senza suoni). Di base 10.</p>
 <label for="idmorse">Identificativo anche in Morse (FM)</label><select id="idmorse"><option value="on">Sì</option><option value="off">No</option></select>
-<p class="hint">Dopo il testo la scheda manda il nominativo in Morse con un tono in FM stretta (20 parole al minuto, 700 Hz): chi non ha le schede LoRa lo sente con un ricevitore FM qualsiasi. Dura circa 5 secondi.</p>
+<p class="hint">Dopo il testo la scheda manda il nominativo in Morse con un tono in FM stretta (15 parole al minuto, 700 Hz): chi non ha le schede LoRa lo sente con un ricevitore FM qualsiasi. Dura circa 6 secondi.</p>
 </div>
 <label for="profile">Profilo</label>
 <select id="profile"><option value="std">Standard (Codec2 3200)</option><option value="rng">Range (Codec2 1200, collegamenti difficili)</option><option value="msg">Messaggio</option><option value="dir">Diretta (Codec2 3200)</option></select>

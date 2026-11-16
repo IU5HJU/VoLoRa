@@ -110,18 +110,6 @@ bool RadioLora::fskSend(uint8_t pattern, uint16_t bytes) {
   return state == RADIOLIB_ERR_NONE;
 }
 
-bool RadioLora::fskSendBuf(const uint8_t* data, uint16_t bytes) {
-  if (!data || bytes == 0 || bytes > 64) return false;
-  int state = radio_->fixedPacketLengthMode(static_cast<uint8_t>(bytes));
-  if (state == RADIOLIB_ERR_NONE) {
-    txActive_ = true;
-    state = radio_->transmit(const_cast<uint8_t*>(data), bytes);  // bloccante: dura bytes * 8 / bit rate
-    txActive_ = false;
-  }
-  if (state != RADIOLIB_ERR_NONE) lastError_ = state;
-  return state == RADIOLIB_ERR_NONE;
-}
-
 void RadioLora::fskEnd() {
   radio_->standby();
   initLora();

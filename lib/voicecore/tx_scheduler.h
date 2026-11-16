@@ -76,7 +76,7 @@ class TxScheduler {
   // Identificativo in Morse con tono in FM stretta (docs/studio-identificativo-fm.md), subito dopo il testo dell'identificativo: il
   // nominativo in Morse a 'wpm' parole al minuto, tono 'toneHz', deviazione 'devKhz'. Chi non ha le schede LoRa lo sente con un
   // ricevitore FM qualsiasi. La voce lo interrompe tra un elemento e l'altro (l'identificativo in testo e' gia' uscito).
-  void setMorseId(bool on, int wpm = 20, float toneHz = 700.0f, float devKhz = 2.5f);
+  void setMorseId(bool on, int wpm = 15, float toneHz = 700.0f, float devKhz = 2.5f);
   // Comandi del sysop: lo stato di servizio (spento, limiti di trasmissione) e la chiave con cui si firmano le risposte.
   void setControl(RepeaterControl* control, const uint8_t key[kSysopKeyBytes]);
   // Un comando gia' verificato dalla RX: lo esegue e trasmette la risposta firmata (anche se questo comando ha appena spento la TX);

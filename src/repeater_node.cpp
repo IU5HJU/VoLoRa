@@ -289,7 +289,7 @@ void sendFrame(uint8_t type, const uint8_t* data, size_t len) {
   lcr::MessageStore* store = new lcr::MessageStore;
   lcr::TxScheduler sched(radio, *store, prof, lcr::profileFor(lcr::kProfileMessage), out.profileFreqKhz(), static_cast<uint16_t>(esp_random()));
   sched.setBeaconInterval(static_cast<uint32_t>(settings.idIntervalMin) * 60000u);  // identificativo periodico (testo, senza bip sulle stazioni)
-  sched.setMorseId(settings.idMorse);  // dopo il testo, il nominativo in Morse a tono in FM (20 wpm, 700 Hz, +-2,5 kHz)
+  sched.setMorseId(settings.idMorse);  // dopo il testo, il nominativo in Morse a tono in FM (15 wpm, 700 Hz, +-2,5 kHz)
   sched.setCallsign(settings.callsign);  // annuncio di occupato (modo 6) prima e dopo i messaggi
   sched.setMessagesEnabled(!prof.message);  // se la voce e' gia' il profilo Messaggio non c'e' nulla da alternare
   lcr::RepeaterControl control(lcr::kMinPowerDbm, lcr::kMaxPowerDbm, settings.powerDbm);
@@ -459,7 +459,7 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
   memcpy(lc.key, settings.nodeKey, sizeof(lc.key));
   static lcr::NodeCore core(radio, net, lc, esp_random(), []() -> uint32_t { return esp_random(); }, lcr::profileFor(settings.profile).codecMode);
   core.setIdentification(settings.callsign, static_cast<uint32_t>(settings.idIntervalMin) * 60000u, settings.profileFreqKhz());  // IDINT, come il ripetitore
-  core.setMorseId(settings.idMorse);  // IDMORSE: dopo il testo, il nominativo in Morse a tono in FM (20 wpm, 700 Hz, +-2,5 kHz)
+  core.setMorseId(settings.idMorse);  // IDMORSE: dopo il testo, il nominativo in Morse a tono in FM (15 wpm, 700 Hz, +-2,5 kHz)
   UsbConsole usb(handler);
 
   Serial.printf("[nodo] id %lu, rete \"%s\", altro nodo %s:%u (id %lu), ascolto sulla porta %u, radio %.3f MHz profilo %s%s\n",

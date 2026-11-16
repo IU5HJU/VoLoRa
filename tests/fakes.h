@@ -73,22 +73,7 @@ class Radio : public lcr::IRadio {
   }
   bool fskSend(uint8_t pattern, uint16_t bytes) override {
     if (bytes == 0 || bytes > lcr::kFskMaxPacketBytes) return false;  // come la radio vera (RadioLib: RADIOLIB_ERR_PACKET_TOO_LONG oltre 64 byte)
-    fskBursts.push_back({pattern, bytes, 0, pattern == 0xAA ? bytes : uint16_t(0)});
-    return inFsk;
-  }
-  bool fskSendBuf(const uint8_t* data, uint16_t bytes) override {
-    if (bytes == 0 || bytes > lcr::kFskMaxPacketBytes) return false;
-    FskBurst b{0xFF, bytes, 0, 0};
-    bool seen = false;
-    for (uint16_t i = 0; i < bytes; i++) {
-      if (data[i] == 0xAA) {
-        b.pattern = 0xAA;
-        if (!seen) b.lead = i;
-        seen = true;
-        b.body++;
-      }
-    }
-    fskBursts.push_back(b);
+    fskBursts.push_back({pattern, bytes});
     return inFsk;
   }
   void fskEnd() override {
@@ -98,8 +83,6 @@ class Radio : public lcr::IRadio {
   struct FskBurst {
     uint8_t pattern;
     uint16_t bytes;
-    uint16_t lead;  // byte di portante prima del tono (solo fskSendBuf)
-    uint16_t body;  // byte di tono
   };
   std::vector<FskBurst> fskBursts;
   bool inFsk = false, failFsk = false;

@@ -37,7 +37,6 @@ class RadioLora : public lcr::IRadio {
   //   mhz: frequenza centrale; kbps: bit rate; devKhz: deviazione; ramp: 0..15 (registro PaRamp) o -1; shape: 0, 3, 5, 10 (gaussiano).
   bool fskBegin(float mhz, float kbps, float devKhz, int ramp, int shape) override;
   bool fskSend(uint8_t pattern, uint16_t bytes) override;
-  bool fskSendBuf(const uint8_t* data, uint16_t bytes) override;
   void fskEnd() override;
 
   // Nome del chip radio (per la riga di avvio e CFG VERSION).
