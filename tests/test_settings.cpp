@@ -230,7 +230,9 @@ static void testShift() {
   CHECK(f.run("CFG GET") == ConsoleResult::Ok && strstr(f.reply, "reboot=1") != nullptr);  // vale dal riavvio
   // con lo shift attivo una frequenza che porterebbe fuori banda la trasmissione si rifiuta, con un messaggio che dice come uscirne
   CHECK(f.run("CFG SET FREQ 433.900") == ConsoleResult::Error && strstr(f.reply, "SHIFT 0") != nullptr && f.con.stored().freqKhz == 430000);
-  CHECK(f.run("CFG SET FREQMSG 435.000") == ConsoleResult::Error && f.run("CFG SET FREQRANGE 435.000") == ConsoleResult::Error);
+  CHECK(f.run("CFG SET FREQRANGE 435.000") == ConsoleResult::Error);  // 445: fuori banda con lo shift
+  CHECK(f.run("CFG SET FREQMSG 435.000") == ConsoleResult::Ok);       // il Messaggio non ha shift: 435 e' una frequenza valida
+  CHECK(f.run("CFG SET FREQMSG 430.000") == ConsoleResult::Ok);
   // si toglie lo shift e poi si cambia frequenza
   CHECK(f.run("CFG SET SHIFT 0") == ConsoleResult::Ok && strcmp(f.reply, "CFG OK shift=0") == 0);
   CHECK(f.run("CFG SET FREQ 433.900") == ConsoleResult::Ok);
@@ -273,7 +275,7 @@ static void testFrequencyFollows() {
   CHECK(f.run("CFG SET FREQMSG 431.500") == ConsoleResult::Ok && f.run("CFG SET FREQ 430.000") == ConsoleResult::Ok && f.con.stored().freqMsgKhz == 430000);
   // fuori banda: rifiutata e le altre non cambiano
   CHECK(f.run("CFG SET FREQ 450.000") == ConsoleResult::Error && f.con.stored().freqMsgKhz == 430000);
-  // con lo shift la frequenza che porterebbe la trasmissione fuori banda si rifiuta anche se il Messaggio la seguirebbe
+  // con lo shift la frequenza che porterebbe la trasmissione fuori banda si rifiuta
   CHECK(f.run("CFG SET SHIFT +10000") == ConsoleResult::Ok && f.run("CFG SET FREQ 431.000") == ConsoleResult::Error && f.con.stored().freqKhz == 430000);
 }
 
@@ -295,10 +297,12 @@ static void testShiftFormats() {
   CHECK(f.run("CFG SET FREQRANGE 430.000") == ConsoleResult::Ok && f.run("CFG SET SHIFT +10000") == ConsoleResult::Ok);
   // lo shift non cambia il resto: il CFG GET principale non lo contiene (resta corto), la frequenza di ascolto e' quella di prima
   CHECK(f.run("CFG GET") == ConsoleResult::Ok && strstr(f.reply, "shift") == nullptr && strstr(f.reply, "freq=430.000") != nullptr);
-  // txFreqKhz segue il profilo in uso: Range e Messaggio usano la loro frequenza
+  // txFreqKhz segue il profilo in uso: il Range usa la sua frequenza piu' lo shift, il Messaggio e la Diretta nessuno shift (si trasmette dove si ascolta)
   Settings s = f.con.stored();
   s.profile = kProfileMessage; s.freqMsgKhz = 430000;
-  CHECK(s.txFreqKhz() == 440000);
+  CHECK(s.txFreqKhz() == 430000 && s.effectiveShiftKhz() == 0);
+  s.profile = kProfileDirect; s.freqDirKhz = 431000;
+  CHECK(s.txFreqKhz() == 431000);
   s.profile = kProfileRange; s.freqRangeKhz = 431000;
   CHECK(s.txFreqKhz() == 441000);  // (fuori banda: un valore salvato cosi' non e' valido)
   CHECK(!isValidSettings(s));
@@ -306,7 +310,9 @@ static void testShiftFormats() {
   Settings t = kDefaults;
   t.freqKhz = 440000; t.freqMsgKhz = 440000; t.freqRangeKhz = 0; t.shiftKhz = -10000;
   CHECK(isValidSettings(t) && t.txFreqKhz() == 430000);
-  t.freqMsgKhz = 439000;  // 429 MHz: fuori banda
+  t.freqMsgKhz = 439000;  // il Messaggio non ha shift: resta valida
+  CHECK(isValidSettings(t));
+  t.freqRangeKhz = 439000;  // 429 MHz: fuori banda
   CHECK(!isValidSettings(t));
 }
 

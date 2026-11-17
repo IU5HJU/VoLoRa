@@ -110,12 +110,12 @@ static bool validMcDests(const Settings& s) {
   return true;
 }
 
-// Lo shift e' libero da -10000 a +10000 kHz (da 0 a 10 MHz, in positivo o negativo, come l'offset di un ripetitore sulle radio) e, se c'e', porta in banda (430-440 MHz) tutte le frequenze dei profili.
+// Lo shift e' libero da -10000 a +10000 kHz (da 0 a 10 MHz, in positivo o negativo, come l'offset di un ripetitore sulle radio) e, se c'e', porta in banda (430-440 MHz) le frequenze dei profili che lo usano (Standard e Range; non la Diretta e il Messaggio).
 static bool validShift(const Settings& s) {
   if (s.shiftKhz == 0) return true;
   if (s.shiftKhz > kMaxShiftKhz || s.shiftKhz < -kMaxShiftKhz) return false;
   if (s.role != kRoleNormal) return true;  // ripetitore e nodo ignorano lo shift (txShiftKhz_ vale solo per la stazione normale): quello di prima non deve bloccarli
-  const int64_t f[3] = {s.freqKhz, s.freqMsgKhz, s.rangeFreqKhz()};
+  const int64_t f[2] = {s.freqKhz, s.rangeFreqKhz()};  // la frequenza dei messaggi e della Diretta non hanno shift
   for (int64_t v : f) {
     const int64_t t = v + s.shiftKhz;
     if (t < static_cast<int64_t>(kMinFreqKhz) || t > static_cast<int64_t>(kMaxFreqKhz)) return false;

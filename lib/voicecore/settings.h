@@ -206,7 +206,9 @@ struct Settings {
   }
   // Frequenza di trasmissione della stazione: quella del profilo in uso piu' lo shift (con shift 0 e' la stessa di ascolto).
   // Nel profilo Diretta lo shift non si applica (simplex): trasmette sulla stessa frequenza con cui ascolta.
-  int32_t effectiveShiftKhz() const { return profile == kProfileDirect ? 0 : shiftKhz; }
+  // Nel profilo Messaggio lo shift non si applica: i messaggi si mandano e si ricevono sulla frequenza di uscita del ripetitore (la TX li ascolta li'),
+  // quindi si trasmette dove si ascolta, come nella Diretta (17/11/2026).
+  int32_t effectiveShiftKhz() const { return (profile == kProfileDirect || profile == kProfileMessage) ? 0 : shiftKhz; }
   uint32_t txFreqKhz() const { return static_cast<uint32_t>(static_cast<int64_t>(profileFreqKhz()) + effectiveShiftKhz()); }
   float freqMhz() const { return static_cast<float>(profileFreqKhz()) / 1000.0f; }
 };
