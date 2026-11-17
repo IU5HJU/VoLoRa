@@ -194,8 +194,11 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   check('rilettura: ruolo TX e riquadro visibile', (await p.inputValue('#role')) === 'rpttx' && (await p.isVisible('#txbox')) && (await p.inputValue('#idint')) === '3');
   await p.selectOption('#role', 'rptrx');
   check('scheda RX: compaiono il monitor e le impostazioni della TX (uscita, identificativo, potenza della TX)', (await p.isVisible('#rxbox')) && (await p.isVisible('#txbox')) && (await p.isVisible('#idint')) && (await p.textContent('#powerlabel')) === 'Potenza della scheda TX (dBm)');
+  check('scheda RX: compaiono nominativo e chiave del sysop, non il modo Sysop ne\' l\'elenco dei comandi', (await p.isVisible('#sysop')) && (await p.isVisible('#sysopkey')) && (await p.isVisible('#genkey')) && (await p.isHidden('#sysopmode')) && (await p.isHidden('#sysopbox')));
+  await p.fill('#sysop', 'iu5hju'); await p.fill('#sysopkey', '000102030405060708090a0b0c0d0e0f');
   await p.selectOption('#monitor', 'on'); await p.click('#save');
   await p.waitForFunction(() => /Salvato/.test(document.getElementById('st').textContent));
+  check('RX salvata: nominativo e chiave del sysop', st.sysop.call === 'IU5HJU' && st.sysop.keyHex === '000102030405060708090a0b0c0d0e0f' && st.sysop.key === 'set');
   check('RX salvata: ruolo e monitor', st.cfg.role === 'rptrx' && st.monitor === 'on' && st.cmds.includes('CFG SET MONITOR on'));
   await p.selectOption('#role', 'off'); await p.click('#save');
   await p.waitForFunction(() => /Salvato/.test(document.getElementById('st').textContent));

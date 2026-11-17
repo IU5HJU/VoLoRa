@@ -113,3 +113,5 @@ Le due schede del ripetitore sono collegate con il filo dei **5 V** oltre a mass
 - **Mai due cavi USB insieme**: le due alimentazioni (due PC o due caricatori) si incontrerebbero attraverso il filo dei 5 V, e il pin `5V` della scheda è dopo il regolatore, a valle dell'USB.
 - Se servono **tutte e due le USB insieme** (per esempio per leggere i due log), si scollega prima il filo dei 5 V e si lasciano massa e seriale.
 - Per aggiornare il firmware basta **un solo cavo USB alla volta**, anche con le due schede collegate fra loro.
+
+**Sysop sulla RX (17/11/2026).** Nel sito e nella pagina della scheda la **RX** mostra il nominativo del sysop e la chiave (con "Genera una chiave nuova"): è la RX che verifica i comandi firmati e li gira alla TX, che riceve la chiave con la configurazione. Il **modo Sysop** e l'elenco dei comandi restano solo sulla stazione normale (la scheda del sysop). Prima la sezione non compariva con il ruolo RX.

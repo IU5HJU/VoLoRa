@@ -903,6 +903,7 @@ async function scenario(name, fn, opts = {}) {
     check('RX: nominativo, profilo, frequenze, potenza (della TX), volume, monitor, uscita e identificativo (li manda alla TX); niente posizione, MeshCom, testi, sysop, microfono',
           v.callsign && v.profile && v.freq && v.power && v.volume && v.monitor && v.freqout && v.idint && v.idmorse && !v.micfloor && !v.qthlat && !v.gps && !v.mcdest1 && !v.sysopmode && !v.text1, JSON.stringify(v));
     check('RX: la frequenza e\' quella di ingresso e la potenza e\' quella della TX', (await p.textContent('#freqlabel')) === 'Frequenza di ingresso (MHz)' && (await p.textContent('#powerlabel')) === 'Potenza della scheda TX (dBm)');
+    check('RX: il sysop (nominativo, chiave) c\'e\', il modo Sysop no', (await p.isVisible('#sysop')) && (await p.isVisible('#sysopkey')) && !(await p.isVisible('#sysopmode')));
     await p.selectOption('#role', 'rpttx');
     v = await vis(all);
     check('TX: una sola frequenza (quella di uscita) e identificativo; niente frequenza del profilo, altre frequenze, volume, monitor, microfono, posizione, MeshCom, testi, sysop',

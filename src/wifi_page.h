@@ -98,14 +98,6 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <label for="mcdest3">Destinatario 3</label><input id="mcdest3" maxlength="15">
 <label for="mcdest4">Destinatario 4</label><input id="mcdest4" maxlength="15">
 <label for="mcdest5">Destinatario 5</label><input id="mcdest5" maxlength="15">
-<h2>Modo Sysop</h2>
-<p class="hint">Per chi gestisce un ripetitore. Con il <strong>modo Sysop</strong> acceso il menu della scheda (volume lungo) mostra <strong>Comandi Sysop</strong> al posto di Invia testo: scegli il comando (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA) e la scheda lo trasmette firmato al ripetitore. Resta acceso finché non lo spegni. Il nominativo e la chiave vanno impostati uguali sul ripetitore (schede RX e TX) e sulla scheda del sysop; la chiave non si rilegge mai.</p>
-<label for="sysopmode">Modo Sysop</label><select id="sysopmode"><option value="off">Spento</option><option value="on">Acceso</option></select>
-<label for="sysop">Nominativo del sysop</label><input id="sysop" maxlength="8" placeholder="IU5HJU">
-<label for="sysopkey">Chiave (32 cifre esadecimali)</label><input id="sysopkey" maxlength="32" autocomplete="off" spellcheck="false">
-<p class="hint" id="sysopkeyhint">Chiave non impostata.</p>
-<button type="button" class="sec" id="genkey">Genera una chiave nuova</button>
-<div id="sysopbox" hidden><h2>Comandi Sysop</h2><p class="hint">L'elenco che compare sulla scheda al posto dei testi predefiniti.</p><ol id="sysoplist"><li>STATO</li><li>SPEGNI</li><li>SPEGNI 15 MIN</li><li>SPEGNI 60 MIN</li><li>RIACCENDI</li><li>RIAVVIA</li><li>IDENTIFICA</li><li>POTENZA 17 dBm</li><li>POTENZA 14 dBm</li><li>POTENZA 10 dBm</li></ol></div>
 <div id="textsbox">
 <h2>Testi predefiniti (SMS)</h2>
 <p class="hint">Segnaposti: %C il tuo nominativo, %M il modo del profilo voce (S Standard, R Range, M Messaggio), %F la sua frequenza. Fino a 5 testi da 150 caratteri al massimo (solo ASCII, senza accenti e senza le parentesi graffe), da inviare dal menu della scheda: <strong>Invia testo</strong>. Lascia vuoto un posto per non usarlo. Valgono subito.</p>
@@ -115,6 +107,17 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <label for="text4">Testo 4</label><input id="text4" maxlength="150">
 <label for="text5">Testo 5</label><input id="text5" maxlength="150">
 </div>
+</div>
+<div data-modes="off rptrx">
+<h2>Sysop del ripetitore</h2>
+<p class="hint" data-modes="rptrx">La RX verifica i comandi firmati del sysop (nominativo e chiave) e li gira alla TX; la chiave arriva alla TX dalla RX insieme al resto della configurazione. Il <strong>modo Sysop</strong> (menu &quot;Comandi Sysop&quot;) si accende solo sulla scheda del sysop. Il nominativo e la chiave vanno uguali sulla RX e sulla scheda del sysop; la chiave non si rilegge mai.</p>
+<p class="hint" data-modes="off">Per chi gestisce un ripetitore. Con il <strong>modo Sysop</strong> acceso il menu della scheda (volume lungo) mostra <strong>Comandi Sysop</strong> al posto di Invia testo: scegli il comando (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA) e la scheda lo trasmette firmato al ripetitore. Resta acceso finché non lo spegni. Il nominativo e la chiave vanno impostati uguali sul ripetitore (schede RX e TX) e sulla scheda del sysop; la chiave non si rilegge mai.</p>
+<div data-modes="off"><label for="sysopmode">Modo Sysop</label><select id="sysopmode"><option value="off">Spento</option><option value="on">Acceso</option></select></div>
+<label for="sysop">Nominativo del sysop</label><input id="sysop" maxlength="8" placeholder="IU5HJU">
+<label for="sysopkey">Chiave (32 cifre esadecimali)</label><input id="sysopkey" maxlength="32" autocomplete="off" spellcheck="false">
+<p class="hint" id="sysopkeyhint">Chiave non impostata.</p>
+<button type="button" class="sec" id="genkey">Genera una chiave nuova</button>
+<div id="sysopbox" data-modes="off" hidden><h2>Comandi Sysop</h2><p class="hint">L'elenco che compare sulla scheda al posto dei testi predefiniti.</p><ol id="sysoplist"><li>STATO</li><li>SPEGNI</li><li>SPEGNI 15 MIN</li><li>SPEGNI 60 MIN</li><li>RIACCENDI</li><li>RIAVVIA</li><li>IDENTIFICA</li><li>POTENZA 17 dBm</li><li>POTENZA 14 dBm</li><li>POTENZA 10 dBm</li></ol></div>
 </div>
 <button type="submit" id="save">Salva</button>
 <button type="button" class="sec" id="reboot">Riavvia la scheda</button>
