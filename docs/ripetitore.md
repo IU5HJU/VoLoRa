@@ -104,3 +104,12 @@ Mandare le due righe (RX e TX) permette di capire da che parte è il guasto.
 - **Ascolto passivo:** solo la ricezione di IO36 (con il driver IDF; **IO2 non si tocca**). Il rumore a vuoto non forza niente: servono frame con il CRC giusto e un battito di tipo "battito RX"; una pausa di oltre 50 ms nel frame fa scartare quanto stava arrivando (un `0x7E` casuale non nasconde i battiti veri). Lo stato e i pacchetti che manda una TX non contano.
 - **Quando non si forza:** durante una trasmissione o una ricezione, con il menu aperto o il PTT premuto; la RX e la TX già configurate non ascoltano. **T-Beam:** niente (il ripetitore è solo T3).
 - **Provato sul PC** (`test_repeater_force`); l'ascolto vero della seriale è codice per la scheda: **da provare**: TX appena uscita dalla scatola, TX accesa prima e dopo la RX, RX riavviata, RX scollegata, aggiornamento di una scheda con l'altra collegata.
+
+## Alimentazione e cavi USB (16/11/2026)
+
+Le due schede del ripetitore sono collegate con il filo dei **5 V** oltre a massa e seriale: **si alimentano a vicenda**. Con il filo dei 5 V collegato:
+
+- **Un solo cavo USB alla volta**, sulla RX **o** sulla TX, come serve (log, aggiornamento, `CFG`): l'altra scheda prende l'alimentazione dal filo. Collegare l'USB alla TX da sola con i 5 V attaccati **va bene**.
+- **Mai due cavi USB insieme**: le due alimentazioni (due PC o due caricatori) si incontrerebbero attraverso il filo dei 5 V, e il pin `5V` della scheda è dopo il regolatore, a valle dell'USB.
+- Se servono **tutte e due le USB insieme** (per esempio per leggere i due log), si scollega prima il filo dei 5 V e si lasciano massa e seriale.
+- Per aggiornare il firmware: una scheda alla volta, con **un solo cavo USB**; il collegamento della seriale non deve essere rimosso se non si vuole, ma la scheda collegata all'USB deve essere l'unica (vedi anche il progetto della forzatura della TX).
