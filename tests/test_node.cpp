@@ -814,6 +814,71 @@ static void testSysopReplyShown() {
   CHECK(note.sysopReplies.size() == 1 && note.sysopRejected.size() == 1);
 }
 
+static void testSysopReplyBetweenCopies() {
+  // Il ripetitore risponde alla prima copia del comando mentre il nodo sta ancora trasmettendo la seconda: la risposta deve essere letta e la seconda
+  // copia non parte (prima la risposta restava nella radio, cancellata dalla seconda copia, e il sysop non vedeva niente).
+  fake::Air air;
+  uint32_t clock = 0;
+  air.clock = &clock;
+  NodeConfig cfg = Station::makeCfg("IU5HJU");
+  cfg.sysopKey = SYSKEY;
+  fake::Radio radio(air, 1);
+  fake::Codec codec(kFrameBytes);
+  fake::Mic mic(clock);
+  fake::Speaker spk;
+  fake::Notifier note;
+  VoiceNode node(cfg, radio, codec, mic, spk, note);
+  CHECK(node.sendSingle(makeSysopCommand(0x0042, "IU5HJU", SYSKEY, {kSysopStatus, 0, 9}), clock));
+  uint8_t buf[kMaxWireBytes];
+  bool replied = false;
+  for (int i = 0; i < 400; i++, clock += 10) {
+    node.tick(clock);
+    if (!replied && air.sent[1] == 1 && clock >= 100) {  // 100 ms dopo la prima copia risponde il ripetitore
+      replied = true;
+      const size_t n = encodePacket(makeSysopReply(0x0043, "IR5XXX", SYSKEY, {kSysopStatus, kSysopOk, 9, 0x00020000}), buf, sizeof(buf));
+      air.inbox[1].push_back(std::vector<uint8_t>(buf, buf + n));
+    }
+  }
+  CHECK(replied && air.sent[1] == 1);  // una sola copia: la risposta ha chiuso la trasmissione
+  CHECK(note.sysopReplies.size() == 1 && note.sysopReplies[0].callsign == "IR5XXX" && note.sysopReplies[0].r.counter == 9);
+  CHECK(node.state() == VoiceNode::State::Idle);
+  // senza risposta le copie sono due, come prima
+  fake::Air air2;
+  uint32_t clock2 = 0;
+  air2.clock = &clock2;
+  fake::Radio radio2(air2, 1);
+  fake::Mic mic2(clock2);
+  fake::Notifier note2;
+  fake::Codec codec2(kFrameBytes);
+  fake::Speaker spk2;
+  VoiceNode node2(cfg, radio2, codec2, mic2, spk2, note2);
+  CHECK(node2.sendSingle(makeSysopCommand(0x0044, "IU5HJU", SYSKEY, {kSysopStatus, 0, 10}), clock2));
+  for (int i = 0; i < 400; i++, clock2 += 10) node2.tick(clock2);
+  CHECK(air2.sent[1] == 2 && node2.state() == VoiceNode::State::Idle);
+  // una risposta con la firma sbagliata fra le due copie non ferma niente e viene segnalata
+  fake::Air air3;
+  uint32_t clock3 = 0;
+  air3.clock = &clock3;
+  fake::Radio radio3(air3, 1);
+  fake::Mic mic3(clock3);
+  fake::Notifier note3;
+  fake::Codec codec3(kFrameBytes);
+  fake::Speaker spk3;
+  VoiceNode node3(cfg, radio3, codec3, mic3, spk3, note3);
+  CHECK(node3.sendSingle(makeSysopCommand(0x0045, "IU5HJU", SYSKEY, {kSysopStatus, 0, 11}), clock3));
+  uint8_t wrong[16] = {0};
+  bool sent3 = false;
+  for (int i = 0; i < 400; i++, clock3 += 10) {
+    node3.tick(clock3);
+    if (!sent3 && air3.sent[1] == 1) {
+      sent3 = true;
+      const size_t n = encodePacket(makeSysopReply(0x0046, "IR5XXX", wrong, {kSysopStatus, kSysopOk, 11, 0}), buf, sizeof(buf));
+      air3.inbox[1].push_back(std::vector<uint8_t>(buf, buf + n));
+    }
+  }
+  CHECK(air3.sent[1] == 2 && note3.sysopReplies.empty() && note3.sysopRejected.size() == 1);
+}
+
 static void testBeaconSilent() {
   Sim s;
   s.run(100);
@@ -1331,6 +1396,7 @@ int main() {
   testViaRepeater();
   testSysopStation();
   testSysopReplyShown();
+  testSysopReplyBetweenCopies();
   testTextMessage();
   testTextRules();
   testVoiceMessageStopAndReplace();

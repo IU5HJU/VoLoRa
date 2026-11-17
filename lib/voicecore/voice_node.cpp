@@ -271,6 +271,7 @@ void VoiceNode::tick(uint32_t nowMs) {
 
 void VoiceNode::txTick(uint32_t nowMs) {
   if (textTx_) {  // testo: due copie con la stessa sessione, a distanza di kTextRepeatGapMs
+    if (textSysop_ && !justSent_ && textCopies_ == 1) pollSysopReply();  // fra le due copie la radio e' in ascolto: la risposta del ripetitore
     if (justSent_) {
       justSent_ = false;
       nextSendMs_ = nowMs + kTextRepeatGapMs + cfg_.extraGapMs;
@@ -284,6 +285,7 @@ void VoiceNode::txTick(uint32_t nowMs) {
     } else {
       justSent_ = false;
       textTx_ = false;
+      textSysop_ = false;
       radio_.startReceive();
       state_ = State::Idle;
       notify_.txEnded(false);
@@ -559,18 +561,34 @@ void VoiceNode::handleText(const Packet& p) {
 // Annuncio di un ripetitore occupato: si ricorda per quanto tempo e si avvisa il display. Due copie: la seconda si scarta.
 // Un annuncio con 0 secondi libera subito.
 // Risposta di un ripetitore a un nostro comando: si mostra solo se la firma torna con la chiave del sysop.
-void VoiceNode::handleSysopReply(const Packet& p) {
-  if (p.payloadLen != kSysopReplyBytes || !(p.payload[0] & kSysopReplyBit)) return;  // un comando (di un altro sysop), non una risposta
+bool VoiceNode::handleSysopReply(const Packet& p) {
+  if (p.payloadLen != kSysopReplyBytes || !(p.payload[0] & kSysopReplyBit)) return false;  // un comando (di un altro sysop), non una risposta
   SysopReply r;
   if (!cfg_.sysopKey) {
     notify_.sysopReplyRejected(p.callsign, true);
-    return;
+    return false;
   }
   if (!parseSysopReply(p, cfg_.sysopKey, r)) {
     notify_.sysopReplyRejected(p.callsign, false);
-    return;
+    return false;
   }
   notify_.sysopReply(p.callsign, r);
+  return true;
+}
+
+// Un comando del sysop si manda due volte a distanza di kTextRepeatGapMs. Il ripetitore risponde alla prima copia (la seconda e' un doppione e non
+// riceve risposta): la risposta arriva mentre il nodo e' ancora "in trasmissione" e prima si perdeva (nessuno leggeva la radio e la seconda copia
+// la cancellava). Ora la radio si legge fra le due copie; con una risposta valida la seconda copia non parte (17/11/2026).
+void VoiceNode::pollSysopReply() {
+  uint8_t buf[kMaxRxBytes];
+  for (int i = 0; i < 4; i++) {
+    int rssi = 0;
+    const size_t n = radio_.receive(buf, sizeof(buf), &rssi);
+    if (n == 0) break;
+    Packet p;
+    if (!decodePacket(buf, n, p) || p.mode != kModeSysop) continue;  // il resto si ignora: il nodo sta trasmettendo
+    if (handleSysopReply(p)) textCopies_ = 0;
+  }
 }
 
 void VoiceNode::handleBusy(const Packet& p, uint32_t nowMs) {
@@ -677,6 +695,7 @@ bool VoiceNode::sendSingle(const Packet& pk, uint32_t nowMs) {
   playing_ = false;
   textOpen_ = false;
   textTx_ = true;
+  textSysop_ = (p.mode == kModeSysop);
   textCopies_ = 2;
   justSent_ = false;
   nextSendMs_ = nowMs;

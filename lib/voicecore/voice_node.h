@@ -145,7 +145,8 @@ class VoiceNode {
   void meshRemember(uint32_t id, uint32_t nowMs);
   void drainToInbox(uint32_t nowMs);
   void handleText(const Packet& p);
-  void handleSysopReply(const Packet& p);
+  bool handleSysopReply(const Packet& p);  // true se e' una risposta valida (firma giusta) e l'abbiamo mostrata
+  void pollSysopReply();                   // tra le due copie di un comando del sysop: la risposta del ripetitore arriva li'
   void handleBusy(const Packet& p, uint32_t nowMs);
   void handleBeacon(const Packet& p);
   void clearBusy();
@@ -263,6 +264,7 @@ class VoiceNode {
   bool lastTextValid_ = false;  // ultimo testo ricevuto (per scartare la seconda copia)
   uint16_t lastTextSession_ = 0;
   char lastTextCall_[kMaxCallsign + 1] = {0};
+  bool textSysop_ = false;   // il testo in corso e' un comando del sysop: se la risposta arriva fra le due copie, la seconda non serve
   bool textTx_ = false;      // trasmissione di un testo in corso
   uint8_t textWire_[kMaxRxBytes];
   size_t textWireLen_ = 0;
