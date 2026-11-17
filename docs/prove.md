@@ -445,3 +445,12 @@ Due T3 V1.6.1 (SX1278), firmware `bc5ef80` sulla RX, collegate con la seriale in
 ### 17/11/2026, casa, IU5HJU (il blocco delle schede del ripetitore: chiuso)
 
 Il blocco di una delle due schede del 16/11/2026 (aggiornando o salvando le impostazioni con l'altra collegata; il tasto RST della TX che non la riavviava) **era un filo collegato a un pin sbagliato**, non un problema della seriale, dell'alimentazione o del firmware. Segnalazione chiusa. Restano valide la configurazione della TX dalla RX e la forzatura della TX dalla seriale; la regola "un solo cavo USB alla volta con il filo dei 5 V" in `ripetitore.md` resta come prudenza.
+
+### 17/11/2026, casa, IU5HJU (la TX forzata torna normale senza la RX)
+
+Stessa T3 della prova del 16/11 (ruolo `off` salvato, `role=off` in `CFG GET`, firmware `bc5ef80`), forzata TX dalla RX. Seriali scollegate, poi riavvio della TX:
+- **Prima:** `TX: seriale con la RX ATTIVA ... byte ricevuti 540, frame validi 60 (battiti/stati 60), CRC errati 0`.
+- **Fili tolti:** i byte si fermano a 570 e i frame validi a 63; ogni 5 s `seriale con la RX SILENZIOSA ... frame validi ma non piu' recenti`.
+- **Dopo il riavvio:** `la scheda era una TX forzata dalla RX: aspetto i battiti della RX (fino a 6 s)`, poi `nessuna RX sul filo seriale: la scheda parte con il suo ruolo`, poi l'avvio normale (`IR5XXX pronto, profilo Standard, 430.000 MHz, 2 dBm, SF7 BW250`).
+- **Esito:** il ritorno al modo normale funziona, e il ruolo salvato non era stato toccato. La stessa scheda ha ancora in memoria le impostazioni del nodo di prove precedenti (rete, reflector, id 2): non interferiscono con la forzatura.
+- **Da provare ancora:** ricollegare i fili e vedere la scheda riforzarsi entro circa 3 s; la configurazione con parametri diversi dalla RX.
