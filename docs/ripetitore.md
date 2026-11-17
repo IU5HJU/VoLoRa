@@ -133,3 +133,13 @@ Il **nodo** (T3 o T-Beam in ruolo `node`) accetta i comandi firmati del sysop su
 - **Provato sul PC** (`test_node_core`: risposta firmata, doppione, contatore basso con una sola risposta ogni 10 s, nominativo o firma sbagliati, potenza e fuori limite, riavvio, IDENTIFICA, SPEGNI con la voce di rete scartata e RIACCENDI, N0CALL, contatore salvato). **Da provare sulla scheda.**
 
 **Lo shift non vale nel profilo Messaggio (17/11/2026).** Le stazioni in Messaggio trasmettono e ascoltano sulla frequenza di uscita del ripetitore (la TX li ascolta lì); con uno shift attivo la stazione trasmetteva invece sull'ingresso. Ora il Messaggio, come la Diretta, **trasmette dove ascolta**, senza shift; la frequenza del Messaggio non è più controllata contro la banda con lo shift (resta 430-440 MHz). Lo Standard e il Range usano lo shift come prima. Cambiato anche `CFG SET FREQMSG`: con uno shift attivo accetta ora ogni valore in banda.
+
+## Il ripetitore si configura dal Wi-Fi di casa (17/11/2026)
+
+La scheda **RX** del ripetitore, quando è collegata al Wi-Fi di casa (rete, reflector, id e chiave impostati: serve per parlare con il reflector), apre sulla rete di casa **la stessa pagina di gestione del nodo**: `http://<indirizzo-IP>/` oppure `http://volora-XXXX.local/`, utente `volora`, password scritta sulla seriale all'avvio (`gestione dalla rete di casa: ...`, anche con `CFG GET NODE` solo per le altre impostazioni). Da lì si cambia tutto quello che si cambia da USB (nominativo, frequenze, ruolo, Wi-Fi, sysop, identificativo...) e con il pulsante in fondo si riavvia la RX.
+
+- **La TX non ha Wi-Fi e non ha una pagina sua**: si configura **dalla RX**. Dopo il riavvio la RX manda alla TX uscita, potenza, profilo, identificativo, Morse, nominativo e chiave del sysop (sezione "La RX configura la TX"), e la TX si riavvia da sola.
+- **Con la RX giù il ripetitore è comunque fuori servizio**: la pagina non serve in quel caso (serve un intervento sul posto).
+- **Senza rete configurata** (ripetitore solo in radio) la RX non apre nessun Wi-Fi: la prima configurazione e il Wi-Fi si impostano da USB.
+- **Solo la RX**: la pagina non c'è sulla TX. Il testo in alto della pagina, dalla rete di casa, dice che la RX manda da sola alla TX le impostazioni.
+- **Da provare sulla scheda.**

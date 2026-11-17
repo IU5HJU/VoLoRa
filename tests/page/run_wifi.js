@@ -122,6 +122,8 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   check('testo del Wi-Fi della scheda', /trasmissione è disattivata/.test(await p.textContent('#intro')));
   check('testo dalla rete di casa', await p.evaluate(() => /rete di casa/.test(introFor('192.168.1.50') || '') && /continua a lavorare/.test(introFor('volora-7cf0.local') || '') && introFor('192.168.4.1') === null));
 
+  check('testo dalla rete di casa dipende dal ruolo (nodo: finestra di 3 minuti; RX: configura la TX; stazione: nessuno dei due)', await p.evaluate(() => /3 minuti/.test(introFor('192.168.1.50', 'node')) && !/3 minuti/.test(introFor('192.168.1.50', 'rptrx')) &&
+        /manda da sola alla TX/.test(introFor('192.168.1.50', 'rptrx')) && !/3 minuti|alla TX/.test(introFor('192.168.1.50', 'off'))));
   check('testi letti', (await p.inputValue('#text1')) === '%C QRV su VoLoRa modo %M %F' && (await p.inputValue('#text5')) === '73 e buona giornata');
   await p.fill('#text2', 'Sono QRV su 433.775, chiamami'); await p.fill('#text4', '');
   check('valori MeshCom letti', (await p.inputValue('#mcfreq')) === '433.175' && (await p.inputValue('#mcssid')) === '99' && (await p.inputValue('#mcwindow')) === '300' && (await p.inputValue('#mcdest1')) === '22251' && (await p.inputValue('#mcdest3')) === '*');

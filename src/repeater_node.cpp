@@ -289,8 +289,26 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
                   static_cast<unsigned long>(settings.peerId), static_cast<unsigned long>(settings.nodeId));
   }
 
+  static WifiConfig lan;  // pagina di gestione sulla rete di casa (come il nodo), a Wi-Fi connesso: la RX configura anche la TX
+  bool lanStarted = false;
+
   for (;;) {
     const uint32_t now = millis();
+
+    // 0. rete di casa: appena il Wi-Fi e' connesso parte la pagina di configurazione, con utente e password (la password si legge sulla seriale)
+    if (netOn && !lanStarted && WiFi.status() == WL_CONNECTED) {
+      lanStarted = true;
+      char pw[16];
+      if (lan.beginLan(handler, pw, sizeof(pw))) {
+        uint8_t mac[6] = {0};
+        WiFi.macAddress(mac);
+        char host[24];
+        snprintf(host, sizeof(host), "volora-%02x%02x", mac[4], mac[5]);
+        if (MDNS.begin(host)) MDNS.addService("http", "tcp", 80);
+        Serial.printf("[ripetitore] RX: gestione dalla rete di casa: http://%s/ oppure http://%s.local/ (utente volora, password %s)\n", WiFi.localIP().toString().c_str(), host, pw);
+      }
+    }
+    if (lanStarted && lan.loop()) restartNow(ui);
 
     // 1. radio: un pacchetto con CRC valido
     uint8_t buf[lcr::kMaxWireBytes + 8];
