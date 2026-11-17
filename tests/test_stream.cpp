@@ -180,6 +180,54 @@ static void testEndLostTimesOut() {
   CHECK(rx.finished());
 }
 
+
+static void testLonelyParity() {
+  // Chi si sintonizza quando restano solo gli ultimi pacchetti (END e parita' del gruppo parziale) non deve suonare la parita' come audio
+  // (era un borbottio di 12 frame con 3 byte di intestazione davanti: stazione che rilascia il PTT mentre il ripetitore sta ancora finendo).
+  TxSession tx("IR5XXX", 0x2345, true, kModeCodec2_3200);
+  std::vector<Packet> pk;
+  tx.begin();
+  for (int i = 1; i <= 48; i++) {
+    uint8_t f[16];
+    memset(f, 0x10 + i, sizeof(f));
+    CHECK(tx.pushFrame(f));
+    Packet p;
+    while (tx.popPacket(p)) pk.push_back(p);
+  }
+  tx.finish();
+  Packet p;
+  while (tx.popPacket(p)) pk.push_back(p);
+  CHECK(pk.size() == 8 && pk[7].isParity() && pk[7].seq == 7 && pk[7].payloadLen == 195);  // la parita' in fondo sta alla posizione 7, non a un multiplo di 5
+  // solo la parita' finale: niente ricezione, niente frame
+  RxStream a;
+  CHECK(!a.onPacket(pk[7], 1000) && !a.active() && !a.finished());
+  CHECK(a.nextFrame(2000).kind == RxStream::Kind::Wait);
+  // END e parita' finale: nessun frame (la END e' vuota) e nessun audio dalla parita'
+  RxStream b;
+  CHECK(b.onPacket(pk[6], 1000) && b.onPacket(pk[7], 1100));
+  int frames = 0;
+  for (int k = 0; k < 100; k++) {
+    const RxStream::Out o = b.nextFrame(100000 + k * 40);
+    if (o.kind == RxStream::Kind::Frame) frames++;
+    if (o.kind == RxStream::Kind::End) break;
+  }
+  CHECK(frames == 0);
+  // un ultimo pacchetto di dati e la parita' finale: solo i 12 frame veri, non 24
+  RxStream c;
+  CHECK(c.onPacket(pk[5], 1000) && c.onPacket(pk[6], 1100) && c.onPacket(pk[7], 1200));
+  frames = 0;
+  int first = -1;
+  for (int k = 0; k < 100; k++) {
+    const RxStream::Out o = c.nextFrame(100000 + k * 40);
+    if (o.kind == RxStream::Kind::Frame) {
+      if (first < 0) first = o.frame[0];
+      frames++;
+    }
+    if (o.kind == RxStream::Kind::End) break;
+  }
+  CHECK(frames == 12 && first == 0x10 + 37);
+}
+
 int main() {
   testTxLayout();
   testTxFrameBoundaryAndNoFec();
@@ -190,5 +238,6 @@ int main() {
   testLateJoin();
   testSessionHandling();
   testEndLostTimesOut();
+  testLonelyParity();
   TEST_MAIN_END();
 }

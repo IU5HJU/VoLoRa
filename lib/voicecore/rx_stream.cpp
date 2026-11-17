@@ -37,6 +37,11 @@ bool RxStream::onPacket(const Packet& p, uint32_t nowMs) {
   }
   if (phase_ == Phase::Done) return false;  // ritardatari della trasmissione conclusa
 
+  // Una parita' da sola non e' una trasmissione: chi si sintonizza quando restano solo gli ultimi pacchetti (per esempio chi ha appena rilasciato il PTT
+  // e sente il ripetitore finire) la riceve per prima. Non deve aprire una ricezione: l'ultima parita' di un gruppo parziale non sta a una posizione fissa
+  // e, se si suonasse come audio, sarebbe un borbottio di dati non decodificabili (16/11/2026).
+  if (phase_ == Phase::Idle && p.isParity()) return false;
+
   if (phase_ == Phase::Idle) {
     session_ = p.session;
     phase_ = Phase::Buffering;
@@ -162,6 +167,11 @@ RxStream::Out RxStream::nextFrame(uint32_t nowMs) {
       continue;
     }
     const Slot& s = slots_[cursor_];
+    if (s.have && s.pkt.isParity()) {  // una parita' non e' audio, anche se non sta alla posizione fissa del gruppo (gruppo parziale in fondo)
+      cursor_++;
+      curFrame_ = 0;
+      continue;
+    }
     if (s.have) {
       const size_t n = s.pkt.payloadLen / fb_;
       if (curFrame_ < n) {
