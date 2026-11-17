@@ -97,6 +97,7 @@ bool RadioLora::fskBegin(float mhz, float kbps, float devKhz, int ramp, int shap
 }
 
 bool RadioLora::fskSend(uint8_t pattern, uint16_t bytes) {
+  txCount_++;
   static uint8_t buf[255];
   if (bytes == 0 || bytes > sizeof(buf)) return false;
   memset(buf, pattern, bytes);
@@ -166,6 +167,7 @@ bool RadioLora::channelBusy() {
 }
 
 bool RadioLora::send(const uint8_t* data, size_t len) {
+  txCount_++;
   // Shift (via ripetitore): si trasmette su FREQ + shift e subito dopo si torna ad ascoltare su FREQ. Non durante l'escursione MeshCom.
   const bool shifted = txShiftKhz_ != 0 && !meshcomOn_;
   if (shifted) {

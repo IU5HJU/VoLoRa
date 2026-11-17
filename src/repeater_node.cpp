@@ -329,7 +329,11 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
             sendFrame(lcr::kLinkControlStale, d, sizeof(d));
             Serial.printf("[ripetitore] comando di %s con contatore basso (ultimo %lu)\n", p.callsign, static_cast<unsigned long>(last));
           } else if (v != lcr::SysopAuth::Verdict::NotCommand && v != lcr::SysopAuth::Verdict::Replay) {
-            Serial.printf("[ripetitore] comando rifiutato da %s (motivo %d)\n", p.callsign, static_cast<int>(v));
+            const char* why = v == lcr::SysopAuth::Verdict::NoKey          ? "la RX non ha nominativo o chiave del sysop (CFG SET SYSOP / SYSOPKEY)"
+                              : v == lcr::SysopAuth::Verdict::WrongCallsign ? "il nominativo di chi trasmette non e' quello del sysop impostato sulla RX (CFG SET SYSOP)"
+                              : v == lcr::SysopAuth::Verdict::BadSignature  ? "firma errata: la chiave del sysop su questa scheda e' diversa da quella di chi trasmette"
+                                                                            : "motivo sconosciuto";
+            Serial.printf("[ripetitore] comando rifiutato da %s (sysop impostato: %s): %s. La RX non risponde mai.\n", p.callsign, settings.sysopCall[0] ? settings.sysopCall : "nessuno", why);
           }
           continue;  // un comando non si ripete e non e' voce
         }
@@ -351,6 +355,14 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
           discarded++;
         }
       }
+    }
+
+    // La scheda RX non trasmette mai sulla radio (ne' sulla frequenza su cui ascolta, ne' su altre): le risposte ai comandi del sysop le manda la TX sull'uscita.
+    // Il contatore delle trasmissioni della radio lo prova: deve restare a 0.
+    static uint32_t lastTxChkMs = 0;
+    if (now - lastTxChkMs >= 30000) {
+      lastTxChkMs = now;
+      Serial.printf("[ripetitore] RX: trasmissioni radio della scheda RX %lu (devono essere 0)%s\n", static_cast<unsigned long>(radio.txCount()), radio.txCount() ? " ERRORE: la RX ha trasmesso" : "");
     }
 
     // 1a. rete: i pacchetti del reflector vanno alla TX per essere trasmessi sull'uscita

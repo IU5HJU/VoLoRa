@@ -115,3 +115,7 @@ Le due schede del ripetitore sono collegate con il filo dei **5 V** oltre a mass
 - Per aggiornare il firmware basta **un solo cavo USB alla volta**, anche con le due schede collegate fra loro.
 
 **Sysop sulla RX (17/11/2026).** Nel sito e nella pagina della scheda la **RX** mostra il nominativo del sysop e la chiave (con "Genera una chiave nuova"): è la RX che verifica i comandi firmati e li gira alla TX, che riceve la chiave con la configurazione. Il **modo Sysop** e l'elenco dei comandi restano solo sulla stazione normale (la scheda del sysop). Prima la sezione non compariva con il ruolo RX.
+
+**La RX non trasmette mai (17/11/2026).** La scheda RX usa la radio solo per ascoltare l'ingresso: nel suo codice (`runRx`) la radio fa solo `begin` e `receive`, e le risposte ai comandi del sysop le manda **la TX** sulla frequenza di uscita (`TxScheduler::onControl`). Per provarlo a ogni avvio e ogni 30 s la RX scrive `trasmissioni radio della scheda RX N (devono essere 0)`: se è maggiore di 0 stampa anche `ERRORE`. Un comando rifiutato (nominativo diverso da quello del sysop, firma sbagliata, nessuna chiave) viene scartato in silenzio sulla radio e scritto sulla seriale con il motivo in chiaro.
+
+**Il nominativo di chi trasmette il comando deve essere quello del sysop impostato sulla RX** (`CFG SET SYSOP`), non quello del ripetitore: una stazione con un altro nominativo (per esempio una seconda scheda dello stesso operatore con un altro nominativo) viene rifiutata come `WrongCallsign`.

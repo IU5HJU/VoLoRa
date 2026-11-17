@@ -55,6 +55,7 @@ class RadioLora : public lcr::IRadio {
   // Diagnostica della ricezione, azzerata da resetRxStats(): quanto tempo passa tra l'arrivo di un
   // pacchetto (interrupt della radio) e la sua lettura nel ciclo principale. Se supera la pausa
   // tra i pacchetti del trasmettitore, il pacchetto successivo puo' sovrascrivere quello non ancora letto.
+  uint32_t txCount() const { return txCount_; }  // trasmissioni fatte da questa radio (la scheda RX del ripetitore deve restare a 0)
   uint32_t rxPackets() const { return rxPackets_; }
   uint32_t rxCrcErrors() const { return rxCrcErrors_; }
   uint32_t rxMaxDelayMs() const { return rxMaxDelayUs_ / 1000; }
@@ -83,6 +84,7 @@ class RadioLora : public lcr::IRadio {
   float lastSnr_ = 0;
   int lastError_ = 0;
   uint32_t rxPackets_ = 0;
+  uint32_t txCount_ = 0;
   uint32_t rxCrcErrors_ = 0;
   uint32_t rxMaxDelayUs_ = 0;
   uint32_t rxOverwritten_ = 0;
