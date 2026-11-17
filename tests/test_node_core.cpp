@@ -468,6 +468,140 @@ static void testMorseId() {
   CHECK(p.b.air.sent[0] == 1 && p.b.radio.fskBegins == 0);
 }
 
+// ---- Comandi del sysop via radio: il nodo si comanda come un ripetitore (17/11/2026) ----
+static const uint8_t NKEY[16] = {7, 7, 7, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+
+static void injectSysop(Side& s, const char* callsign, const uint8_t* key, SysopCommand c, uint16_t session = 0x0100) {
+  uint8_t wire[kMaxWireBytes];
+  const size_t n = encodePacket(makeSysopCommand(session, callsign, key, c), wire, sizeof(wire));
+  s.air.inbox[0].push_back(Bytes(wire, wire + n));
+}
+
+static bool lastReply(Side& s, size_t from, SysopReply& r) {
+  for (size_t i = s.air.log[0].size(); i > from; i--) {
+    Packet p;
+    if (decodePacket(s.air.log[0][i - 1].data(), s.air.log[0][i - 1].size(), p) && p.mode == kModeSysop && parseSysopReply(p, NKEY, r)) return true;
+  }
+  return false;
+}
+
+static void testSysopCommands() {
+  Rig r;
+  r.a.core->setIdentification("IR5NOD", 0, 433900);
+  r.a.core->setSysop("IU5HJU", NKEY, 0, 10);
+  CHECK(r.a.core->sysopOn() && !r.a.core->txOff(0));
+  NodeCore::SysopEvents ev;
+  SysopReply rep;
+  // STATO: risposta firmata con il nominativo del nodo, contatore da salvare, niente verso la rete
+  size_t before = r.a.air.log[0].size();
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopStatus, 0, 1});
+  r.run(50);
+  CHECK(lastReply(r.a, before, rep) && rep.code == kSysopStatus && rep.result == kSysopOk && rep.counter == 1 && (rep.data >> 16 & 0xFF) == 10);
+  Packet pk;
+  CHECK(decodePacket(r.a.air.log[0].back().data(), r.a.air.log[0].back().size(), pk) && strcmp(pk.callsign, "IR5NOD") == 0);
+  CHECK(r.a.core->takeSysopEvents(ev) && ev.counter && ev.counterValue == 1 && ev.power == -1 && !ev.restart && !r.a.core->takeSysopEvents(ev));
+  CHECK(r.a.core->stats().sysopCommands == 1 && r.a.core->stats().sysopReplies == 1 && r.a.core->stats().toNet == 0 && r.b.core->stats().fromNet == 0);
+  // lo stesso comando ripetuto (la seconda copia): doppione, niente risposta, niente evento
+  before = r.a.air.log[0].size();
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopStatus, 0, 1});
+  r.run(50);
+  CHECK(r.a.air.log[0].size() == before && !r.a.core->takeSysopEvents(ev));
+  // contatore basso: la risposta dice l'ultimo accettato (una sola ogni 10 s)
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopStatus, 0, 0});
+  r.run(50);
+  CHECK(lastReply(r.a, before, rep) && rep.result == kSysopCounterLow && rep.counter == 1);
+  before = r.a.air.log[0].size();
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopStatus, 0, 0});
+  r.run(50);
+  CHECK(r.a.air.log[0].size() == before);
+  r.run(10000);
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopStatus, 0, 0});
+  r.run(50);
+  CHECK(r.a.air.log[0].size() == before + 1);
+  // nominativo diverso dal sysop o firma sbagliata: scartati, niente risposta
+  before = r.a.air.log[0].size();
+  const uint8_t other[16] = {0};
+  injectSysop(r.a, "IZ0XXX", NKEY, {kSysopStatus, 0, 2});
+  injectSysop(r.a, "IU5HJU", other, {kSysopStatus, 0, 2});
+  r.run(50);
+  CHECK(r.a.air.log[0].size() == before && r.a.core->stats().sysopRejected == 2 && !r.a.core->takeSysopEvents(ev));
+  // POTENZA 14: applicata alla radio, da salvare; fuori limite: rifiutata
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopPower, 14, 2});
+  r.run(50);
+  CHECK(lastReply(r.a, before, rep) && rep.code == kSysopPower && rep.result == kSysopOk);
+  CHECK(r.a.radio.powers.size() == 1 && r.a.radio.powers[0] == 14 && r.a.core->takeSysopEvents(ev) && ev.power == 14 && ev.counterValue == 2);
+  before = r.a.air.log[0].size();
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopPower, 30, 3});
+  r.run(50);
+  CHECK(lastReply(r.a, before, rep) && rep.result == kSysopBadParam && r.a.radio.powers.size() == 1);
+  r.a.core->takeSysopEvents(ev);
+  // RIAVVIA: risposta e richiesta di riavvio
+  before = r.a.air.log[0].size();
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopRestart, 0, 4});
+  r.run(50);
+  CHECK(lastReply(r.a, before, rep) && rep.code == kSysopRestart && r.a.core->takeSysopEvents(ev) && ev.restart);
+  // IDENTIFICA: dopo la risposta esce subito l'identificativo del nodo
+  before = r.a.air.log[0].size();
+  const uint32_t beacons0 = r.a.core->stats().beacons;
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopIdentify, 0, 5});
+  r.run(50);
+  CHECK(lastReply(r.a, before, rep) && rep.code == kSysopIdentify && r.a.core->stats().beacons == beacons0 + 1);
+  r.a.core->takeSysopEvents(ev);
+  // SPEGNI: la risposta esce, poi il nodo non trasmette piu' (voce dalla rete scartata) finche' non arriva RIACCENDI
+  before = r.a.air.log[0].size();
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopOff, 0, 6});
+  r.run(50);
+  CHECK(lastReply(r.a, before, rep) && rep.code == kSysopOff && rep.result == kSysopOk && r.a.core->txOff(r.t));
+  r.run(200);  // collegamento in rete attivo
+  const uint32_t tx0 = r.a.core->stats().transmitted;
+  for (const Packet& m : makeMessage(0x77, 3)) {
+    uint8_t wire[kMaxWireBytes];
+    const size_t n = encodePacket(m, wire, sizeof(wire));
+    r.b.air.inbox[0].push_back(Bytes(wire, wire + n));
+  }
+  r.run(3000);
+  CHECK(r.a.core->stats().transmitted == tx0);  // spento: non trasmette (scarta come senza nominativo)
+  // RIACCENDI arriva anche a nodo spento (la RX ascolta sempre) e la risposta esce
+  before = r.a.air.log[0].size();
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopOn, 0, 7});
+  r.run(50);
+  CHECK(lastReply(r.a, before, rep) && rep.code == kSysopOn && !r.a.core->txOff(r.t));
+  r.a.core->takeSysopEvents(ev);
+  for (const Packet& m : makeMessage(0x78, 3)) {  // acceso di nuovo: la voce dalla rete si trasmette
+    uint8_t wire[kMaxWireBytes];
+    const size_t n = encodePacket(m, wire, sizeof(wire));
+    r.b.air.inbox[0].push_back(Bytes(wire, wire + n));
+  }
+  r.run(3000);
+  CHECK(r.a.core->stats().transmitted > tx0);
+  // N0CALL (mayTransmit falso): il comando e' eseguito ma non si risponde
+  r.txA = false;
+  before = r.a.air.log[0].size();
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopStatus, 0, 8});
+  r.run(50);
+  CHECK(r.a.air.log[0].size() == before && r.a.core->takeSysopEvents(ev) && ev.counterValue == 8);
+}
+
+static void testSysopOffByDefault() {
+  Rig r;
+  r.a.core->setIdentification("IR5NOD", 0, 433900);
+  // senza setSysop (nessuna chiave o nessun nominativo del sysop) i comandi si ignorano e non vanno in rete
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopStatus, 0, 1});
+  r.run(50);
+  NodeCore::SysopEvents ev;
+  CHECK(!r.a.core->sysopOn() && r.a.air.log[0].empty() && !r.a.core->takeSysopEvents(ev) && r.a.core->stats().toNet == 0);
+  r.a.core->setSysop("", NKEY, 0, 10);
+  CHECK(!r.a.core->sysopOn());
+  // l'ultimo contatore accettato (salvato) vale dopo un riavvio: un comando vecchio e' un doppione
+  r.a.core->setSysop("IU5HJU", NKEY, 5, 10);
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopStatus, 0, 5});
+  r.run(50);
+  CHECK(r.a.air.log[0].empty());
+  injectSysop(r.a, "IU5HJU", NKEY, {kSysopStatus, 0, 6});
+  r.run(50);
+  CHECK(r.a.air.log[0].size() == 1);
+}
+
 int main() {
   testLinkComesUp();
   testVoiceAcrossTheNet();
@@ -485,5 +619,7 @@ int main() {
   testIdentification();
   testIdentificationWaitsForQuiet();
   testMorseId();
+  testSysopCommands();
+  testSysopOffByDefault();
   TEST_MAIN_END();
 }

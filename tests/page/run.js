@@ -508,6 +508,7 @@ async function scenario(name, fn, opts = {}) {
     await p.selectOption('#role', 'node');
     check('nodo: solo il profilo Standard e' + "'" + ' selezionabile (gli altri sono nascosti e disabilitati)', (await p.inputValue('#profile')) === 'std' &&
           await p.$$eval('#profile option', (os) => os.every((o) => o.value === 'std' ? !o.disabled && !o.hidden : o.disabled && o.hidden)));
+    check('nodo: il sysop (nominativo, chiave) c\'e\' perche\' il nodo si comanda via radio, il modo Sysop no', (await p.isVisible('#sysop')) && (await p.isVisible('#sysopkey')) && !(await p.isVisible('#sysopmode')));
     await p.selectOption('#role', 'off');
     check('stazione normale: tutti i profili selezionabili', await p.$$eval('#profile option', (os) => os.length === 4 && os.every((o) => !o.disabled && !o.hidden)));
     await p.selectOption('#role', 'node');

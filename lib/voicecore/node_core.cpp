@@ -115,7 +115,86 @@ void NodeCore::endMorse(bool aborted) {
   else stats_.morseIds++;
 }
 
-void NodeCore::tick(uint32_t nowMs, bool mayTransmit) {
+void NodeCore::sendBeacon(uint32_t nowMs) {
+  uint8_t wire[kMaxWireBytes];
+  const size_t m = encodePacket(makeBeaconPacket(nextSession_++, callsign_, "Nodo VoLoRa"), wire, sizeof(wire));
+  if (!m) return;
+  if (morseActive_) endMorse(true);
+  radio_.send(wire, m);
+  haveActivity_ = true;
+  lastActivityMs_ = nowMs;
+  stats_.beacons++;
+  startMorse(nowMs);
+}
+
+void NodeCore::setSysop(const char* sysopCall, const uint8_t key[kSysopKeyBytes], uint32_t lastCounter, int powerDbm) {
+  if (!sysopCall || !sysopCall[0] || !key) {
+    sysopOn_ = false;
+    return;
+  }
+  memcpy(key_, key, sizeof(key_));
+  auth_.setKey(key);
+  auth_.setSysop(sysopCall);
+  auth_.setLastCounter(lastCounter);
+  control_ = RepeaterControl(kMinPowerDbm, kMaxPowerDbm, powerDbm);
+  sysopOn_ = true;
+}
+
+bool NodeCore::takeSysopEvents(SysopEvents& ev) {
+  if (!eventsPending_) return false;
+  ev = events_;
+  events_ = SysopEvents();
+  eventsPending_ = false;
+  return true;
+}
+
+void NodeCore::sendSysopReply(const SysopReply& r, uint32_t nowMs) {
+  uint8_t wire[kMaxWireBytes];
+  const size_t m = encodePacket(makeSysopReply(nextSession_++, callsign_, key_, r), wire, sizeof(wire));
+  if (!m) return;  // senza nominativo del nodo non c'e' risposta
+  if (morseActive_) endMorse(true);
+  radio_.send(wire, m);
+  haveActivity_ = true;
+  lastActivityMs_ = nowMs;
+  stats_.sysopReplies++;
+}
+
+// Un pacchetto del modo 5 ricevuto in radio: un comando del sysop per questo nodo (le risposte degli altri ripetitori si ignorano).
+void NodeCore::handleSysop(const Packet& p, uint32_t nowMs, bool mayTransmit) {
+  SysopCommand cmd;
+  const SysopAuth::Verdict v = auth_.check(p, cmd);
+  if (v == SysopAuth::Verdict::Ok) {
+    stats_.sysopCommands++;
+    events_.counter = true;
+    events_.counterValue = auth_.lastCounter();
+    eventsPending_ = true;
+    RepeaterControl::Effects fx;
+    uint32_t data = 0;
+    const SysopResult r = control_.apply(cmd, nowMs, fx, data);
+    if (fx.power >= 0) {
+      radio_.setPower(fx.power);
+      events_.power = fx.power;
+    }
+    if (fx.restart) events_.restart = true;
+    if (mayTransmit && (control_.txAllowed(nowMs) || fx.forceReply)) {
+      sendSysopReply({cmd.code, r, cmd.counter, data}, nowMs);
+      if (fx.identify && control_.txAllowed(nowMs)) identifyNow_ = true;
+    }
+  } else if (v == SysopAuth::Verdict::Stale) {
+    // firma valida ma contatore basso: si dice alla stazione l'ultimo accettato, cosi' si risincronizza (al massimo una volta ogni 10 s)
+    if (mayTransmit && control_.txAllowed(nowMs) && (!haveStale_ || nowMs - lastStaleMs_ >= kStaleReplyGapMs)) {
+      haveStale_ = true;
+      lastStaleMs_ = nowMs;
+      sendSysopReply({p.payload[0], kSysopCounterLow, auth_.lastCounter(), control_.statusData(nowMs)}, nowMs);
+    }
+  } else if (v != SysopAuth::Verdict::NotCommand && v != SysopAuth::Verdict::Replay) {
+    stats_.sysopRejected++;
+  }
+}
+
+void NodeCore::tick(uint32_t nowMs, bool mayTransmit0) {
+  // Il sysop puo' aver spento il nodo (anche a tempo): in radio non esce niente, come con N0CALL
+  const bool mayTransmit = mayTransmit0 && !txOff(nowMs);
   uint8_t dg[kNodeMaxDatagram];
   const size_t md = link_.maintenance(nowMs, dg, sizeof(dg));
   if (md) net_.sendDatagram(dg, md);
@@ -134,6 +213,10 @@ void NodeCore::tick(uint32_t nowMs, bool mayTransmit) {
     stats_.radioRx++;
     haveActivity_ = true;
     lastActivityMs_ = nowMs;
+    if (p.mode == kModeSysop) {  // un comando del sysop (o la risposta di un altro ripetitore): non e' voce, non va in rete
+      if (sysopOn_) handleSysop(p, nowMs, mayTransmit0);
+      continue;
+    }
     Packet out;
     if (rep_.onPacket(p, nowMs, out) != Repeater::Verdict::Forward) continue;
     if (!link_.linkUp(nowMs)) {
@@ -163,6 +246,12 @@ void NodeCore::tick(uint32_t nowMs, bool mayTransmit) {
     }
   }
 
+  // IDENTIFICA del sysop: il nominativo subito (testo e Morse)
+  if (identifyNow_) {
+    identifyNow_ = false;
+    if (mayTransmit) sendBeacon(nowMs);
+  }
+
   // Morse in corso: un pacchetto dalla rete (o la TX non piu' permessa) lo interrompe, altrimenti prosegue
   if (morseActive_) {
     if (queue_.size() > 0 || !mayTransmit) endMorse(true);
@@ -180,15 +269,7 @@ void NodeCore::tick(uint32_t nowMs, bool mayTransmit) {
       deferredNoted_ = true;
     } else {
       deferredNoted_ = false;
-      uint8_t wire[kMaxWireBytes];
-      const size_t m = encodePacket(makeBeaconPacket(nextSession_++, callsign_, "Nodo VoLoRa"), wire, sizeof(wire));
-      if (m) {
-        radio_.send(wire, m);
-        haveActivity_ = true;
-        lastActivityMs_ = nowMs;
-        stats_.beacons++;
-        startMorse(nowMs);  // poi il nominativo in Morse a tono, se acceso
-      }
+      sendBeacon(nowMs);  // poi il nominativo in Morse a tono, se acceso
       haveBeacon_ = true;
       lastBeaconMs_ = nowMs;
       return;

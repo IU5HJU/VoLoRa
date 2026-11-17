@@ -108,8 +108,9 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <label for="text5">Testo 5</label><input id="text5" maxlength="150">
 </div>
 </div>
-<div data-modes="off rptrx">
-<h2>Sysop del ripetitore</h2>
+<div data-modes="off rptrx node">
+<h2>Sysop del ripetitore e del nodo</h2>
+<p class="hint" data-modes="node">Il nodo si comanda via radio come un ripetitore (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA): nominativo del sysop (chi trasmette i comandi) e chiave, uguali sulla scheda del sysop. La chiave non si rilegge mai.</p>
 <p class="hint" data-modes="rptrx">La RX verifica i comandi firmati del sysop (nominativo e chiave) e li gira alla TX; la chiave arriva alla TX dalla RX insieme al resto della configurazione. Il <strong>modo Sysop</strong> (menu &quot;Comandi Sysop&quot;) si accende solo sulla scheda del sysop. Il nominativo e la chiave vanno uguali sulla RX e sulla scheda del sysop; la chiave non si rilegge mai.</p>
 <p class="hint" data-modes="off">Per chi gestisce un ripetitore. Con il <strong>modo Sysop</strong> acceso il menu della scheda (volume lungo) mostra <strong>Comandi Sysop</strong> al posto di Invia testo: scegli il comando (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA) e la scheda lo trasmette firmato al ripetitore. Resta acceso finché non lo spegni. Il nominativo e la chiave vanno impostati uguali sul ripetitore (schede RX e TX) e sulla scheda del sysop; la chiave non si rilegge mai.</p>
 <div data-modes="off"><label for="sysopmode">Modo Sysop</label><select id="sysopmode"><option value="off">Spento</option><option value="on">Acceso</option></select></div>

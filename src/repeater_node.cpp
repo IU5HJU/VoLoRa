@@ -688,6 +688,14 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
   static lcr::NodeCore core(radio, net, lc, esp_random(), []() -> uint32_t { return esp_random(); }, lcr::profileFor(settings.profile).codecMode);
   core.setIdentification(settings.callsign, static_cast<uint32_t>(settings.idIntervalMin) * 60000u, settings.profileFreqKhz());  // IDINT, come il ripetitore
   core.setMorseId(settings.idMorse);  // IDMORSE: dopo il testo, il nominativo in Morse a tono in FM (15 wpm, 700 Hz, +-2,5 kHz)
+  // Comandi del sysop via radio, come il ripetitore: servono nominativo e chiave del sysop (CFG SET SYSOP, SYSOPKEY)
+  if (settings.sysopKeySet && settings.sysopCall[0]) {
+    core.setSysop(settings.sysopCall, settings.sysopKey, loadSysopCounter(), settings.powerDbm);
+    Serial.printf("[nodo] comandi del sysop %s via radio: attivi\n", settings.sysopCall);
+  } else {
+    Serial.println("[nodo] comandi del sysop via radio: non attivi (manca il nominativo o la chiave del sysop: CFG SET SYSOP, SYSOPKEY)");
+  }
+  uint32_t nodeRestartAtMs = 0;
   UsbConsole usb(handler);
 
   Serial.printf("[nodo] id %lu, rete \"%s\", altro nodo %s:%u (id %lu), ascolto sulla porta %u, radio %.3f MHz profilo %s%s\n",
@@ -711,6 +719,21 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
     while (guard-- > 0 && net.receive(dgram, sizeof(dgram), dgramLen)) core.onDatagram(dgram, dgramLen, now);
     core.setPublicAddress(net.publicAddress());  // l'indirizzo pubblico, per il reflector
     core.tick(now, mayTransmit);
+    lcr::NodeCore::SysopEvents sev;
+    if (core.takeSysopEvents(sev)) {  // un comando del sysop eseguito: contatore e potenza in memoria, riavvio dopo la risposta
+      if (sev.counter) saveSysopCounter(sev.counterValue);
+      if (sev.power >= 0) {
+        NvsSettingsStorage storage;
+        lcr::Settings saved;
+        if (storage.load(saved)) {
+          saved.powerDbm = sev.power;
+          storage.save(saved);
+        }
+      }
+      if (sev.restart) nodeRestartAtMs = now + 3000;
+      Serial.printf("[nodo] comando del sysop eseguito (contatore %lu%s%s)\n", static_cast<unsigned long>(sev.counterValue), sev.power >= 0 ? ", potenza salvata" : "", sev.restart ? ", riavvio fra 3 s" : "");
+    }
+    if (nodeRestartAtMs && static_cast<int32_t>(now - nodeRestartAtMs) >= 0) restartNow(ui);
 
     const bool wifi = WiFi.status() == WL_CONNECTED;
     const bool up = core.linkUp(now);

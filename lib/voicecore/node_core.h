@@ -15,6 +15,8 @@
 #include "node_link.h"
 #include "repeater.h"
 #include "repeater_link.h"
+#include "settings.h"
+#include "sysop.h"
 
 namespace lcr {
 
@@ -40,6 +42,9 @@ class NodeCore {
     uint32_t morseIds = 0;        // identificativi in Morse trasmessi per intero
     uint32_t morseAborted = 0;    // interrotti da un pacchetto di rete in coda o da un errore della radio
     uint32_t beaconDeferred = 0;  // identificativo dovuto ma rimandato (canale occupato o attivita' recente)
+    uint32_t sysopCommands = 0;   // comandi del sysop eseguiti (firma e nominativo giusti)
+    uint32_t sysopRejected = 0;   // comandi del sysop rifiutati (nominativo o firma sbagliati, nessuna chiave)
+    uint32_t sysopReplies = 0;    // risposte firmate trasmesse
   };
 
   // L'ultima stazione che e' transitata dal nodo (ricevuta in radio e mandata all'altro nodo): nominativo (nei pacchetti START e END), RSSI e SNR
@@ -75,6 +80,22 @@ class NodeCore {
   void setMorseId(bool on, int wpm = 15, float toneHz = 700.0f, float devKhz = 2.5f);
   bool morseActive() const { return morseActive_; }
 
+  // Comandi del sysop via radio, come per il ripetitore (docs/ripetitore.md): STATO, SPEGNI (anche a tempo), RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA.
+  // Il nodo ascolta i pacchetti del modo 5 sulla sua frequenza, controlla nominativo, firma e contatore e risponde con un pacchetto firmato (con il
+  // nominativo del nodo, vedi setIdentification). 'sysopCall' e la chiave sono quelli impostati con CFG SET SYSOP e SYSOPKEY; 'lastCounter' l'ultimo
+  // contatore accettato (salvato in memoria); 'powerDbm' la potenza attuale. Senza questa chiamata i comandi si ignorano.
+  void setSysop(const char* sysopCall, const uint8_t key[kSysopKeyBytes], uint32_t lastCounter, int powerDbm);
+  // Cose che il chiamante deve fare dopo un comando: salvare il contatore (e la potenza), riavviare. true se ce n'e' qualcuna (si azzerano).
+  struct SysopEvents {
+    bool counter = false;
+    uint32_t counterValue = 0;
+    int power = -1;
+    bool restart = false;
+  };
+  bool takeSysopEvents(SysopEvents& ev);
+  bool sysopOn() const { return sysopOn_; }
+  bool txOff(uint32_t nowMs) { return sysopOn_ && !control_.txAllowed(nowMs); }  // spento dal sysop (o dalla sicurezza)
+
   bool linkUp(uint32_t nowMs) const { return link_.linkUp(nowMs); }
   // L'indirizzo pubblico della scheda (vedi NodeLink::setPublicAddress), da aggiornare quando cambia.
   void setPublicAddress(uint32_t ipv4) { link_.setPublicAddress(ipv4); }
@@ -85,6 +106,9 @@ class NodeCore {
   const Repeater& repeater() const { return rep_; }
 
  private:
+  void handleSysop(const Packet& p, uint32_t nowMs, bool mayTransmit);
+  void sendSysopReply(const SysopReply& r, uint32_t nowMs);
+  void sendBeacon(uint32_t nowMs);
   bool beaconDue(uint32_t nowMs) const;
   void startMorse(uint32_t nowMs);
   void morseStep(uint32_t nowMs);
@@ -117,6 +141,17 @@ class NodeCore {
   uint8_t morseStage_ = 0;  // 0 portante iniziale, 1 elementi del Morse, 2 coda
   uint32_t morseNextMs_ = 0;
   float morseKbps_ = 1.4f;
+  // comandi del sysop
+  SysopAuth auth_;
+  RepeaterControl control_{kMinPowerDbm, kMaxPowerDbm, 10};
+  bool sysopOn_ = false;
+  uint8_t key_[kSysopKeyBytes] = {0};
+  SysopEvents events_;
+  bool eventsPending_ = false;
+  bool identifyNow_ = false;
+  bool haveStale_ = false;
+  uint32_t lastStaleMs_ = 0;
+  static constexpr uint32_t kStaleReplyGapMs = 10000;  // al massimo una risposta "contatore basso" ogni 10 s
 };
 
 }  // namespace lcr
