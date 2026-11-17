@@ -389,6 +389,17 @@ void UiNotifier::drawPicker() {
   display_.display();
 }
 
+// Risposta di un ripetitore arrivata ma scartata: la radio e la frequenza vanno bene, quello che non torna e' la chiave.
+void UiNotifier::sysopReplyRejected(const char* callsign, bool noKey) {
+  if (noKey) Serial.printf("[sysop] risposta da %s ricevuta ma questa scheda non ha la chiave del sysop (CFG SET SYSOPKEY)\n", callsign);
+  else Serial.printf("[sysop] risposta da %s ricevuta ma la firma non torna: la chiave su questa scheda e' diversa da quella della TX del ripetitore\n", callsign);
+  snprintf(noticeBuf_, sizeof(noticeBuf_), "RIP: CHIAVE?");
+  notice_ = noticeBuf_;
+  noticeUntilMs_ = millis() + 4000;
+  audio_.beep(300, 120);
+  dirty_ = true;
+}
+
 // Risposta firmata di un ripetitore a un comando del sysop (CFG SYSCMD): una riga sulla seriale e un bip.
 void UiNotifier::sysopReply(const char* callsign, const lcr::SysopReply& r) {
   Serial.printf("CFG SYSCMD RISPOSTA da=%s codice=%u esito=%u contatore=%lu spento=%u potenza=%u minuti=%u\n", callsign, static_cast<unsigned>(r.code),

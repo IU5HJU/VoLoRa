@@ -560,8 +560,16 @@ void VoiceNode::handleText(const Packet& p) {
 // Un annuncio con 0 secondi libera subito.
 // Risposta di un ripetitore a un nostro comando: si mostra solo se la firma torna con la chiave del sysop.
 void VoiceNode::handleSysopReply(const Packet& p) {
+  if (p.payloadLen != kSysopReplyBytes || !(p.payload[0] & kSysopReplyBit)) return;  // un comando (di un altro sysop), non una risposta
   SysopReply r;
-  if (!cfg_.sysopKey || !parseSysopReply(p, cfg_.sysopKey, r)) return;
+  if (!cfg_.sysopKey) {
+    notify_.sysopReplyRejected(p.callsign, true);
+    return;
+  }
+  if (!parseSysopReply(p, cfg_.sysopKey, r)) {
+    notify_.sysopReplyRejected(p.callsign, false);
+    return;
+  }
   notify_.sysopReply(p.callsign, r);
 }
 

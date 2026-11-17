@@ -132,6 +132,11 @@ class INotifier {
     (void)seconds;
   }
   // Risposta firmata di un ripetitore a un comando del sysop trasmesso da questa scheda (la firma e' gia' verificata).
+  // Una risposta di un ripetitore arrivata ma scartata: 'noKey' = questa scheda non ha la chiave del sysop, altrimenti la firma non torna (chiave diversa su RX, TX o qui).
+  virtual void sysopReplyRejected(const char* callsign, bool noKey) {
+    (void)callsign;
+    (void)noKey;
+  }
   virtual void sysopReply(const char* callsign, const SysopReply& r) {
     (void)callsign;
     (void)r;

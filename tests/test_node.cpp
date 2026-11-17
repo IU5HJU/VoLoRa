@@ -808,9 +808,10 @@ static void testSysopReplyShown() {
   inject(makeSysopReply(5, "IZ0RPT", SYSKEY, {kSysopOff, kSysopOk, 12, 0x01000000}));
   CHECK(note.sysopReplies.size() == 1 && note.sysopReplies[0].callsign == "IZ0RPT" && note.sysopReplies[0].r.code == kSysopOff && note.sysopReplies[0].r.counter == 12);
   uint8_t other[16] = {0};
-  inject(makeSysopReply(6, "IZ0RPT", other, {kSysopOn, kSysopOk, 13, 0}));  // firma di un altro: scartata
-  inject(makeSysopCommand(7, "IZ0SOP", SYSKEY, {kSysopOff, 0, 14}));        // un comando non e' una risposta
-  CHECK(note.sysopReplies.size() == 1);
+  inject(makeSysopReply(6, "IZ0RPT", other, {kSysopOn, kSysopOk, 13, 0}));  // firma di un altro: scartata, ma se ne avvisa (chiave diversa)
+  CHECK(note.sysopRejected.size() == 1 && note.sysopRejected[0].callsign == "IZ0RPT" && !note.sysopRejected[0].noKey);
+  inject(makeSysopCommand(7, "IZ0SOP", SYSKEY, {kSysopOff, 0, 14}));        // un comando non e' una risposta: nessun avviso
+  CHECK(note.sysopReplies.size() == 1 && note.sysopRejected.size() == 1);
 }
 
 static void testBeaconSilent() {

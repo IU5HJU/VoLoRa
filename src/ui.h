@@ -115,6 +115,7 @@ class UiNotifier : public lcr::INotifier {
   void beaconReceived(const char* callsign) override;
   void meshcomChanged(bool on) override;
   void sysopReply(const char* callsign, const lcr::SysopReply& r) override;
+  void sysopReplyRejected(const char* callsign, bool noKey) override;
   void recPhaseChanged(int phase) override { recPhase_ = phase; dirty_ = true; }
   void linkTestReport(bool fromRemote, const char* callsign, const lcr::TestReport& r) override;
   void powerSweepStep(const lcr::PowerSweep::Step& s, size_t index) override;

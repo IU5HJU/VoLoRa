@@ -507,8 +507,10 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
         const lcr::SysopCommand cmd = {f.data[0], static_cast<uint16_t>((f.data[1] << 8) | f.data[2]),
                                        (static_cast<uint32_t>(f.data[3]) << 24) | (static_cast<uint32_t>(f.data[4]) << 16) | (static_cast<uint32_t>(f.data[5]) << 8) | f.data[6]};
         lcr::RepeaterControl::Effects fx;
+        const uint32_t repliesBefore = sched.stats().replies;
         const lcr::SysopResult res = sched.onControl(cmd, millis(), fx);  // esegue e trasmette la risposta firmata
-        Serial.printf("[ripetitore] comando %u contatore %lu: esito %u\n", static_cast<unsigned>(cmd.code), static_cast<unsigned long>(cmd.counter), static_cast<unsigned>(res));
+        Serial.printf("[ripetitore] comando %u contatore %lu: esito %u, risposta firmata %s (chiave %s)\n", static_cast<unsigned>(cmd.code), static_cast<unsigned long>(cmd.counter),
+                      static_cast<unsigned>(res), sched.stats().replies > repliesBefore ? "TRASMESSA" : "NON trasmessa (TX spenta dal sysop?)", settings.sysopKeySet ? "impostata" : "MANCANTE");
         if (fx.power >= 0) {  // la potenza scelta dal sysop e' permanente: si salva come CFG SET POWER
           NvsSettingsStorage storage;
           lcr::Settings saved;

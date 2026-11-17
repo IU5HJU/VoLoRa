@@ -206,6 +206,12 @@ class Notifier : public lcr::INotifier {
   };
   std::vector<BusyEv> busyEvents;
   void sysopReply(const char* cs, const lcr::SysopReply& r) override { sysopReplies.push_back({cs, r}); }
+  void sysopReplyRejected(const char* cs, bool noKey) override { sysopRejected.push_back({cs, noKey}); }
+  struct SysRej {
+    std::string callsign;
+    bool noKey;
+  };
+  std::vector<SysRej> sysopRejected;
   struct SysRep {
     std::string callsign;
     lcr::SysopReply r;
