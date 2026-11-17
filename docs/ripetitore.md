@@ -75,7 +75,7 @@ Mandare le due righe (RX e TX) permette di capire da che parte è il guasto.
 
 ## La RX configura la TX sul filo seriale (16/11/2026)
 
-**Perché.** Salvare le impostazioni sulla TX con il cavo USB, con le due schede collegate, bloccava una delle due (prova del 16/11/2026). Ora la TX **non si configura più a parte**: si dà tutto sulla RX (sito o pagina della scheda) e la RX lo manda alla TX.
+**Perché.** Prima la TX si configurava a parte, con il proprio cavo USB (ruolo "scheda TX" e parametri). Ora la TX **non si configura più a parte**: si dà tutto sulla RX (sito o pagina della scheda) e la RX lo manda alla TX. (Il blocco delle schede visto il 16/11/2026 durante gli aggiornamenti **non dipendeva dalla seriale né dall'alimentazione**: era un filo collegato a un pin sbagliato. Chiuso.)
 
 **Cosa viaggia:** frequenza di uscita (obbligatoria sulla RX per partire), potenza (della TX), profilo, identificativo ogni N minuti e Morse, nominativo, chiave del sysop. Il resto (ruolo, frequenze del profilo, Wi-Fi, impostazioni della stazione) resta com'è sulla TX. **La scheda TX non si imposta**: vedi la sezione "La TX si forza da sola" qui sotto (dal 16/11/2026).
 
@@ -112,4 +112,4 @@ Le due schede del ripetitore sono collegate con il filo dei **5 V** oltre a mass
 - **Un solo cavo USB alla volta**, sulla RX **o** sulla TX, come serve (log, aggiornamento, `CFG`): l'altra scheda prende l'alimentazione dal filo. Collegare l'USB alla TX da sola con i 5 V attaccati **va bene**.
 - **Mai due cavi USB insieme**: le due alimentazioni (due PC o due caricatori) si incontrerebbero attraverso il filo dei 5 V, e il pin `5V` della scheda è dopo il regolatore, a valle dell'USB.
 - Se servono **tutte e due le USB insieme** (per esempio per leggere i due log), si scollega prima il filo dei 5 V e si lasciano massa e seriale.
-- Per aggiornare il firmware: una scheda alla volta, con **un solo cavo USB**; il collegamento della seriale non deve essere rimosso se non si vuole, ma la scheda collegata all'USB deve essere l'unica (vedi anche il progetto della forzatura della TX).
+- Per aggiornare il firmware basta **un solo cavo USB alla volta**, anche con le due schede collegate fra loro.

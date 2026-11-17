@@ -2,7 +2,7 @@
 
 **Stato (16/11/2026): scelta la variante C (rilevamento sulla seriale, nessun filo in più), realizzata nel firmware: vedi "La TX si forza da sola" in `ripetitore.md`. Le varianti A e B restano come alternative non realizzate.** Il resto del documento è il progetto iniziale.
 
-**(Stato iniziale: progetto, niente era ancora nel firmware.)** Nasce dalle prove del 16/11/2026: aggiornare o salvare le impostazioni su una scheda con l'altra collegata blocca una delle due, e la TX si doveva configurare a parte con il cavo USB (ruolo "scheda TX"). Con il quinto filo la TX non ha bisogno di nessuna configurazione preventiva.
+**(Stato iniziale: progetto, niente era ancora nel firmware.)** Nasce dalle prove del 16/11/2026: la TX si doveva configurare a parte con il cavo USB (ruolo "scheda TX"), e un blocco delle schede durante gli aggiornamenti sembrava dipendere dalla seriale fra le due. **Il blocco era invece un filo collegato a un pin sbagliato: chiuso** (17/11/2026); resta il vantaggio di non dover configurare la TX. Con il quinto filo la TX non ha bisogno di nessuna configurazione preventiva.
 
 ## Idea
 
@@ -56,8 +56,8 @@ I fili fra le due schede diventano: **5 V, massa, seriale TX, seriale RX, e il f
 
 Il pin **RST** della T3 sta sul connettore (fila destra, dopo IO34). La RX potrebbe tirarlo a massa per 100 ms per riavviare la TX (dopo aver mandato la configurazione, o quando la TX non risponde per troppo tempo). Va **open-drain** come il filo di comando.
 - **Pin sulla RX:** **IO15** (pulsante volume, facoltativo: se serve il volume sulla RX non si può usare), oppure IO12 (pin di tensione della flash, **da evitare**). Con l'altoparlante di monitor montato restano pochi pin liberi.
-- **Pro:** riavvia una TX bloccata. **Contro:** un filo in più da sbagliare; riavvia la TX anche quando non serve (una frase interrotta); non è ancora chiaro **perché il tasto RST della TX non riavviava la scheda** (16/11/2026): se il blocco è elettrico (alimentazione), un reset dalla RX non lo risolverebbe.
-- **Decisione:** da prendere **dopo** le prove del quinto filo, con il log USB della TX durante un blocco (le righe `rst:0x...`).
+- **Pro:** riavvia una TX bloccata. **Contro:** un filo in più da sbagliare; riavvia la TX anche quando non serve (una frase interrotta); il mancato riavvio con il tasto RST del 16/11/2026 era dovuto al cablaggio sbagliato di cui sopra (chiuso).
+- **Decisione:** senza il blocco da spiegare, il sesto filo non serve: **non si fa** (17/11/2026).
 
 ## Rischi e cose da verificare sul banco
 
