@@ -702,3 +702,10 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Dopo "Usa la posizione del browser"** (Chrome ha chiesto il permesso, icona della posizione nella barra): i due campi si riempiono con **4 decimali** e compare l'avviso **"Posizione del browser inserita (precisione circa 131 m). È una stima: da un computer è spesso poco precisa. Controllala, correggila se serve e premi Salva per scriverla nella scheda."** Il funzionamento è quello progettato (avviso, permesso, 4 decimali, valori nei campi finché non si salva).
 - **La posizione proposta dal browser era molto lontana da quella reale** (stima dal computer, non dal GPS: centinaia di chilometri di scarto, nonostante la "precisione circa 131 m" dichiarata dal browser). È proprio il motivo dell'avviso: **va sempre controllata prima di salvare**.
 - **Da vedere (A3):** `Salva` e poi `CFG GET` con il QTH scritto, per chiudere la prova.
+
+### 18/11/2026, casa, IU5HJU (prova di potenza con la distanza in km, posizione su entrambe le schede)
+
+- **Schede:** T3 (posizione fissa di casa) e T-Beam (**posizione salvata dalla pagina con "Usa la posizione del browser"**, una stima del computer lontana da quella reale: vedi la prova di A3), vicine fra loro sul banco. Prova accesa su entrambe, PTT sulla T3.
+- **Esito sui display (foto):** su **tutte e due** `MIN 2 dBm`, `sente fino a 2 dBm` e nell'ultima riga **`100% a MIN  959km`**; sulla T3 "POTENZA da <nominativo della T-Beam>" e sulla T-Beam "POTENZA: finita". **La distanza in km compare su entrambe le schede.**
+- **Controllo del valore:** la distanza fra le due posizioni salvate (formula di haversine, raggio terrestre 6371 km) è **959,2 km**, uguale a quella mostrata. **Il calcolo dei km sul display è giusto**; il valore è enorme solo perché la posizione della T-Beam era quella sbagliata proposta dal browser, non per un difetto.
+- **Esito delle due prove:** **B1 superata** (km su entrambe le schede, valore corretto) e **A3 superata** (la posizione proposta dal browser si scrive nella scheda, resta dopo il riavvio ed è usata dalla prova). Resta il consiglio di **controllare sempre la posizione prima di salvare**.

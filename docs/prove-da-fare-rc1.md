@@ -10,13 +10,13 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## Riepilogo (18/11/2026): quante ne restano
 
-**14 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+**12 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
 
 | Gruppo | Prove | Quante |
 |---|---|---|
 | E. Ripetitore e messaggi (nuovo) | E5 | ~~**Uscita dal modo prova con tre clic**~~ **fatto il 18/11/2026** (riferito: lo schermo torna su ASCOLTO senza scritte di prova; vedi B3 e [prove.md](prove.md)) | niente scritte di prova rimaste | foto |
-| A. Schede singole | A3, A4 | 2 |
-| B. Due schede | B1, B4b, B5, B6 | 4 |
+| A. Schede singole | A4 | 1 |
+| B. Due schede | B4b, B5, B6 | 3 |
 | C. Nodo e reflector | C1, C2, C3 | 3 |
 | D. Ripetitore vero | D2 | 1 |
 | Con l'altro radioamatore (T-Beam SX1262) | A2, B4, trasmissione SX1262 → SX1278, A4 sulla sua scheda | 4 |
@@ -28,14 +28,14 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 |---|---|---|---|
 | A1 | ~~Aggiornamento senza perdere le impostazioni~~ **fatto il 14/11/2026** su T3 (registri) e, riferito dall'operatore, su T-Beam SX1278 e SX1262: se si vuole un registro per le T-Beam, ripetere con `CFG GET` prima e dopo | dopo l'avvio `impostazioni: lette dalla memoria` e `CFG GET` uguale a prima | `CFG GET` prima e dopo, riga `[avvio]`, se compariva la casella "Erase device" |
 | A2 | **Prova dei toni** nel profilo Messaggio sulla **T-Beam SX1262**: `CFG TEST AUDIO` | arriva fino a `CFG AUDIO rf pkts=...` e `CFG AUDIO fine` **senza riavvio** (prima: `task_wdt`, `abort`) | l'intero blocco `CFG AUDIO ...` |
-| A3 | **Posizione dal browser** sul sito: scheda collegata, QTH vuoto | compare l'avviso, il pulsante "Usa la posizione del browser" chiede il permesso e riempie i campi a **4 decimali**; i valori restano nei campi finché non premi Salva | schermata, precisione scritta sotto, se dopo Salva `CFG GET` mostra il QTH |
+| A3 | ~~**Posizione dal browser** sul sito~~ **fatto il 18/11/2026**: avviso, permesso, 4 decimali e valori nei campi; la posizione salvata nella scheda è usata dalla prova di potenza (vedi [prove.md](prove.md)); la stima del browser può essere lontana dalla reale: va controllata prima di salvare | compare l'avviso, il pulsante chiede il permesso e riempie i campi a 4 decimali | schermata |
 | A4 | **MeshCom ascolto**: menu → "MeshCom ascolto" | conto alla rovescia per `MCWINDOW` (di base 5 minuti), la lettera in alto è **T**, a fine tempo la scheda rientra da sola; con un altro dispositivo MeshCom che manda un testo a te o a un tuo gruppo, il testo arriva in casella | durata reale, se il testo è arrivato, riga `[meshcom] fine escursione ...` |
 
 ## B. Due schede (in casa, poi in movimento)
 
 | # | Prova | Cosa deve succedere | Da riportare |
 |---|---|---|---|
-| B1 | **Prova di potenza con la distanza**: su **tutte e due** `CFG SET POS ON` e una posizione (`CFG SET QTH lat,lon` o GPS con fix); prova accesa su entrambe (tre pressioni brevi del PTT), PTT su una | l'esito sul display di **entrambe** dice `MIN n dBm` e, nell'ultima riga, `100% a MIN  X.Xkm` | foto dei due display, distanza reale, riga `PROVA POTENZA ...` della seriale |
+| B1 | ~~**Prova di potenza con la distanza**~~ **fatto il 18/11/2026**: `100% a MIN  959km` su **entrambe** le schede (posizione fissa sulla T3, posizione dal browser sulla T-Beam), valore uguale al calcolo (959,2 km); MIN 2 dBm con le schede vicine (vedi [prove.md](prove.md)) | l'esito sul display di **entrambe** dice `MIN n dBm` e `100% a MIN  X.Xkm` | foto dei due display, riga `PROVA POTENZA ...` |
 | B2 | ~~Come B1 con `POS OFF` su una~~ **fatto il 18/11/2026** (T3 con posizione, T-Beam senza): su **tutte e due** l'esito mostra "(frame 100% a MIN)" e **niente km**; MIN 2 dBm a poca distanza (vedi [prove.md](prove.md)) | sull'altra scheda niente km (`(frame 100% a MIN)`) | foto |
 | B3 | ~~**Uscita dalla prova con tre pressioni brevi**~~ **fatto il 18/11/2026**, riferito dall'operatore ("con tre pressioni si esce senza più problemi"), senza distinguere i tre casi (vedi [prove.md](prove.md)) | in tutti i casi la prova si spegne (`PROVA SPENTA`) | quante pressioni sono servite |
 | B4 | **T-Beam SX1262 ↔ SX1278 vicine** (stessa stanza, potenza 2): profili **Standard**, **Range** e **Messaggio**, nei **due versi** (a Standard e Range lontano non si sentivano) | voce intelligibile in entrambi i versi, `frame persi` e `RSSI`/`SNR` sul display | per ogni profilo e verso: ok o no, RSSI, SNR, frame persi |
