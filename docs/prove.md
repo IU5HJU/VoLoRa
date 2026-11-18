@@ -527,3 +527,8 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Esito:** due foto del display della **RX** (T3, firmware `833fcd5`, Build #380). **All'avvio** compare la schermata **AVVIO** con la riga `fw 833fcd5` (la versione installata). Dopo l'avvio compare **GESTIONE WI-FI** con "Da rete di casa:", l'indirizzo IP, "utente volora" e la password (non riportata qui). L'operatore: **"le schermate funzionano"**.
 - **Anche la TX** (foto, stesso firmware `833fcd5`): la schermata AVVIO con `fw 833fcd5`, leggibile per intero.
 - **Limiti:** la schermata con IP e password è provata **sulla RX del ripetitore**. La versione all'avvio non è ancora vista sulle altre schede (nodo, T-Beam) e la schermata con IP e password non è vista sul **nodo**. Del 25 s di visualizzazione e dell'alternanza dell'IP con la riga della rete non ci sono misure.
+
+### 18/11/2026, casa, IU5HJU (messaggio vocale in diretta: "MESSAGGIO DIRETTO" sul display)
+
+- **Esito:** foto del display di una **T3 ricevente**: "Voce da IU5HJU", icona dell'altoparlante, **"MESSAGGIO DIRETTO"** e "Premi PTT: ascolta". L'indicazione di un messaggio arrivato **direttamente dal mittente** (senza ripetitore) funziona e **sta nelle 21 colonne dello schermo**.
+- **Limiti:** foto senza registro; non è indicato il firmware (si presume quello della Build #380 o successivo, ma la riga `fw` non è nella foto). **Resta da vedere "MESSAGGIO via RPT"** con la prova via ripetitore (E1).

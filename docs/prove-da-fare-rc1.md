@@ -61,7 +61,7 @@ D2: **shift** con un ripetitore vero (frequenza di ascolto e di trasmissione). I
 | # | Prova | Cosa deve succedere | Da riportare |
 |---|---|---|---|
 | E1 | **Messaggio vocale via ripetitore**: ricevente **spenta** durante tutta la trasmissione del mittente (profilo Messaggio, sulla frequenza di uscita; shift non vale), riaccesa appena il mittente ha finito (la TX parte circa 5 s dopo l'ultimo pacchetto ascoltato, dopo i due annunci di occupato) | in casella **"MESSAGGIO via RPT"**; "Riproduco (via RPT)" all'ascolto | foto del display, **registro della TX** (riga `[ripetitore] TX messaggi: ...`), RSSI e SNR |
-| E2 | **Messaggio in diretta**, ricevente accesa | "MESSAGGIO DIRETTO", poi (se è nel raggio) una seconda copia "via RPT" che sostituisce la prima | foto, registro della TX |
+| E2 | **Messaggio in diretta** (**"MESSAGGIO DIRETTO" visto il 18/11/2026**; resta la seconda copia "via RPT"), ricevente accesa | "MESSAGGIO DIRETTO", poi (se è nel raggio) una seconda copia "via RPT" che sostituisce la prima | foto, registro della TX |
 | E3 | **Comandi del sysop sul nodo** (via radio): STATO, POTENZA, SPEGNI, RIACCENDI, IDENTIFICA, RIAVVIA | come sul ripetitore; la risposta firmata col nominativo del nodo torna alla stazione | registro della stazione e del nodo |
 | E4 | **Versione sull'OLED all'avvio** (`fw <versione>`, 1,8 s) su T3, T-Beam, RX e TX del ripetitore (**RX e TX del ripetitore provate il 18/11/2026**; restano il nodo e le T-Beam) | compare prima della schermata normale | foto |
 | E5 | **Uscita dal modo prova con tre clic** (schermo torna su ASCOLTO) | niente scritte di prova rimaste | foto; è la parte "schermata" di B3 |
