@@ -67,7 +67,7 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 </div>
 <label for="profile">Profilo</label>
 <select id="profile"><option value="std">Standard (Codec2 3200)</option><option value="rng">Range (Codec2 1200, collegamenti difficili)</option><option value="msg">Messaggio</option><option value="dir">Diretta (Codec2 3200)</option></select>
-<p class="hint" data-modes="node">Il nodo Internet lavora solo in Standard: gli altri profili non sono selezionabili.</p>
+<p class="hint" data-modes="node rptrx rpttx">Il nodo Internet e il ripetitore lavorano solo in Standard (Codec2 3200): gli altri profili non sono selezionabili.</p>
 <div data-modes="off rptrx node"><label for="freq">Frequenza Standard (MHz)</label><input id="freq" inputmode="decimal" required>
 <p class="hint">Da 430.000 a 440.000.</p></div>
 <div data-modes="off">
@@ -75,7 +75,7 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <label for="shiftmhz">Scostamento dello shift (MHz, da 0 a 10)</label><input id="shiftmhz" inputmode="decimal" placeholder="7.600">
 <p class="hint">Come l'offset di un ripetitore: si ascolta sulla frequenza Standard e si trasmette sulla frequenza + o - lo scostamento (passi di 1 kHz, deve restare tra 430.000 e 440.000). Vale dal riavvio.</p>
 </div>
-<details data-modes="off rptrx"><summary>Frequenze degli altri modi (Messaggio, Range, Diretta)</summary>
+<details data-modes="off"><summary>Frequenze degli altri modi (Messaggio, Range, Diretta)</summary>
 <label for="freqmsg">Frequenza Messaggio (MHz)</label><input id="freqmsg" inputmode="decimal" required>
 <label for="freqrange">Frequenza Range (MHz)</label><input id="freqrange" inputmode="decimal" required>
 <label for="freqdir">Frequenza Diretta (MHz)</label><input id="freqdir" inputmode="decimal" required>
@@ -136,7 +136,7 @@ let board='';
 let fp='';
 function fill(m){if(m.board!==undefined){board=m.board;$('gpsbox').hidden=board!=='tbeam';for(const o of $('role').options)if(o.value==='rptrx'||o.value==='rpttx')o.disabled=board==='tbeam';$('rolenote').hidden=board!=='tbeam';}for(const k of ['callsign','profile','freq','freqmsg','freqrange','freqdir','power','volume','micfloor','pos','qth','gps','role','freqout'])if(m[k]!==undefined&&$(k))$(k).value=m[k];if($('freqout').value==='none')$('freqout').value='';fp=$('freq').value.trim();}
 $('freq').addEventListener('input',()=>{const v=$('freq').value.trim();for(const id of ['freqmsg','freqrange','freqdir'])if($(id).value.trim()===fp)$(id).value=v;fp=v;});   // le frequenze uguali a quella dello Standard la seguono; quelle cambiate a mano restano
-function roleShow(){const r=$('role').value;$('powerlabel').textContent=r==='rptrx'?'Potenza della scheda TX (dBm)':'Potenza (dBm)';const nd=r==='node';for(const o of $('profile').options){o.hidden=nd&&o.value!=='std';o.disabled=nd&&o.value!=='std';}if(nd)$('profile').value='std';   // il nodo lavora solo in Standard: gli altri profili non si scelgono
+function roleShow(){const r=$('role').value;$('powerlabel').textContent=r==='rptrx'?'Potenza della scheda TX (dBm)':'Potenza (dBm)';const nd=r==='node'||r==='rptrx'||r==='rpttx';for(const o of $('profile').options){o.hidden=nd&&o.value!=='std';o.disabled=nd&&o.value!=='std';}if(nd)$('profile').value='std';   // il nodo lavora solo in Standard: gli altri profili non si scelgono
 $('rxbox').hidden=r!=='rptrx';$('txbox').hidden=r!=='rpttx'&&r!=='rptrx';for(const e of document.querySelectorAll('[data-modes]'))e.classList.toggle('nomode',!e.dataset.modes.split(' ').includes(r));}   // di ogni modalità si vedono solo i suoi campi
 $('role').addEventListener('change',roleShow);
 async function loadRole(){try{const r=await cmd('CFG GET MONITOR');if(r.startsWith('CFG MONITOR='))$('monitor').value=r.slice(12)==='on'?'on':'off';}catch(e){}roleShow();}

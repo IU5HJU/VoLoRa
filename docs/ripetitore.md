@@ -145,3 +145,5 @@ La scheda **RX** del ripetitore, quando è collegata al Wi-Fi di casa (rete, ref
 - **Da provare sulla scheda.**
 
 **Risposte del ripetitore sul display della stazione del sysop (18/11/2026).** Dopo un comando la stazione mostra: STATO, SPEGNI e RIACCENDI `RIP: ATTIVO 10dBm` o `RIP: SPENTO`, **POTENZA `RIP: PWR 10dBm`** (la potenza nuova, dalla risposta della TX, non più un generico `RIP: OK`), RIAVVIA `RIP: RIAVVIO`, IDENTIFICA `RIP: IDENTIFICA`. Sulla RX, dopo un comando di potenza la configurazione verso la TX si rimanda dopo 3 s (lo stato della TX è in ritardo di un secondo) e la risposta "già uguale" (codice 3) si distingue da "applicata, riavvio".
+
+**Profilo del ripetitore (18/11/2026).** Nel sito e nella pagina della scheda, con il ruolo **ripetitore (RX o TX)** il profilo è **solo Standard** (Codec2 3200): Range, Messaggio e Diretta sono nascosti e non selezionabili, come per il nodo, e le frequenze degli altri profili non compaiono. Il profilo salvato torna Standard al salvataggio.

@@ -195,6 +195,8 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   await p.selectOption('#role', 'rpttx');
   check('rilettura: ruolo TX e riquadro visibile', (await p.inputValue('#role')) === 'rpttx' && (await p.isVisible('#txbox')) && (await p.inputValue('#idint')) === '3');
   await p.selectOption('#role', 'rptrx');
+  check('scheda RX: solo il profilo Standard e niente frequenze degli altri profili', (await p.inputValue('#profile')) === 'std' &&
+        await p.$$eval('#profile option', (os) => os.every((o) => o.value === 'std' ? !o.disabled && !o.hidden : o.disabled && o.hidden)) && (await p.isHidden('#freqmsg')) && (await p.isHidden('#freqdir')));
   check('scheda RX: compaiono il monitor e le impostazioni della TX (uscita, identificativo, potenza della TX)', (await p.isVisible('#rxbox')) && (await p.isVisible('#txbox')) && (await p.isVisible('#idint')) && (await p.textContent('#powerlabel')) === 'Potenza della scheda TX (dBm)');
   check('scheda RX: compaiono nominativo e chiave del sysop, non il modo Sysop ne\' l\'elenco dei comandi', (await p.isVisible('#sysop')) && (await p.isVisible('#sysopkey')) && (await p.isVisible('#genkey')) && (await p.isHidden('#sysopmode')) && (await p.isHidden('#sysopbox')));
   await p.fill('#sysop', 'iu5hju'); await p.fill('#sysopkey', '000102030405060708090a0b0c0d0e0f');
@@ -215,6 +217,8 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
         (await p.isVisible('#shiftdir')) && (await p.isVisible('#volume')) && (await p.isVisible('#micfloor')) && (await p.isVisible('#pos')) && (await p.isVisible('#mcfreq')) && (await p.isVisible('#sysopmode')) && (await p.isVisible('#text1')) && (await p.isVisible('#freqmsg')) &&
         (await p.isHidden('#wifissid')) && (await p.isHidden('#idint')) && (await p.isHidden('#nodebox')));
   await p.selectOption('#role', 'rpttx');
+  check('scheda TX: solo il profilo Standard (il ripetitore ripete solo Codec2 3200)', (await p.inputValue('#profile')) === 'std' &&
+        await p.$$eval('#profile option', (os) => os.every((o) => o.value === 'std' ? !o.disabled && !o.hidden : o.disabled && o.hidden)));
   check('scheda TX: una sola frequenza (quella di uscita), non quella del profilo ne\' le altre', (await p.isVisible('#freqout')) && (await p.isHidden('#freq')) && (await p.isHidden('#freqmsg')) && (await p.isHidden('#freqrange')));
   await p.selectOption('#role', 'node');
   check('nodo: Wi-Fi e rete, identificativo visibili; shift, volume, microfono, posizione, MeshCom, sysop, testi e altre frequenze nascosti',

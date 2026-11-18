@@ -903,10 +903,14 @@ async function scenario(name, fn, opts = {}) {
     v = await vis(all);
     check('RX: nominativo, profilo, frequenze, potenza (della TX), volume, monitor, uscita e identificativo (li manda alla TX); niente posizione, MeshCom, testi, sysop, microfono',
           v.callsign && v.profile && v.freq && v.power && v.volume && v.monitor && v.freqout && v.idint && v.idmorse && !v.micfloor && !v.qthlat && !v.gps && !v.mcdest1 && !v.sysopmode && !v.text1, JSON.stringify(v));
+    check('RX: solo il profilo Standard selezionabile, niente frequenze degli altri profili', (await p.inputValue('#profile')) === 'std' &&
+          await p.$$eval('#profile option', (os) => os.every((o) => o.value === 'std' ? !o.disabled && !o.hidden : o.disabled && o.hidden)) && !(await p.isVisible('#freqmsg')));
     check('RX: la frequenza e\' quella di ingresso e la potenza e\' quella della TX', (await p.textContent('#freqlabel')) === 'Frequenza di ingresso (MHz)' && (await p.textContent('#powerlabel')) === 'Potenza della scheda TX (dBm)');
     check('RX: il sysop (nominativo, chiave) c\'e\', il modo Sysop no', (await p.isVisible('#sysop')) && (await p.isVisible('#sysopkey')) && !(await p.isVisible('#sysopmode')));
     await p.selectOption('#role', 'rpttx');
     v = await vis(all);
+    check('TX: solo il profilo Standard selezionabile', (await p.inputValue('#profile')) === 'std' &&
+          await p.$$eval('#profile option', (os) => os.every((o) => o.value === 'std' ? !o.disabled && !o.hidden : o.disabled && o.hidden)));
     check('TX: una sola frequenza (quella di uscita) e identificativo; niente frequenza del profilo, altre frequenze, volume, monitor, microfono, posizione, MeshCom, testi, sysop',
           v.callsign && !v.freq && !v.freqmsg && v.power && v.freqout && v.idint && v.idmorse && !v.volume && !v.monitor && !v.micfloor && !v.qthlat && !v.mcdest1 && !v.sysopmode && !v.text1, JSON.stringify(v));
     await p.selectOption('#role', 'node');
