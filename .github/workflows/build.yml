@@ -33,7 +33,9 @@ jobs:
       - name: Reflector e pagina di amministrazione (socket veri)
         run: make reflector-smoke
       - name: Parte Python del ricevitore SDR
-        run: make test-py
+        run: |
+          sudo apt-get install -y python3-numpy  # serve all'analizzatore del Morse (tests/sdr/test_morse.py)
+          make test-py
 
   page:
     name: Prova della pagina web
