@@ -167,10 +167,13 @@ void NodeCore::handleSysop(const Packet& p, uint32_t nowMs, bool mayTransmit) {
     stats_.sysopCommands++;
     events_.counter = true;
     events_.counterValue = auth_.lastCounter();
+    events_.code = cmd.code;
+    events_.replied = false;
     eventsPending_ = true;
     RepeaterControl::Effects fx;
     uint32_t data = 0;
     const SysopResult r = control_.apply(cmd, nowMs, fx, data);
+    events_.result = r;
     if (fx.power >= 0) {
       radio_.setPower(fx.power);
       events_.power = fx.power;
@@ -178,6 +181,7 @@ void NodeCore::handleSysop(const Packet& p, uint32_t nowMs, bool mayTransmit) {
     if (fx.restart) events_.restart = true;
     if (mayTransmit && (control_.txAllowed(nowMs) || fx.forceReply)) {
       sendSysopReply({cmd.code, r, cmd.counter, data}, nowMs);
+      events_.replied = true;
       if (fx.identify && control_.txAllowed(nowMs)) identifyNow_ = true;
     }
   } else if (v == SysopAuth::Verdict::Stale) {

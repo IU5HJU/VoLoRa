@@ -91,6 +91,9 @@ class NodeCore {
     uint32_t counterValue = 0;
     int power = -1;
     bool restart = false;
+    uint8_t code = 0;      // il comando eseguito (come SysopCode)
+    uint8_t result = 0;    // l'esito (SysopResult: 0 = eseguito)
+    bool replied = false;  // la risposta firmata e' stata trasmessa
   };
   bool takeSysopEvents(SysopEvents& ev);
   bool sysopOn() const { return sysopOn_; }

@@ -500,6 +500,8 @@ static void testSysopCommands() {
   Packet pk;
   CHECK(decodePacket(r.a.air.log[0].back().data(), r.a.air.log[0].back().size(), pk) && strcmp(pk.callsign, "IR5NOD") == 0);
   CHECK(r.a.core->takeSysopEvents(ev) && ev.counter && ev.counterValue == 1 && ev.power == -1 && !ev.restart && !r.a.core->takeSysopEvents(ev));
+  // l'evento dice anche quale comando e' stato eseguito, con che esito e se la risposta e' stata trasmessa (per il registro del nodo)
+  CHECK(ev.code == kSysopStatus && ev.result == kSysopOk && ev.replied);
   CHECK(r.a.core->stats().sysopCommands == 1 && r.a.core->stats().sysopReplies == 1 && r.a.core->stats().toNet == 0 && r.b.core->stats().fromNet == 0);
   // lo stesso comando ripetuto (la seconda copia): doppione, niente risposta, niente evento
   before = r.a.air.log[0].size();

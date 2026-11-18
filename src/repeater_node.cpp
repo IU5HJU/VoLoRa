@@ -783,7 +783,8 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
         }
       }
       if (sev.restart) nodeRestartAtMs = now + 3000;
-      Serial.printf("[nodo] comando del sysop eseguito (contatore %lu%s%s)\n", static_cast<unsigned long>(sev.counterValue), sev.power >= 0 ? ", potenza salvata" : "", sev.restart ? ", riavvio fra 3 s" : "");
+      Serial.printf("[nodo] comando del sysop %u contatore %lu: esito %u, risposta firmata %s%s%s\n", static_cast<unsigned>(sev.code), static_cast<unsigned long>(sev.counterValue), static_cast<unsigned>(sev.result),
+                    sev.replied ? "TRASMESSA" : "NON trasmessa (nodo spento dal sysop?)", sev.power >= 0 ? ", potenza salvata" : "", sev.restart ? ", riavvio fra 3 s" : "");
     }
     if (nodeRestartAtMs && static_cast<int32_t>(now - nodeRestartAtMs) >= 0) restartNow(ui);
 
