@@ -10,14 +10,14 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## Riepilogo (18/11/2026): quante ne restano
 
-**25 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+**24 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
 
 | Gruppo | Prove | Quante |
 |---|---|---|
 | E. Ripetitore e messaggi (nuovo) | E1-E7 | 7 |
 | A. Schede singole | A3, A4 | 2 |
 | B. Due schede | B1, B2, B3, B4b, B5, B6 | 6 |
-| C. Nodo e reflector | C1, C2, C3, C4b, C5 | 5 |
+| C. Nodo e reflector | C1, C2, C3, C4b | 4 |
 | D. Ripetitore vero | D2 | 1 |
 | Con l'altro radioamatore (T-Beam SX1262) | A2, B4, trasmissione SX1262 → SX1278, A4 sulla sua scheda | 4 |
 
@@ -52,7 +52,7 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 | C3 | **Gestione dalla rete di casa** (14/11/2026: aperta da un telefono con utente e password, configurazione letta, `prove.md`; mancano `volora-XXXX.local`, la password sbagliata, una modifica e la nuova scritta in cima alla pagina, corretta dopo la prova: da rivedere sul telefono): dal computer `http://<indirizzo>/` (e `http://volora-XXXX.local/`) | chiede utente `volora` e la password; con una password sbagliata non si apre; con quella giusta la pagina funziona | indirizzo, se `.local` funziona, un `CFG SET` cambiato dalla pagina |
 | C4 (**fatto il 14/11/2026 su T-Beam SX1278, vedi `prove.md`**) | **Ultima stazione transitata**: una scheda trasmette in radio verso il nodo | ultima riga `RX <nominativo> RSSI SNR`, dopo 5 s `Ult ...`; sulla seriale `[nodo] transito N` | foto, riga seriale |
 | C4b | **Morse del nodo** (causa trovata e corretta il 15/11/2026: pacchetti FSK oltre 64 byte rifiutati dalla radio; **riascoltato: funziona, non perfetto**; resta una misura con SDR/ricevitore): ascolta con un ricevitore FM (e SDR) all'ora dell'identificativo (ogni 10 minuti, il primo 15 s dopo l'avvio); con il registro nuovo del nodo (`Morse n, interrotti n, rimandati n, errore radio n`) | dopo il testo `Nodo VoLoRa` il nominativo in Morse a tono; `Morse` sale di uno a ogni identificativo | registro con la riga a 30 s, cosa si sente |
-| C5 | **Voce attraverso il reflector** fra due schede (nodi diversi; il 18/11/2026 la pagina del reflector ha mostrato "IP del Nodo" di due nodi e le trasmissioni entrate dal nodo mobile: **provata il 18/11/2026 fino all'aria**: la voce da un nodo (cellulare) passa dal reflector, dalla RX e dalla TX del ripetitore ed è decodificata dalla chiavetta SDR a 430.000 MHz (209 frame, 0 persi); resta la voce nell'altro senso (`rete->radio` sul nodo) e l'ascolto con una scheda; **cambio di rete**: corretto, da riprovare dalla rete di casa a quella cellulare senza riavvio) | la voce passa e si capisce; nella pagina del reflector compare "IP del Nodo" pubblico di ciascuna | durata, ritardo, IP visto |
+| C5 | ~~**Voce attraverso il reflector** fra due schede~~ **fatto il 18/11/2026, nei due sensi, ascoltato con la chiavetta SDR** (radio -> reflector -> RX e TX del ripetitore a 430.000 MHz: 209 frame, 0 persi; reflector -> nodo -> 433.475 MHz: `rete->radio 29`, 72 e 161 frame, 0 persi; "IP del Nodo" visto nella pagina del reflector; vedi [prove.md](prove.md)). Con una scheda ricevente resterebbe l'ascolto all'altoparlante | la voce passa e si capisce | durata, ritardo, intelligibilità |
 
 ## D. Ripetitore con una radio vera
 

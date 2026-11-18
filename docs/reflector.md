@@ -154,4 +154,4 @@ build/vlnode --id 3 --peer-id 1000 --key <chiave> --listen 0 --peer localhost:54
 - **Solo IPv4**, e un solo modo voce per reflector.
 - Il contenuto dei pacchetti **non è cifrato** (come la radio): la firma impedisce di inserire pacchetti, non di leggerli.
 - Chi conosce la chiave di un client può fingersi quel client: una chiave per client serve a poterlo escludere senza toccare gli altri.
-- Provato dietro il NAT di un router di casa (server e nodi, anche da rete cellulare). **Non ancora provato:** il passaggio della voce fra schede attraverso il reflector, e il comportamento con più di due schede insieme.
+- Provato dietro il NAT di un router di casa (server e nodi, anche da rete cellulare). **Provato il 18/11/2026** (ascoltato con la chiavetta SDR): il passaggio della voce dal nodo mobile al ripetitore e dal ripetitore al nodo, nei due sensi. **Non ancora provato:** il comportamento con più di due schede insieme.

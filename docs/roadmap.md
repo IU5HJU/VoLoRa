@@ -16,7 +16,7 @@ Firmware `b465287` (Build #391) e successivi. **Nessuna delle prove rimaste bloc
 - **Display:** la **versione del firmware all'avvio** (`fw <versione>`), l'uscita dal modo prova con tre clic che torna su ASCOLTO, la riga `RX identificativo` con il segnale giusto.
 - **Altro:** audio su **T-Beam SX1278** (microfono, amplificatore e altoparlante, anche attraverso il ripetitore) provato il 17/11/2026; "coda" rumorosa dopo il PTT risolta (ricezione di un pacchetto di parità isolato); lo **shift vale solo per Standard e Range di una stazione normale** (Diretta e Messaggio trasmettono dove ascoltano).
 
-**Prima della rc.1 resta da provare** (tutto in [prove-da-fare-rc1.md](prove-da-fare-rc1.md)): voce attraverso il reflector, comandi del sysop sul nodo (IDENTIFICA, SPEGNI, RIACCENDI), versione all'avvio sul nodo e sulle T-Beam, IP e password sul nodo, profilo Diretta, prova di potenza con i km sul display di entrambe, registrazioni senza frame persi (T3), MeshCom fra due schede, le prove della T-Beam SX1262 (Standard, Range, trasmissione verso una SX1278, prova dei toni), shift con un ripetitore vero.
+**Prima della rc.1 resta da provare** (tutto in [prove-da-fare-rc1.md](prove-da-fare-rc1.md)): comandi del sysop sul nodo (IDENTIFICA, SPEGNI, RIACCENDI), versione all'avvio sul nodo e sulle T-Beam, IP e password sul nodo, profilo Diretta, prova di potenza con i km sul display di entrambe, registrazioni senza frame persi (T3), MeshCom fra due schede, le prove della T-Beam SX1262 (Standard, Range, trasmissione verso una SX1278, prova dei toni), shift con un ripetitore vero.
 
 ## Stato al 14/11/2026: verso la prima release candidate
 
@@ -25,7 +25,7 @@ Firmware `b465287` (Build #391) e successivi. **Nessuna delle prove rimaste bloc
 **Prima della release candidate, da fare o da confermare su schede** (nessuna di queste cose blocca la rc, ma le note di rilascio devono dire che non sono provate):
 
 1. Prova di potenza in aria fra due schede: **fatta il 14/11/2026 a 5,02 km** ([prove.md](prove.md)); resta da documentare l'esito sul display di **entrambe** le schede e la distanza in km (nuova, 14/11/2026).
-2. **Voce attraverso il reflector** fra schede (finora è provato il collegamento, non la voce).
+2. **Voce attraverso il reflector** fra schede: **provata il 18/11/2026 nei due sensi**, ascoltata con la chiavetta SDR (nodo mobile, reflector, RX e TX del ripetitore; resta l'ascolto con una scheda).
 3. **T-Beam con radio SX1262**: provata il 14/11/2026 in ricezione di un messaggio da una SX1278 ([prove.md](prove.md)); restano da provare Standard e Range, la trasmissione verso una SX1278 e la prova dei toni dopo la correzione del watchdog ([tbeam-sx1262.md](tbeam-sx1262.md)).
 4. **Aggiornamento dalla pagina senza perdere le impostazioni**: **confermato il 14/11/2026** su una T3 ([prove.md](prove.md)) e, secondo l'operatore, sulle due T-Beam (SX1278 e SX1262, senza registri).
 5. **Ripetitore** a banco ([banco-ripetitore.md](banco-ripetitore.md)) e **shift** con un ripetitore vero.
