@@ -599,6 +599,15 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
     // 2. il regista: voce, ascolto dei messaggi, ritrasmissione (al piu' un pacchetto, bloccante: dura il tempo in aria)
     sched.tick(now, mayTransmit);
 
+    {  // spenta o riaccesa dal sysop (anche a tempo: allo scadere) o dalla sicurezza: una riga sulla seriale a ogni cambiamento
+      static bool prevOff = false;
+      const bool offNow = control.off();
+      if (offNow != prevOff) {
+        Serial.printf("[ripetitore] TX %s\n", offNow ? "SPENTA (comando del sysop o sicurezza): non trasmette, ascolta i comandi" : "RIACCESA (RIACCENDI, oppure e' scaduto il tempo dello spegnimento)");
+        prevOff = offNow;
+      }
+    }
+
     // 2b. messaggi vocali: la TX li ascolta sull'uscita, li tiene e li ritrasmette; qui si vede che cosa succede (la RX non li sente: sta sull'ingresso)
     {
       static uint32_t lastMsgLogMs = 0;
@@ -771,6 +780,14 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
     while (guard-- > 0 && net.receive(dgram, sizeof(dgram), dgramLen)) core.onDatagram(dgram, dgramLen, now);
     core.setPublicAddress(net.publicAddress());  // l'indirizzo pubblico, per il reflector
     core.tick(now, mayTransmit);
+    {  // spento o riacceso dal sysop (anche a tempo: allo scadere): una riga sulla seriale a ogni cambiamento
+      static bool prevNodeOff = false;
+      const bool offNow = core.txOff(now);
+      if (offNow != prevNodeOff) {
+        Serial.printf("[nodo] %s\n", offNow ? "SPENTO (comando del sysop o sicurezza): non trasmette e non manda niente in rete, ascolta i comandi" : "RIACCESO (RIACCENDI, oppure e' scaduto il tempo dello spegnimento)");
+        prevNodeOff = offNow;
+      }
+    }
     lcr::NodeCore::SysopEvents sev;
     if (core.takeSysopEvents(sev)) {  // un comando del sysop eseguito: contatore e potenza in memoria, riavvio dopo la risposta
       if (sev.counter) saveSysopCounter(sev.counterValue);
