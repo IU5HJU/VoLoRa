@@ -85,6 +85,7 @@ void NetUdp::run() {
   bool open = false;
   uint32_t lastPubMs = 0;
   bool havePubTry = false;
+  bool prevLinkUp = false;
   uint32_t lastLocal = 0;  // l'indirizzo locale (IP della scheda sulla rete) dell'ultimo giro: 0 = Wi-Fi non collegato
   lcr::PeerResolveSchedule sched(host_);
   if (sched.literal()) {
@@ -102,6 +103,10 @@ void NetUdp::run() {
       havePubTry = false;
     }
     lastLocal = local;
+    // Anche quando il collegamento con l'altro nodo torna su dopo essere caduto (per esempio il telefono che fa da hotspot cambia la sua uscita verso
+    // Internet senza cambiare l'indirizzo locale della scheda): l'indirizzo pubblico puo' essere cambiato. Non piu' di una richiesta al minuto.
+    if (linkUp_ && !prevLinkUp && up && millis() - lastPubMs >= 60000) havePubTry = false;
+    prevLinkUp = linkUp_;
     if (up && !open) open = udp.begin(localPort_) != 0;
     if (!up && open) {
       udp.stop();
