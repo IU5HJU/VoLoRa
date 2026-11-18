@@ -1,10 +1,24 @@
 # Prove da fare prima di pubblicare la rc.1
 
-Scaletta delle prove su schede ancora mancanti (stato al 14/11/2026, firmware `dev` dal commit `9056f3b` in poi; la riga d'avvio dice `firmware <commit>`). Per ogni prova: **cosa fare**, **cosa deve succedere** e **cosa riportare**. Gli esiti vanno in [prove.md](prove.md); le note di rilascio ([v0.1.0-rc.1.md](note-rilascio/v0.1.0-rc.1.md)) si correggono di conseguenza. Il tag lo crea chi pubblica, a mano.
+Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `dev` dalla Build #380, commit `833fcd5`, in poi; la riga d'avvio mostra `fw <versione>`; la riga d'avvio dice `firmware <commit>`). Per ogni prova: **cosa fare**, **cosa deve succedere** e **cosa riportare**. Gli esiti vanno in [prove.md](prove.md); le note di rilascio ([v0.1.0-rc.1.md](note-rilascio/v0.1.0-rc.1.md)) si correggono di conseguenza. Il tag lo crea chi pubblica, a mano.
 
 **Per tutte le prove:** aggiorna dalla pagina di installazione (ricarica con Ctrl+Shift+R, versione `dev`) lasciando **vuota** la casella "Erase device"; prima e dopo l'aggiornamento copia `CFG GET`, `CFG VERSION` e la riga `[avvio] impostazioni: ...`. Antenna collegata prima dell'USB. Registri della seriale salvati su file (pulsante "Salva su file" della pagina).
 
 **Prove con la T-Beam SX1262 di un altro radioamatore** (14/11/2026): A1, A2, B1-B6 sono state riportate in un PDF a lui destinato, con per ogni prova se servono il registro e la foto del display (registro obbligatorio per A1, A2, B1, B3-B6; foto obbligatoria per B1, B3, B4, B5). Il PDF non è nel repository; i risultati arriveranno qui in [prove.md](prove.md) senza nominativo di terzi.
+
+## Riepilogo (18/11/2026): quante ne restano
+
+**24 prove** ancora da fare, **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+
+| Gruppo | Prove | Quante |
+|---|---|---|
+| E. Ripetitore e messaggi (nuovo) | E1-E7 | 7 |
+| A. Schede singole | A3, A4 | 2 |
+| B. Due schede | B1, B2, B3, B4b, B5, B6 | 6 |
+| C. Nodo e reflector | C1, C2, C3, C4b, C5 | 5 |
+| D. Ripetitore vero | D2 | 1 |
+| Con l'altro radioamatore (T-Beam SX1262) | A2, B4, trasmissione SX1262 → SX1278, A4 sulla sua scheda | 4 |
+
 
 ## A. Schede singole (a banco, 15 minuti l'una)
 
@@ -38,9 +52,23 @@ Scaletta delle prove su schede ancora mancanti (stato al 14/11/2026, firmware `d
 | C4b | **Morse del nodo** (causa trovata e corretta il 15/11/2026: pacchetti FSK oltre 64 byte rifiutati dalla radio; **riascoltato: funziona, non perfetto**; resta una misura con SDR/ricevitore): ascolta con un ricevitore FM (e SDR) all'ora dell'identificativo (ogni 10 minuti, il primo 15 s dopo l'avvio); con il registro nuovo del nodo (`Morse n, interrotti n, rimandati n, errore radio n`) | dopo il testo `Nodo VoLoRa` il nominativo in Morse a tono; `Morse` sale di uno a ogni identificativo | registro con la riga a 30 s, cosa si sente |
 | C5 | **Voce attraverso il reflector** fra due schede (nodi diversi) | la voce passa e si capisce; nella pagina del reflector compare "IP del Nodo" pubblico di ciascuna | durata, ritardo, IP visto |
 
-## D. Ripetitore (da banco)
+## D. Ripetitore con una radio vera
 
-Seguire [banco-ripetitore.md](banco-ripetitore.md): D1 collegamento RX-TX a quattro fili e identificativo in testo e in Morse FM; D2 **shift** con un ripetitore vero (frequenza di ascolto e di trasmissione); D3 comandi sysop firmati. Riportare per ogni passo cosa si vede sul display e sulla seriale.
+D2: **shift** con un ripetitore vero (frequenza di ascolto e di trasmissione). Il collegamento RX-TX, l'identificativo in testo e in Morse FM e i comandi del sysop sono già provati a banco ([prove.md](prove.md), 16-18/11/2026).
+
+## E. Ripetitore e messaggi (aggiunte del 16-18/11/2026, firmware dalla Build #380)
+
+| # | Prova | Cosa deve succedere | Da riportare |
+|---|---|---|---|
+| E1 | **Messaggio vocale via ripetitore**: ricevente **spenta** durante tutta la trasmissione del mittente (profilo Messaggio, sulla frequenza di uscita; shift non vale), riaccesa appena il mittente ha finito (la TX parte circa 5 s dopo l'ultimo pacchetto ascoltato, dopo i due annunci di occupato) | in casella **"MESSAGGIO via RPT"**; "Riproduco (via RPT)" all'ascolto | foto del display, **registro della TX** (riga `[ripetitore] TX messaggi: ...`), RSSI e SNR |
+| E2 | **Messaggio in diretta**, ricevente accesa | "MESSAGGIO DIRETTO", poi (se è nel raggio) una seconda copia "via RPT" che sostituisce la prima | foto, registro della TX |
+| E3 | **Comandi del sysop sul nodo** (via radio): STATO, POTENZA, SPEGNI, RIACCENDI, IDENTIFICA, RIAVVIA | come sul ripetitore; la risposta firmata col nominativo del nodo torna alla stazione | registro della stazione e del nodo |
+| E4 | **Versione sull'OLED all'avvio** (`fw <versione>`, 1,8 s) su T3, T-Beam, RX e TX del ripetitore | compare prima della schermata normale | foto |
+| E5 | **Uscita dal modo prova con tre clic** (schermo torna su ASCOLTO) | niente scritte di prova rimaste | foto; è la parte "schermata" di B3 |
+| E6 | **IP e password sull'OLED** all'avvio della RX del ripetitore e del nodo (25 s) | "GESTIONE WI-FI" con IP (alterna con la riga della rete) e password | foto |
+| E7 | **SPEGNI a tempo**: durata e rientro in servizio | **provato il 18/11/2026** (la TX mostra "TX SPENTA (sysop)"); manca il registro con la durata e il rientro alla scadenza | registro della TX |
+
+**Il nodo non tiene né ritrasmette i messaggi** (una sola radio: non può ascoltare insieme Standard e Messaggio): non c'è una prova da fare, è un limite documentato in [ripetitore.md](ripetitore.md).
 
 ## Dopo le prove
 
