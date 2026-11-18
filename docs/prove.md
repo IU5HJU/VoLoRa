@@ -634,3 +634,10 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Esito:** **la TX del ripetitore ritrasmette il messaggio**, con lo stesso numero di frame (87), senza perdite, e la ricevente distingue le due copie dal flag (E1 ed E2). La copia ripetuta non ha richiesto nessun recupero con la parità, mentre la diretta ne ha avuto uno (la prima ricezione dell'SDR a guadagno basso).
 - **Limiti:** ricezione con la chiavetta; la voce della copia ripetuta non è ancora stata giudicata all'ascolto (quella della copia diretta, il 18/11/2026, era "perfettamente intelligibile"); i messaggi `underrun!!!` di `aplay` nel registro (43,7 s) sono i vuoti tra le riproduzioni, non un difetto.
 - **Voce della copia ripetuta (18/11/2026, riferito dall'operatore):** **"perfettamente intelligibile"**, come la copia diretta.
+
+### 18/11/2026, casa, IU5HJU (Morse a tono in FM del nodo: misura con la chiavetta SDR)
+
+- **Ricezione:** NESDR con `rtl_fm` (FM stretta, 24 kHz di audio, guadagno 10 dB) sulla frequenza del nodo (433.475 MHz), 60 s di registrazione; analisi con `tools/sdr/analizza_morse.py`. Identificativo uscito durante la registrazione (IDENTIFICA e/o identificativo periodico del nodo).
+- **Esito:** `Morse a tono: <nominativo del nodo> <nominativo del nodo>` (**decodificato correttamente, due volte**), **tono 700 Hz** (atteso 700), **punto 80 ms, linea 240 ms, 15,0 parole al minuto** (attese 15), 42 toni in 41,8 s, **rapporto tono/fondo 60 dB**. I valori coincidono con quelli di progetto.
+- **Cosa è misurato:** tono, lunghezza di punto e linea, velocità e testo. **Non misurata** la deviazione (±2,5 kHz): l'audio di `rtl_fm` non è tarato in kHz. Sul ripetitore (stessa funzione di invio, `TxScheduler`) il Morse è stato ascoltato a orecchio ("funziona, non perfetto") ma **non ancora misurato con l'SDR**.
+- **Perché due volte:** il nominativo compare due volte nella registrazione di 60 s (due identificativi, per esempio IDENTIFICA e il periodico, o due comandi): non indagato.
