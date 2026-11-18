@@ -568,3 +568,11 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Il primo STATO senza risposta:** non è chiaro il motivo. Il contatore 11 era basso rispetto al 22 del nodo, che dovrebbe rispondere con l'esito 4; si sospetta che la prima trasmissione non sia stata ricevuta (il nodo stava ancora partendo o la prima copia è andata persa). Con il log nuovo del nodo (`comando del sysop <codice> ...`) si vedrà.
 - **Riga "RX identificativo ... RSSI 0 dBm SNR 0.0 dB"** (prima dopo l'accensione): RSSI e SNR erano **quelli del pacchetto precedente** (0 all'avvio), non dell'identificativo: la riga usciva prima dell'aggiornamento dei valori. Corretto (la riga esce al giro successivo, con i valori giusti): **non ancora provato**.
 - **Non ancora provati sul nodo:** POTENZA, SPEGNI, RIACCENDI, IDENTIFICA.
+
+### 18/11/2026, casa, IU5HJU (comandi del sysop sul nodo: STATO e POTENZA con il registro nuovo, firmware `b465287`)
+
+- **Schede:** nodo T-Beam SX1278 e stazione T3, entrambe `b465287` (Build #391).
+- **STATO** (contatore 26): nodo `comando del sysop 1 contatore 26: esito 0, risposta firmata TRASMESSA`; stazione `RISPOSTA da=<nodo> codice=1 esito=0 contatore=26 spento=0 potenza=10 minuti=0`. **Il primo STATO della serie riesce al primo colpo** (a differenza del giro precedente: il contatore era già allineato).
+- **POTENZA 17 dBm** (contatore 27): nodo `comando del sysop 7 contatore 27: esito 0, risposta firmata TRASMESSA, potenza salvata`; stazione `RISPOSTA ... codice=7 esito=0 contatore=27 ... potenza=17`. **POTENZA sul nodo funziona**: applicata e salvata in memoria; la risposta dice la potenza nuova.
+- **Il registro nuovo del nodo** (`comando del sysop <codice> contatore <n>: esito <n>, risposta firmata TRASMESSA`) **funziona** come previsto. La riga della stazione `RX identificativo: <nodo> RSSI -27 dBm SNR 9.8 dB` ha ora il segnale del pacchetto (prima 0), **correzione confermata**.
+- **Non ancora visto:** la potenza che resta dopo un riavvio (`CFG GET` sul nodo dopo il comando), IDENTIFICA, SPEGNI e RIACCENDI sul nodo; il testo "RIP: PWR 17dBm" sul display della stazione.
