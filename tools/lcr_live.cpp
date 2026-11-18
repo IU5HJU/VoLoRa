@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     const std::string a = argv[i];
     if (a == "--messaggio") {
       message = true;
-    } else if (a == "--qualita") {
+    } else if (a == "--standard" || a == "--qualita") {  // --qualita e' il vecchio nome dello Standard (fino al 12/11/2026)
       quality = true;  // solo per l'avviso iniziale: il modo si riconosce dai pacchetti (1200 o 3200)
     } else if (a == "--accept-bad-crc") {
       acceptBad = true;
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
       lead = static_cast<uint32_t>(std::atoi(argv[++i]));
       if (lead > 1000) lead = 1000;
     } else {
-      std::fprintf(stderr, "uso: lcr_live [--messaggio] [--qualita] [--accept-bad-crc] [--anticipo MS]   (legge le righe di lora_rx.py dallo standard input)\n");
+      std::fprintf(stderr, "uso: lcr_live [--messaggio] [--standard] [--accept-bad-crc] [--anticipo MS]   (legge le righe di lora_rx.py dallo standard input)\n");
       return a == "-h" || a == "--help" ? 0 : 2;
     }
   }
@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
   std::string buf;
   bool eof = false;
   uint32_t eofAt = 0;
-  std::fprintf(stderr, "lcr_live: in ascolto (%s). Ctrl+C per fermare.\n", message ? "profilo Messaggio" : (quality ? "profilo Qualita'" : "profilo Standard"));
+  std::fprintf(stderr, "lcr_live: in ascolto (%s). Ctrl+C per fermare.\n", message ? "profilo Messaggio" : (quality ? "profilo Standard, Codec2 3200" : "profilo Range o Standard, riconosciuto dai pacchetti"));
   for (;;) {
     if (!eof) {
       pollfd p{0, POLLIN, 0};

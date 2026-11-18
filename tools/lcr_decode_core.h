@@ -38,6 +38,7 @@ struct Session {
   std::string callsign;
   bool isTest = false;
   uint8_t mode = kModeCodec2_1200;  // modo del pacchetto di avvio (1200 o 3200)
+  bool relayed = false;        // il pacchetto di avvio ha il flag RELAYED: passato da un ripetitore o da un nodo
   size_t frameBytes = kFrameBytes;
   uint32_t packets = 0;        // pacchetti accettati
   uint32_t frames = 0;         // frame consegnati (buoni)
@@ -208,6 +209,7 @@ inline std::vector<Session> reassemble(const std::vector<Capture>& caps, Summary
       cur.id = p.session;
       cur.isTest = isTest;
       cur.mode = p.mode;
+      cur.relayed = (p.flags & kFlagRelayed) != 0;
       cur.frameBytes = frameBytesFor(p.mode);
       cur.startSec = c.hasTime ? c.tSec : 0.0;
       nextPlay = now;

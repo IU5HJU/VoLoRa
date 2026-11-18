@@ -95,6 +95,30 @@ void run(LiveRx& live, const Stream& s, uint32_t gapMs, const std::vector<size_t
   }
 }
 
+void testRelayedFlag() {
+  // Il flag RELAYED del primo pacchetto: la riga di inizio dice se la trasmissione e' diretta o passata da un ripetitore o da un nodo.
+  for (int relayed = 0; relayed < 2; relayed++) {
+    Stream s = makeStream(30, false, false);
+    if (relayed) {
+      for (auto& w : s.pkts) {
+        Packet p;
+        CHECK(decodePacket(w.data(), w.size(), p));
+        p.flags = static_cast<uint8_t>(p.flags | kFlagRelayed);
+        uint8_t buf[kMaxWireBytes];
+        const size_t n = encodePacket(p, buf, sizeof(buf));
+        w.assign(buf, buf + n);
+      }
+    }
+    Out out;
+    uint32_t clock = 0;
+    out.clock = &clock;
+    LiveRx live(out);
+    run(live, s, 350, {}, clock, 8000);
+    CHECK(out.has(relayed ? "via ripetitore o nodo" : "diretta,"));
+    CHECK(!out.has(relayed ? "diretta," : "via ripetitore o nodo"));
+  }
+}
+
 void testQuality3200() {
   // Sessione a 3200: i frame escono da 16 byte
   Stream g;
@@ -286,6 +310,7 @@ void testTestSession() {
 int main() {
   testStandard();
   testQuality3200();
+  testRelayedFlag();
   testLead();
   testRecovery();
   testMessage();

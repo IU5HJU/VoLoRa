@@ -72,10 +72,12 @@ class LiveRx {
       callsignShown_ = posShown_ = false;
       pctShown_ = 0;
       if (isTest_) lt_.begin(p.session);
-      char b[96];
+      char b[128];
       const char* what = isTest_ ? "prova di collegamento"
-                                 : (p.mode == kModeCodec2_3200 ? "trasmissione Standard (Codec2 3200)" : "trasmissione (Codec2 1200)");
-      std::snprintf(b, sizeof(b), "inizio %s, sessione %u", what, p.session);
+                                 : (p.mode == kModeCodec2_3200 ? "trasmissione Standard (Codec2 3200)" : "trasmissione Range (Codec2 1200)");
+      // flag RELAYED: il pacchetto e' stato ritrasmesso da un ripetitore o da un nodo (altrimenti arriva direttamente dal mittente)
+      const char* via = (p.flags & kFlagRelayed) ? " via ripetitore o nodo," : " diretta,";
+      std::snprintf(b, sizeof(b), "inizio %s%s sessione %u", what, via, p.session);
       info(b);
     }
     progress();

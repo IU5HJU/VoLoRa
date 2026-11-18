@@ -78,8 +78,8 @@ int main(int argc, char** argv) {
       continue;
     }
     const double sec = s.c2.size() / static_cast<double>(s.frameBytes) * kFrameMs / 1000.0;
-    std::printf("VOCE sessione %u da %s: %u pacchetti, %u frame (%.1f s), persi %u, pacchetti recuperati %u%s\n", s.id,
-                s.callsign.empty() ? "-" : s.callsign.c_str(), s.packets, s.frames, sec, s.framesLost, s.recovered,
+    std::printf("VOCE sessione %u da %s (%s): %u pacchetti, %u frame (%.1f s), persi %u, pacchetti recuperati %u%s\n", s.id,
+                s.callsign.empty() ? "-" : s.callsign.c_str(), s.relayed ? "via ripetitore o nodo" : "diretta", s.packets, s.frames, sec, s.framesLost, s.recovered,
                 s.ended ? "" : " [cattura interrotta]");
     if (s.c2.empty()) continue;
     char name[96];

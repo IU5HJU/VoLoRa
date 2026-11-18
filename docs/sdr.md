@@ -43,12 +43,12 @@ Antenna del NESDR a circa 17 cm (quarto d'onda a 434 MHz) e **almeno un metro da
 
 ```bash
 conda activate lora
-python3 tools/sdr/lora_rx.py --freq 433.9e6 --out cattura.txt
+python3 tools/sdr/lora_rx.py --freq 433.475e6 --out cattura.txt
 ```
 
 **Se la chiavetta non viene vista** solo dentro conda (`No supported devices found`, mentre `/usr/bin/rtl_test -t` la trova): su Ubuntu 20.04 la `libudev` di conda non elenca i dispositivi USB. Avvia `lora_rx.py` con `LD_PRELOAD="/lib/x86_64-linux-gnu/libudev.so.1 /usr/lib/x86_64-linux-gnu/libusb-1.0.so.0 /usr/lib/x86_64-linux-gnu/librtlsdr.so.0"` davanti al comando.
 
-I parametri predefiniti sono quelli del firmware: **SF8, BW 250 kHz, CR 4/5, sync word 0x4C, preambolo 12, intestazione esplicita, CRC attivo**. Se hai cambiato la frequenza con `CFG SET FREQ`, passa la stessa a `--freq`.
+I parametri predefiniti sono quelli dello **Standard** (il profilo di base, Codec2 3200): **433,475 MHz, SF7, BW 250 kHz, CR 4/5, sync word 0x4C, preambolo 12, intestazione esplicita, CRC attivo**. Se hai cambiato la frequenza con `CFG SET FREQ`, passa la stessa a `--freq`; per il **Range** (Codec2 1200) aggiungi `--sf 8`, per il **Messaggio** `--sf 12 --bw 125e3`. Il **ripetitore** ripete lo Standard sulla frequenza di uscita (`freqout`) e i messaggi sulla stessa frequenza in Messaggio (SF12, 125 kHz).
 Per ogni pacchetto stampa una riga come `[3] CRC ok  voce Codec2 1200, sessione 1234, seq 1, flag -, payload 72 byte` e accoda a `cattura.txt` una riga
 `t=<secondi> crc=<0|1> len=<n> hex=<byte>`. `--help` elenca tutte le opzioni (`--gain`, `--ppm`, `--duration`, `--device`).
 
@@ -76,15 +76,16 @@ Il decodificatore accetta anche le righe che stampa `gr-lora_sdr` con `print_rx_
 `tools/lcr_live.cpp` (`make lcr_live`) fa la stessa ricostruzione di `lcr_decode`, ma **man mano che i pacchetti arrivano**: legge le righe di `lora_rx.py` dallo standard input e scrive sullo standard output i frame Codec2 1200 a ritmo reale (uno ogni 40 ms), con la stessa logica del ricevitore della scheda: pre-buffer di 1 s, recupero con la parità, frame persi a zero. Le righe di stato (nominativo, posizione, avanzamento del messaggio, fine) vanno sullo standard error.
 
 ```bash
-tail -n0 -F cattura.txt | build/lcr_live | c2dec 1200 - - | aplay -q -t raw -f S16_LE -r 8000 -c 1
+tail -n0 -F cattura.txt | build/lcr_live --standard | c2dec 3200 - - | aplay -q -t raw -f S16_LE -r 8000 -c 1
 ```
 
-- **Range (Codec2 1200, SF8):** la voce si sente mentre la scheda trasmette, con un ritardo di circa **1-2 secondi** (il pre-buffer di 1 s più il tempo di demodulazione).
-- **Standard (`--qualita`, SF7, Codec2 3200):** come il Range ma con `c2dec 3200`; lo script `ricevitore-live.sh` lo sceglie con la voce 3 e **ricompila sempre** `lcr_live` (un `lcr_live` vecchio, costruito prima del modo Standard, scarta in silenzio i pacchetti a 3200).
+- **Range (Codec2 1200, SF8; senza `--standard`, `c2dec 1200`):** la voce si sente mentre la scheda trasmette, con un ritardo di circa **1-2 secondi** (il pre-buffer di 1 s più il tempo di demodulazione).
+- **Standard (`--standard`, SF7, Codec2 3200):** come il Range ma con `c2dec 3200` (`--qualita` è il vecchio nome, ancora accettato); lo script `ricevitore-live.sh` lo sceglie con la voce 3 e **ricompila sempre** `lcr_live` (un `lcr_live` vecchio, costruito prima del modo Standard, scarta in silenzio i pacchetti a 3200).
 - **Messaggio (`--messaggio`, SF12):** come sulle schede, la riproduzione parte a messaggio completo; durante la ricezione si legge l'avanzamento.
+- **Ripetuto o diretto (18/11/2026):** la riga di inizio di `lcr_live` dice se la trasmissione è **diretta** oppure **via ripetitore o nodo** (flag `RELAYED` del primo pacchetto); il riepilogo di `lcr_decode` lo scrive in ogni riga `VOCE`, e `lora_rx.py` mostra il flag `RIPETUTO` nei pacchetti. Così con la chiavetta si distingue la voce passata da un ripetitore o da un nodo da quella diretta della stazione.
 - **Cuscinetto contro gli "underrun" (10/11/2026):** `aplay` può stampare `underrun!!!` (un vuoto nell'audio) se per un attimo non riceve dati: con i frame consegnati esattamente a ritmo reale il suo buffer resta sempre quasi vuoto. `lcr_live` fa quindi uscire i primi 7 frame in blocco e poi uno ogni 40 ms, così l'audio ha **240 ms di margine** (`--anticipo MS`, 0 = ritmo reale esatto). L'audio parte prima, non dopo.
 - Si usa `aplay` e non `ffplay`: `ffplay` con dati che arrivano a rilento si blocca nel suo "probe" iniziale.
-- Lo script **`tools/sdr/ricevitore-live.sh`** fa tutto (ambiente conda, scelta del modo, frequenza e guadagno, ascolto, riepilogo finale) e si può collegare a un'icona su Ubuntu MATE.
+- Lo script **`tools/sdr/ricevitore-live.sh`** fa tutto (ambiente conda, scelta del modo, frequenza e guadagno, ascolto, riepilogo finale) e si può collegare a un'icona su Ubuntu MATE. **All'avvio fa da solo `git pull`** del clone (se c'è la rete e non ci sono modifiche locali) e poi riparte con la versione nuova di se stesso, poi ricompila `lcr_live` e `lcr_decode`: l'icona tiene sempre allineato il ricevitore al progetto. La prima volta dopo questa modifica serve un `git pull` a mano nella cartella del progetto (l'icona vecchia non aggiorna).
 - Provato sul PC con orologio finto (`tests/test_live.cpp`) e con una trasmissione sintetica (600 byte in 4,9 s). **Da provare con la chiavetta e una scheda vera.**
 
 ## 4. Controllo di una scheda

@@ -4,10 +4,10 @@
 Si esegue nell'ambiente conda con GNU Radio 3.10 e gr-lora_sdr (vedi docs/sdr.md):
 
     conda activate lora
-    python3 tools/sdr/lora_rx.py --freq 433.9e6 --out cattura.txt
+    python3 tools/sdr/lora_rx.py --freq 433.475e6 --out cattura.txt
 
-I parametri radio predefiniti sono quelli del firmware (src/user_config.h): SF8, BW 250 kHz, CR 4/5, sync word 0x4C,
-preambolo 12 simboli, intestazione esplicita, CRC attivo. Per ogni pacchetto scrive una riga
+I parametri radio predefiniti sono quelli dello Standard (il profilo di base del firmware, Codec2 3200): 433,475 MHz, SF7, BW 250 kHz, CR 4/5, sync word 0x4C,
+preambolo 12 simboli, intestazione esplicita, CRC attivo. Per il Range (Codec2 1200) usa --sf 8; per il Messaggio --sf 12 --bw 125e3; il ripetitore ripete lo Standard. Per ogni pacchetto scrive una riga
     t=<secondi unix> crc=<0|1> len=<byte> hex=<byte in esadecimale>
 che `build/lcr_decode cattura.txt` trasforma in sessioni vocali e prove di collegamento.
 """
@@ -116,8 +116,8 @@ class LoraRx(gr.top_block):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--freq", type=float, default=433.9e6, help="frequenza in Hz (predefinita 433.9e6)")
-    ap.add_argument("--sf", type=int, default=8, help="spreading factor (predefinito 8)")
+    ap.add_argument("--freq", type=float, default=433.475e6, help="frequenza in Hz (predefinita 433.475e6)")
+    ap.add_argument("--sf", type=int, default=7, help="spreading factor (predefinito 7 = Standard; Range 8, Messaggio 12)")
     ap.add_argument("--bw", type=float, default=250e3, help="banda in Hz (predefinita 250000)")
     ap.add_argument("--cr", type=int, default=1, help="coding rate 1..4 = 4/5..4/8 (predefinito 1 = 4/5)")
     ap.add_argument("--sync-word", type=lambda s: int(s, 0), default=0x4C, help="sync word (predefinita 0x4C)")
