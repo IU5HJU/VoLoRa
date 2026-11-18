@@ -525,4 +525,5 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 ### 18/11/2026, casa, IU5HJU (RX del ripetitore: versione all'avvio e schermata di gestione Wi-Fi, firmware `833fcd5`)
 
 - **Esito:** due foto del display della **RX** (T3, firmware `833fcd5`, Build #380). **All'avvio** compare la schermata **AVVIO** con la riga `fw 833fcd5` (la versione installata). Dopo l'avvio compare **GESTIONE WI-FI** con "Da rete di casa:", l'indirizzo IP, "utente volora" e la password (non riportata qui). L'operatore: **"le schermate funzionano"**.
-- **Limiti:** provate **sulla RX del ripetitore**. La versione all'avvio non è ancora vista sulle altre schede (TX, nodo, T-Beam) e la schermata con IP e password non è vista sul **nodo**. Del 25 s di visualizzazione e dell'alternanza dell'IP con la riga della rete non ci sono misure.
+- **Anche la TX** (foto, stesso firmware `833fcd5`): la schermata AVVIO con `fw 833fcd5`, leggibile per intero.
+- **Limiti:** la schermata con IP e password è provata **sulla RX del ripetitore**. La versione all'avvio non è ancora vista sulle altre schede (nodo, T-Beam) e la schermata con IP e password non è vista sul **nodo**. Del 25 s di visualizzazione e dell'alternanza dell'IP con la riga della rete non ci sono misure.
