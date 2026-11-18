@@ -662,3 +662,5 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 
 - **Foto del display del nodo dopo SPEGNI:** **"NODO SPENTO (sysop)"** nella prima riga, la riga della rete (`WiFi ...`), `REF ok <reflector>` (**il collegamento con il reflector resta attivo**), `R>N 0  N>R 0` e nell'ultima riga **"SPENTO dal sysop"**. La schermata nuova funziona e sta nelle 21 colonne.
 - **Ancora da vedere (registro del nodo):** che mentre il nodo è spento `radio->rete` non salga e salga `scartati da spento`, e che dopo RIACCENDI la voce ricevuta in radio torni in rete.
+- **Registro del nodo (firmware `f745ad6`):** `comando del sysop 2 contatore 41: esito 0, risposta firmata TRASMESSA` (SPEGNI), poi, con la stazione che trasmette, **`radio->rete` resta a 0** e **`scartati da spento` sale a 33**; l'identificativo non esce (`id 1` fermo). **La correzione funziona: da spento il nodo non manda più in rete quello che riceve in radio.**
+- **Ancora da vedere:** RIACCENDI e la ripresa del passaggio in rete (`radio->rete` che risale), e la potenza dopo un riavvio.
