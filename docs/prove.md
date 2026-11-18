@@ -664,3 +664,5 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Ancora da vedere (registro del nodo):** che mentre il nodo è spento `radio->rete` non salga e salga `scartati da spento`, e che dopo RIACCENDI la voce ricevuta in radio torni in rete.
 - **Registro del nodo (firmware `f745ad6`):** `comando del sysop 2 contatore 41: esito 0, risposta firmata TRASMESSA` (SPEGNI), poi, con la stazione che trasmette, **`radio->rete` resta a 0** e **`scartati da spento` sale a 33**; l'identificativo non esce (`id 1` fermo). **La correzione funziona: da spento il nodo non manda più in rete quello che riceve in radio.**
 - **Ancora da vedere:** RIACCENDI e la ripresa del passaggio in rete (`radio->rete` che risale), e la potenza dopo un riavvio.
+- **RIACCENDI (stesso registro):** `comando del sysop 3 contatore 42: esito 0, risposta firmata TRASMESSA`, subito dopo `transito 1: <stazione> RSSI -34 dBm SNR 10.5 dB`: **il passaggio in rete riprende** (il transito si conta solo quando il pacchetto va al reflector). Il ciclo **SPEGNI, nodo spento che scarta, RIACCENDI, ripresa** è provato sul nodo.
+- **Resta:** la potenza dopo un riavvio.
