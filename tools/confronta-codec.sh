@@ -14,12 +14,25 @@ fi
 OUT=${OUT:-$HOME/confronto-codec}
 fine() { echo; read -rp "Premi Invio per chiudere"; exit "${1:-0}"; }
 
+# Aggiornamento automatico (18/11/2026): il clone si porta all'ultima versione del progetto (se c'e' la rete e non ci sono modifiche locali
+# che lo impediscono) e lo script riparte da se', perche' potrebbe essere cambiato lui stesso. Senza rete si usa quello che c'e'.
+if [ -z "$VOLORA_AGGIORNATO" ] && [ -d "$REPO/.git" ]; then
+  echo "Controllo se il progetto e' aggiornato..."
+  PRIMA=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null)
+  if timeout 30 git -C "$REPO" pull --ff-only -q 2>/dev/null; then
+    DOPO=$(git -C "$REPO" rev-parse --short HEAD 2>/dev/null)
+    if [ "$PRIMA" != "$DOPO" ]; then echo "Progetto aggiornato: $PRIMA -> $DOPO"; else echo "Progetto gia' aggiornato ($DOPO)"; fi
+  else
+    echo "Aggiornamento non riuscito (rete assente o modifiche locali nel clone): uso la versione presente ($PRIMA)"
+  fi
+  export VOLORA_AGGIORNATO=1
+  exec bash "$REPO/tools/confronta-codec.sh" "$@"
+fi
+
 command -v arecord >/dev/null || { echo "Manca arecord: sudo apt install alsa-utils"; fine 1; }
 command -v ffplay >/dev/null || { echo "Manca ffplay: sudo apt install ffmpeg"; fine 1; }
-if [ ! -x "$REPO/build/codec_compare" ]; then
-  echo "Compilo lo strumento di confronto..."
-  make -C "$REPO" codec_compare >/dev/null 2>&1 || { echo "Compilazione fallita: nella cartella $REPO prova 'git pull origin main' e poi 'make codec_compare'"; fine 1; }
-fi
+echo "Preparo lo strumento di confronto (la prima volta puo' volerci qualche minuto: non e' bloccato)..."
+MAKELOG=$(make -C "$REPO" codec_compare 2>&1) || { echo "$MAKELOG" | tail -20; echo "Compilazione fallita: nella cartella $REPO prova 'git pull origin main' e poi 'make codec_compare'"; fine 1; }
 
 DIR="$OUT/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$DIR"
