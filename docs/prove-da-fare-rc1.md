@@ -10,13 +10,13 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## Riepilogo (18/11/2026): quante ne restano
 
-**16 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+**14 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
 
 | Gruppo | Prove | Quante |
 |---|---|---|
-| E. Ripetitore e messaggi (nuovo) | E5 | 1 |
+| E. Ripetitore e messaggi (nuovo) | E5 | ~~**Uscita dal modo prova con tre clic**~~ **fatto il 18/11/2026** (riferito: lo schermo torna su ASCOLTO senza scritte di prova; vedi B3 e [prove.md](prove.md)) | niente scritte di prova rimaste | foto |
 | A. Schede singole | A3, A4 | 2 |
-| B. Due schede | B1, B3, B4b, B5, B6 | 5 |
+| B. Due schede | B1, B4b, B5, B6 | 4 |
 | C. Nodo e reflector | C1, C2, C3 | 3 |
 | D. Ripetitore vero | D2 | 1 |
 | Con l'altro radioamatore (T-Beam SX1262) | A2, B4, trasmissione SX1262 → SX1278, A4 sulla sua scheda | 4 |
@@ -37,7 +37,7 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 |---|---|---|---|
 | B1 | **Prova di potenza con la distanza**: su **tutte e due** `CFG SET POS ON` e una posizione (`CFG SET QTH lat,lon` o GPS con fix); prova accesa su entrambe (tre pressioni brevi del PTT), PTT su una | l'esito sul display di **entrambe** dice `MIN n dBm` e, nell'ultima riga, `100% a MIN  X.Xkm` | foto dei due display, distanza reale, riga `PROVA POTENZA ...` della seriale |
 | B2 | ~~Come B1 con `POS OFF` su una~~ **fatto il 18/11/2026** (T3 con posizione, T-Beam senza): su **tutte e due** l'esito mostra "(frame 100% a MIN)" e **niente km**; MIN 2 dBm a poca distanza (vedi [prove.md](prove.md)) | sull'altra scheda niente km (`(frame 100% a MIN)`) | foto |
-| B3 | **Uscita dalla prova con tre pressioni brevi**: (a) a scheda ferma, (b) mentre l'altra trasmette, (c) a prova di potenza in corso | in tutti e tre i casi la prova si spegne (`PROVA SPENTA`) | quante pressioni sono servite, se in un caso non ha funzionato |
+| B3 | ~~**Uscita dalla prova con tre pressioni brevi**~~ **fatto il 18/11/2026**, riferito dall'operatore ("con tre pressioni si esce senza più problemi"), senza distinguere i tre casi (vedi [prove.md](prove.md)) | in tutti i casi la prova si spegne (`PROVA SPENTA`) | quante pressioni sono servite |
 | B4 | **T-Beam SX1262 ↔ SX1278 vicine** (stessa stanza, potenza 2): profili **Standard**, **Range** e **Messaggio**, nei **due versi** (a Standard e Range lontano non si sentivano) | voce intelligibile in entrambi i versi, `frame persi` e `RSSI`/`SNR` sul display | per ogni profilo e verso: ok o no, RSSI, SNR, frame persi |
 | B4b | **Profilo Diretta** (T3 e T-Beam SX1278 o altre due schede): su una frequenza diversa da quella dello Standard, per esempio `CFG SET FREQDIR 433.600` su entrambe e `CFG SET PROFILE DIR` (o dal menu "Modo Diretta", lettera **D** in alto a destra); con uno shift impostato per il ripetitore (`CFG SET SHIFT 5000`) | voce comprensibile nei due versi sulla frequenza della Diretta, **senza** shift (a display e seriale la frequenza di trasmissione è uguale a quella di ascolto); tornando allo Standard lo shift e la frequenza di prima sono quelli di prima; una scheda in **Standard** sulla frequenza della Diretta la sente | foto del display con la **D** e la frequenza, registro, quale frequenza usata |
 | B5 | **Registrazioni con frame persi dal microfono** (T3): 10 messaggi di fila nel profilo Messaggio | `frame persi dal microfono 0` (il 14/11 una registrazione ne ha avuti 18) | quante registrazioni con perdite e quanti frame |
