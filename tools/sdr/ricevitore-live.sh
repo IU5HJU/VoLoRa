@@ -40,8 +40,11 @@ command -v c2dec >/dev/null || { echo "Manca c2dec: sudo apt install codec2"; fi
 command -v aplay >/dev/null || { echo "Manca aplay: sudo apt install alsa-utils"; fine 1; }
 # Si ricompila sempre (make rifa solo cio' che e' cambiato): un lcr_live vecchio, compilato prima dello Standard a 3200, scarta in
 # silenzio i pacchetti a 3200 e non si sente nulla.
+echo "Preparo i programmi di decodifica (la prima volta dopo un aggiornamento puo' volerci anche un paio di minuti: non e' bloccato)..."
 MAKELOG=$(make -C "$REPO" lcr_live lcr_decode 2>&1) || { echo "$MAKELOG" | tail -20; echo "Compilazione di lcr_live fallita (make nel repository $REPO)"; fine 1; }  # gli avvisi del compilatore non si mostrano
 
+echo "Programmi pronti."
+echo
 echo "=== Ricevitore SDR in tempo reale ==="
 echo "Antenna collegata e scheda a piu' di un metro dalla chiavetta."
 echo
