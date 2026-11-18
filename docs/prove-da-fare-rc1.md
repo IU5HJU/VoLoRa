@@ -10,11 +10,11 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## Riepilogo (18/11/2026): quante ne restano
 
-**18 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+**17 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
 
 | Gruppo | Prove | Quante |
 |---|---|---|
-| E. Ripetitore e messaggi (nuovo) | E5, E7 | 2 |
+| E. Ripetitore e messaggi (nuovo) | E5 | 1 |
 | A. Schede singole | A3, A4 | 2 |
 | B. Due schede | B1, B2, B3, B4b, B5, B6 | 6 |
 | C. Nodo e reflector | C1, C2, C3 | 3 |
@@ -68,7 +68,7 @@ D2: **shift** con un ripetitore vero (frequenza di ascolto e di trasmissione). I
 | E4 | ~~**Versione sull'OLED all'avvio**~~ **fatto il 18/11/2026** su RX e TX del ripetitore (T3), T-Beam in ruolo normale (`339a198`) e **nodo T-Beam** (`f745ad6`): `fw <versione>` prima della schermata normale (vedi [prove.md](prove.md)) | compare prima della schermata normale | foto |
 | E5 | **Uscita dal modo prova con tre clic** (schermo torna su ASCOLTO) | niente scritte di prova rimaste | foto; è la parte "schermata" di B3 |
 | E6 | ~~**IP e password sull'OLED**~~ **fatto il 18/11/2026** sulla RX del ripetitore e sul **nodo**: "GESTIONE WI-FI" con IP, utente e password (vedi [prove.md](prove.md)) | "GESTIONE WI-FI" con IP e password | foto |
-| E7 | **SPEGNI a tempo**: durata e rientro in servizio | **provato il 18/11/2026**: 15 minuti, la TX mostra "TX SPENTA (sysop)" alle 21:11 e **si riaccende da sola** ("RX ok ascolto" alle 21:30); mancano il registro con l'ora esatta (firmware nuovo, `a8d86e0`) e una trasmissione dopo la riaccensione | registro della TX |
+| E7 | ~~**SPEGNI a tempo**~~ **fatto il 18/11/2026**: 15 minuti sulla TX del ripetitore, "TX SPENTA (sysop)" alle 21:11, riaccensione da sola ("RX ok ascolto" alle 21:30), poi la voce passa e `Voce` sale sul display (vedi [prove.md](prove.md)) | spegnimento e rientro da soli | display e registro della TX |
 
 **Il nodo non tiene né ritrasmette i messaggi** (una sola radio: non può ascoltare insieme Standard e Messaggio): non c'è una prova da fare, è un limite documentato in [ripetitore.md](ripetitore.md).
 
