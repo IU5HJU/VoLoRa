@@ -415,6 +415,12 @@ void UiNotifier::sysopReply(const char* callsign, const lcr::SysopReply& r) {
     if ((r.data >> 24) == 0) snprintf(noticeBuf_, sizeof(noticeBuf_), "RIP: ATTIVO %udBm", static_cast<unsigned>((r.data >> 16) & 0xFF));
     else if (mins == 0xFFFF) snprintf(noticeBuf_, sizeof(noticeBuf_), "RIP: SPENTO");
     else snprintf(noticeBuf_, sizeof(noticeBuf_), "RIP: SPENTO %umin", mins);
+  } else if (r.code == lcr::kSysopPower) {  // la risposta porta lo stato dopo il comando: la potenza nuova
+    snprintf(noticeBuf_, sizeof(noticeBuf_), "RIP: PWR %udBm", static_cast<unsigned>((r.data >> 16) & 0xFF));
+  } else if (r.code == lcr::kSysopRestart) {
+    snprintf(noticeBuf_, sizeof(noticeBuf_), "RIP: RIAVVIO");
+  } else if (r.code == lcr::kSysopIdentify) {
+    snprintf(noticeBuf_, sizeof(noticeBuf_), "RIP: IDENTIFICA");
   } else {
     snprintf(noticeBuf_, sizeof(noticeBuf_), "RIP: OK");
   }

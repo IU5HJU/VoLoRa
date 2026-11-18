@@ -63,7 +63,7 @@ class TxConfigSync {
   bool inSync() const { return known_ && txDigest_ == wantedDigest_; }
   bool gaveUp() const { return enabled_ && known_ && !inSync() && tries_ >= kMaxTries; }
   int tries() const { return tries_; }
-  int lastAck() const { return lastAck_; }        // -1 nessuna risposta; 0 applicata; 1 non valida; 2 non salvata
+  int lastAck() const { return lastAck_; }        // -1 nessuna risposta; 0 applicata; 1 non valida; 2 non salvata; 3 gia' uguale
   uint32_t wantedDigest() const { return wantedDigest_; }
 
  private:

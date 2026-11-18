@@ -260,6 +260,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
   txSync.enable(settings.freqOutKhz != 0);
   Serial.printf("[ripetitore] RX: configurazione della TX dalla RX %s\n", txSync.enabled() ? "attiva (uscita impostata)" : "NON attiva: l'uscita non e' impostata sulla RX (CFG SET FREQOUT), la TX resta com'e'");
   bool txWasInSync = false;
+  uint32_t syncHoldUntilMs = 0;
   uint32_t lastSyncLogMs = 0;
 
   uint32_t received = 0, badPackets = 0, sent = 0, discarded = 0;
@@ -334,6 +335,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
               }
               txWanted.powerDbm = static_cast<int8_t>(cmd.param);
               txSync.setWanted(txWanted);
+              syncHoldUntilMs = now + 3000;  // lo stato della TX e' in ritardo di un secondo: non si manda una configurazione inutile
             }
             uint8_t d[7] = {cmd.code, static_cast<uint8_t>(cmd.param >> 8), static_cast<uint8_t>(cmd.param), static_cast<uint8_t>(cmd.counter >> 24),
                             static_cast<uint8_t>(cmd.counter >> 16), static_cast<uint8_t>(cmd.counter >> 8), static_cast<uint8_t>(cmd.counter)};
@@ -442,11 +444,11 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
           txSync.onStatus(now, hasDigest, hasDigest ? (static_cast<uint32_t>(d[2]) << 24) | (static_cast<uint32_t>(d[3]) << 16) | (static_cast<uint32_t>(d[4]) << 8) | d[5] : 0);
         } else if (parser.frame().type == lcr::kLinkConfigAck && parser.frame().len >= 1) {
           txSync.onAck(parser.frame().data[0]);
-          Serial.printf("[ripetitore] RX: la TX risponde alla configurazione: %s\n", parser.frame().data[0] == 0 ? "applicata (si riavvia)" : parser.frame().data[0] == 1 ? "NON VALIDA" : "non salvata");
+          Serial.printf("[ripetitore] RX: la TX risponde alla configurazione: %s\n", parser.frame().data[0] == 0 ? "applicata (si riavvia)" : parser.frame().data[0] == 3 ? "gia' uguale (niente da fare)" : parser.frame().data[0] == 1 ? "NON VALIDA" : "non salvata");
         }
       }
     }
-    if (txSync.due(now)) {
+    if (static_cast<int32_t>(now - syncHoldUntilMs) >= 0 && txSync.due(now)) {
       uint8_t cf[lcr::kTxConfigBytes];
       const size_t cn = txSync.frame(now, cf, sizeof(cf));
       if (cn) {
@@ -560,7 +562,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
         lcr::TxConfig c;
         if (lcr::decodeTxConfig(f.data, f.len, c)) {
           if (lcr::txConfigDigest(c) == lcr::txConfigDigest(cfgNow)) {
-            res = 0;  // gia' uguale
+            res = 3;  // gia' uguale: niente da salvare, niente riavvio
           } else {
             NvsSettingsStorage storage;
             lcr::Settings saved;
@@ -573,7 +575,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
           }
         }
         sendFrame(lcr::kLinkConfigAck, &res, 1);
-        Serial.printf("[ripetitore] TX: configurazione dalla RX %s\n", res == 0 ? (restartAtMs ? "applicata e salvata (riavvio fra poco)" : "gia' uguale") : res == 1 ? "NON VALIDA, scartata" : "non salvata");
+        Serial.printf("[ripetitore] TX: configurazione dalla RX %s\n", res == 0 ? "applicata e salvata (riavvio fra poco)" : res == 3 ? "gia' uguale (niente da fare)" : res == 1 ? "NON VALIDA, scartata" : "non salvata");
       } else if (f.type == lcr::kLinkHeartbeat && f.len >= 4) {
         rxCount = (static_cast<uint32_t>(f.data[0]) << 24) | (static_cast<uint32_t>(f.data[1]) << 16) | (static_cast<uint32_t>(f.data[2]) << 8) | f.data[3];
         lastHbMs = now;

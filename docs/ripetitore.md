@@ -82,7 +82,7 @@ Mandare le due righe (RX e TX) permette di capire da che parte è il guasto.
 **Come funziona** (`repeater_config.h`, provato sul PC in `test_repeater_config`):
 1. Ogni secondo la TX manda alla RX il suo **stato**; dal 16/11/2026 lo stato porta anche la **firma** (FNV-1a a 32 bit) della configurazione che la TX ha adesso.
 2. La RX confronta quella firma con la propria. Se è diversa (e lo stato è recente) manda un frame **configurazione** (tipo 6, 34 byte: versione, profilo, potenza, identificativo, Morse, uscita, nominativo, chiave).
-3. La TX **controlla** (versione, intervalli, nominativo, banda 430-440), **salva** nella memoria come se fosse un `CFG SET`, risponde con un frame di conferma (tipo 7: 0 applicata, 1 non valida, 2 non salvata) e si **riavvia da sola** dopo 1,5 s.
+3. La TX **controlla** (versione, intervalli, nominativo, banda 430-440), **salva** nella memoria come se fosse un `CFG SET`, risponde con un frame di conferma (tipo 7: 0 applicata, 1 non valida, 2 non salvata, 3 già uguale) e si **riavvia da sola** dopo 1,5 s.
 4. Dopo il riavvio la TX riparte con la firma giusta: la RX stampa "la TX ha la configurazione giusta" e smette.
 
 **Sicurezza.** Se la TX non accetta (non valida o non salvata), la RX riprova ogni 4 s per **5 volte** e poi si ferma e lo scrive ogni 30 s: una TX che non applica la configurazione non si riavvia all'infinito. Cambiando la configurazione sulla RX il conteggio riparte. Con la **TX con firmware vecchio** (che non manda la firma) la RX non manda niente. Se sulla RX l'uscita è 0 (non impostata) la RX **non tocca** la TX.
@@ -143,3 +143,5 @@ La scheda **RX** del ripetitore, quando è collegata al Wi-Fi di casa (rete, ref
 - **Senza rete configurata** (ripetitore solo in radio) la RX non apre nessun Wi-Fi: la prima configurazione e il Wi-Fi si impostano da USB.
 - **Solo la RX**: la pagina non c'è sulla TX. Il testo in alto della pagina, dalla rete di casa, dice che la RX manda da sola alla TX le impostazioni.
 - **Da provare sulla scheda.**
+
+**Risposte del ripetitore sul display della stazione del sysop (18/11/2026).** Dopo un comando la stazione mostra: STATO, SPEGNI e RIACCENDI `RIP: ATTIVO 10dBm` o `RIP: SPENTO`, **POTENZA `RIP: PWR 10dBm`** (la potenza nuova, dalla risposta della TX, non più un generico `RIP: OK`), RIAVVIA `RIP: RIAVVIO`, IDENTIFICA `RIP: IDENTIFICA`. Sulla RX, dopo un comando di potenza la configurazione verso la TX si rimanda dopo 3 s (lo stato della TX è in ritardo di un secondo) e la risposta "già uguale" (codice 3) si distingue da "applicata, riavvio".
