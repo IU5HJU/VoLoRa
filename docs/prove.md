@@ -671,3 +671,10 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 
 - **Registro del nodo:** dopo **POTENZA 14 dBm** (i valori del menu del sysop sono 17, 14 e 10 dBm) e `CFG REBOOT`, `CFG GET` mostra **`power=14`** (prima `power=10`): **la potenza comandata dal sysop resta salvata nel nodo anche dopo il riavvio**.
 - **Esito:** con questa prova **E3 è chiusa**: tutti i comandi del sysop sul nodo (STATO, POTENZA con salvataggio, SPEGNI anche a tempo, RIACCENDI con ripresa in rete, IDENTIFICA, RIAVVIA) sono provati, e il nodo spento non manda niente in rete.
+
+### 18/11/2026, casa, IU5HJU (SPEGNI A TEMPO 15 minuti sulla TX del ripetitore: spegnimento e rientro in servizio)
+
+- **Comando:** SPEGNI A TEMPO (`codice 4`, contatore 47 nel registro della RX), **15 minuti**, mandato dalla stazione del sysop intorno alle **21:11**. La RX lo ha ricevuto e passato alla TX (registro: `comando del sysop ...: codice 4 contatore 47`, nessuna trasmissione radio della RX).
+- **Spegnimento (foto delle 21:11):** il display della TX dice **"TX SPENTA (sysop)"**, con `da RX 2`: la TX resta collegata alla RX e ascolta i comandi.
+- **Rientro (foto delle 21:30):** il display della TX è tornato su **"RX ok ascolto M0/0"** senza nessun altro comando: **allo scadere del tempo la TX si è riaccesa da sola**.
+- **Limiti:** niente registro della TX con l'ora esatta della riaccensione (il firmware della prova non scrive le righe `TX SPENTA`/`TX RIACCESA`, aggiunte dopo, commit `a8d86e0`); non è registrata una risposta STATO con i minuti rimasti né una trasmissione della stazione dopo la riaccensione (`Voce 0` sul display).

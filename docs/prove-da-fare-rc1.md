@@ -68,7 +68,7 @@ D2: **shift** con un ripetitore vero (frequenza di ascolto e di trasmissione). I
 | E4 | ~~**Versione sull'OLED all'avvio**~~ **fatto il 18/11/2026** su RX e TX del ripetitore (T3), T-Beam in ruolo normale (`339a198`) e **nodo T-Beam** (`f745ad6`): `fw <versione>` prima della schermata normale (vedi [prove.md](prove.md)) | compare prima della schermata normale | foto |
 | E5 | **Uscita dal modo prova con tre clic** (schermo torna su ASCOLTO) | niente scritte di prova rimaste | foto; è la parte "schermata" di B3 |
 | E6 | ~~**IP e password sull'OLED**~~ **fatto il 18/11/2026** sulla RX del ripetitore e sul **nodo**: "GESTIONE WI-FI" con IP, utente e password (vedi [prove.md](prove.md)) | "GESTIONE WI-FI" con IP e password | foto |
-| E7 | **SPEGNI a tempo**: durata e rientro in servizio | **provato il 18/11/2026** (la TX mostra "TX SPENTA (sysop)"); manca il registro con la durata e il rientro alla scadenza | registro della TX |
+| E7 | **SPEGNI a tempo**: durata e rientro in servizio | **provato il 18/11/2026**: 15 minuti, la TX mostra "TX SPENTA (sysop)" alle 21:11 e **si riaccende da sola** ("RX ok ascolto" alle 21:30); mancano il registro con l'ora esatta (firmware nuovo, `a8d86e0`) e una trasmissione dopo la riaccensione | registro della TX |
 
 **Il nodo non tiene né ritrasmette i messaggi** (una sola radio: non può ascoltare insieme Standard e Messaggio): non c'è una prova da fare, è un limite documentato in [ripetitore.md](ripetitore.md).
 
