@@ -599,6 +599,24 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
     // 2. il regista: voce, ascolto dei messaggi, ritrasmissione (al piu' un pacchetto, bloccante: dura il tempo in aria)
     sched.tick(now, mayTransmit);
 
+    // 2b. messaggi vocali: la TX li ascolta sull'uscita, li tiene e li ritrasmette; qui si vede che cosa succede (la RX non li sente: sta sull'ingresso)
+    {
+      static uint32_t lastMsgLogMs = 0;
+      static uint32_t pMsgRx = 0, pDone = 0, pRelayed = 0, pRelayPk = 0, pInt = 0, pBusy = 0, pAband = 0, pAnn = 0;
+      const lcr::TxScheduler::Stats& st = sched.stats();
+      const lcr::MessageStore::Stats& ms = store->stats();
+      const bool changed = st.messageRx != pMsgRx || ms.completed != pDone || st.relayed != pRelayed || st.relayPackets != pRelayPk || st.interrupted != pInt ||
+                           st.busyAborts != pBusy || ms.abandoned != pAband || st.announces != pAnn;
+      if (changed && now - lastMsgLogMs >= 1000) {
+        lastMsgLogMs = now;
+        Serial.printf("[ripetitore] TX messaggi: pacchetti ascoltati %lu (ricostruiti con la parita' %lu), messaggi completi %lu, in archivio %u, ritrasmessi %lu (pacchetti trasmessi %lu), interrotti dalla voce %lu, dal canale occupato %lu, incompleti scartati %lu, annunci %lu\n",
+                      static_cast<unsigned long>(st.messageRx), static_cast<unsigned long>(ms.recovered), static_cast<unsigned long>(ms.completed), static_cast<unsigned>(store->readyCount()),
+                      static_cast<unsigned long>(st.relayed), static_cast<unsigned long>(st.relayPackets), static_cast<unsigned long>(st.interrupted), static_cast<unsigned long>(st.busyAborts),
+                      static_cast<unsigned long>(ms.abandoned), static_cast<unsigned long>(st.announces));
+        pMsgRx = st.messageRx; pDone = ms.completed; pRelayed = st.relayed; pRelayPk = st.relayPackets; pInt = st.interrupted; pBusy = st.busyAborts; pAband = ms.abandoned; pAnn = st.announces;
+      }
+    }
+
     // 3. stato verso la RX, una volta al secondo
     if (now - lastStatusMs >= kHeartbeatMs) {
       lastStatusMs = now;
