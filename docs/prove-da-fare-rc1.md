@@ -10,13 +10,13 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## Riepilogo (18/11/2026): quante ne restano
 
-**9 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+**8 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
 
 | Gruppo | Prove | Quante |
 |---|---|---|
 | E. Ripetitore e messaggi (nuovo) | E5 | ~~**Uscita dal modo prova con tre clic**~~ **fatto il 18/11/2026** (riferito: lo schermo torna su ASCOLTO senza scritte di prova; vedi B3 e [prove.md](prove.md)) | niente scritte di prova rimaste | foto |
 | A. Schede singole | A4 | 1 |
-| B. Due schede | B6 | 1 |
+| B. Due schede | nessuna | 0 |
 | C. Nodo e reflector | C1, C2, C3 | 3 |
 | D. Ripetitore vero | nessuna | 0 |
 | Con l'altro radioamatore (T-Beam SX1262) | A2, B4, trasmissione SX1262 → SX1278, A4 sulla sua scheda | 4 |
@@ -41,7 +41,7 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 | B4 | **T-Beam SX1262 ↔ SX1278 vicine** (stessa stanza, potenza 2): profili **Standard**, **Range** e **Messaggio**, nei **due versi** (a Standard e Range lontano non si sentivano) | voce intelligibile in entrambi i versi, `frame persi` e `RSSI`/`SNR` sul display | per ogni profilo e verso: ok o no, RSSI, SNR, frame persi |
 | B4b | ~~**Profilo Diretta**~~ **fatto il 18/11/2026** (T3 e T-Beam, nei due versi, frequenza propria `freqdir`, senza shift, **voce perfettamente intelligibile**; vedi [prove.md](prove.md)). Resta da tenere d'occhio il tempo di decodifica sulla T3 (36,4 ms) | voce comprensibile nei due versi sulla frequenza della Diretta, senza shift | per ogni verso: ok o no, RSSI, SNR |
 | B5 | ~~**Registrazioni con frame persi dal microfono** (T3): 10 messaggi di fila nel profilo Messaggio~~ **superata il 18/11/2026**: 10 registrazioni sulla T3 e 8 sulla T-Beam, tutte con `frame persi dal microfono 0` ([prove.md](prove.md)) | `frame persi dal microfono 0` (il 14/11 una registrazione ne ha avuti 18) | fatto |
-| B6 | **MeshCom fra due schede**: ripetere la prova già riferita registrando il seriale | `[meshcom]` con i frame ricevuti | registro, distanza |
+| B6 | ~~**MeshCom fra due schede**: ripetere la prova già riferita registrando il seriale~~ **superata il 18/11/2026**: T-Beam e T3 a meno di 100 m, testo inviato, ricevuto e mostrato, registro con le righe `[meshcom]` ([prove.md](prove.md)) | `[meshcom]` con i frame ricevuti | fatto |
 
 ## C. Nodo Internet e reflector
 
