@@ -10,11 +10,11 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## Riepilogo (18/11/2026): quante ne restano
 
-**23 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+**22 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
 
 | Gruppo | Prove | Quante |
 |---|---|---|
-| E. Ripetitore e messaggi (nuovo) | E1, E3-E7 | 6 |
+| E. Ripetitore e messaggi (nuovo) | E3-E7 | 5 |
 | A. Schede singole | A3, A4 | 2 |
 | B. Due schede | B1, B2, B3, B4b, B5, B6 | 6 |
 | C. Nodo e reflector | C1, C2, C3, C4b | 4 |
@@ -62,7 +62,7 @@ D2: **shift** con un ripetitore vero (frequenza di ascolto e di trasmissione). I
 
 | # | Prova | Cosa deve succedere | Da riportare |
 |---|---|---|---|
-| E1 | **Messaggio vocale via ripetitore** (**provato il 18/11/2026**: "MESSAGGIO via RPT" sul display, registro della TX con 2 messaggi ascoltati e ritrasmessi e **le due copie ascoltate con la chiavetta SDR a 430.000 MHz**: diretta, poi "via ripetitore o nodo" 7 s dopo, 87 frame, 0 persi; resta il giudizio sull'audio della copia ripetuta): ricevente **spenta** durante tutta la trasmissione del mittente (profilo Messaggio, sulla frequenza di uscita; shift non vale), riaccesa appena il mittente ha finito (la TX parte circa 5 s dopo l'ultimo pacchetto ascoltato, dopo i due annunci di occupato) | in casella **"MESSAGGIO via RPT"**; "Riproduco (via RPT)" all'ascolto | foto del display, **registro della TX** (riga `[ripetitore] TX messaggi: ...`), RSSI e SNR |
+| E1 | ~~**Messaggio vocale via ripetitore**~~ **fatto il 18/11/2026**: "MESSAGGIO via RPT" sul display, registro della TX con 2 messaggi ascoltati e ritrasmessi, **le due copie ascoltate con la chiavetta SDR a 430.000 MHz** (diretta, poi "via ripetitore o nodo" 7 s dopo, 87 frame, 0 persi), **voce perfettamente intelligibile** nelle due copie (vedi [prove.md](prove.md)) | in casella "MESSAGGIO via RPT"; la TX scrive `[ripetitore] TX messaggi: ...` | foto, registro della TX |
 | E2 | ~~**Messaggio in diretta**~~ **fatto il 18/11/2026**: "MESSAGGIO DIRETTO" sul display; copia diretta ascoltata con la chiavetta SDR, perfettamente intelligibile; la **seconda copia via ripetitore** arriva 7 s dopo (sessione nuova, flag `RELAYED`; vedi [prove.md](prove.md)) | "MESSAGGIO DIRETTO", poi una seconda copia "via RPT" che sostituisce la prima | foto, registro della TX |
 | E3 | **Comandi del sysop sul nodo** (via radio): **tutti provati il 18/11/2026** (STATO, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA, RIAVVIA); da spento il nodo continuava a mandare in rete: **corretto, da riprovare**; resta la potenza dopo un riavvio | come sul ripetitore; la risposta firmata col nominativo del nodo torna alla stazione | registro della stazione e del nodo |
 | E4 | **Versione sull'OLED all'avvio** (`fw <versione>`, 1,8 s) su T3, T-Beam, RX e TX del ripetitore (**RX e TX del ripetitore provate il 18/11/2026**; restano il nodo e le T-Beam) | compare prima della schermata normale | foto |
