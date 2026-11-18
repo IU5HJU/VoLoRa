@@ -512,3 +512,7 @@ Stazione T-Beam SX1278 `471ac35`, ripetitore a due T3 (RX `471ac35`).
 - **IDENTIFICA:** funziona (operatore). **RIAVVIA** (contatore 21): risposta `esito=0`, poi `RX identificativo: IR5XXX RSSI -44 dBm SNR 6,8 dB` dopo il riavvio.
 - **RX dopo il riavvio:** `trasmissioni radio della scheda RX 0 (devono essere 0)`, seriale con la TX attiva (120 frame validi, 0 errori CRC), memoria libera **102.940 byte** (prima della pagina sulla rete di casa erano circa 126.000: i 23 kB in meno sono il server della pagina e mDNS, margine ampio).
 - **Esito:** i comandi del sysop STATO, RIAVVIA, POTENZA, SPEGNI, RIACCENDI e IDENTIFICA funzionano sul ripetitore. Manca SPEGNI a tempo e il nodo Internet.
+
+### 18/11/2026, casa, IU5HJU (pagina di gestione della RX sulla rete di casa: provata)
+
+La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha ricavato l'indirizzo dal log e aperto la pagina sul browser (`http://192.168.1.80/`, utente `volora`). **Esito: la pagina funziona**: mostra `Configurazione`, il testo "Scheda collegata alla rete di casa ... al riavvio la RX manda da sola alla TX le sue impostazioni", nominativo `IR5XXX`, modalità "Ripetitore: scheda RX", sezione "Wi-Fi e rete". L'indirizzo e la password erano solo sulla seriale: dal 18/11/2026 (`fec7bd2`) compaiono anche sul display per 25 s. Il testo sul ruolo ripetitore ("questa pagina non si apre più") era vecchio e dal 18/11/2026 dice che la RX la apre sulla rete di casa.
