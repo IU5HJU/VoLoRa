@@ -85,6 +85,7 @@ void NetUdp::run() {
   bool open = false;
   uint32_t lastPubMs = 0;
   bool havePubTry = false;
+  uint32_t lastLocal = 0;  // l'indirizzo locale (IP della scheda sulla rete) dell'ultimo giro: 0 = Wi-Fi non collegato
   lcr::PeerResolveSchedule sched(host_);
   if (sched.literal()) {
     IPAddress ip;
@@ -92,6 +93,15 @@ void NetUdp::run() {
   }
   for (;;) {
     const bool up = WiFi.status() == WL_CONNECTED;
+    // Se la scheda cambia rete (Wi-Fi perso e ritrovato, o un altro indirizzo locale: per esempio da casa alla rete cellulare), l'indirizzo pubblico di prima
+    // non vale piu': si dimentica e si chiede subito di nuovo (18/11/2026: prima restava quello di casa fino a 10 minuti o al riavvio).
+    const uint32_t local = up ? static_cast<uint32_t>(WiFi.localIP()) : 0;
+    if (up && local != lastLocal) {
+      if (lastLocal != 0 || publicAddr_ != 0) Serial.println("[rete] la rete e' cambiata: richiedo l'indirizzo pubblico");
+      publicAddr_ = 0;
+      havePubTry = false;
+    }
+    lastLocal = local;
     if (up && !open) open = udp.begin(localPort_) != 0;
     if (!up && open) {
       udp.stop();
