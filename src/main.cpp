@@ -4,6 +4,7 @@
 //
 // ATTENZIONE: collegare l'antenna a 433 MHz prima di alimentare la scheda.
 #include <Arduino.h>
+#include <cstring>
 #include <Wire.h>
 #include <esp_system.h>
 #include <freertos/task.h>
@@ -155,7 +156,16 @@ void setup() {
     }
     Serial.println(found ? "" : " nessuno");
   }
-  ui.showMessage("AVVIO");
+  // La versione del firmware sull'OLED all'accensione: per sapere subito cosa c'e' sulla scheda (RX, TX, nodo o stazione). Se e' piu' lunga dello schermo
+  // (21 caratteri con "fw ") si mostra la coda, che ha il codice del commit.
+  {
+    char ver[24];
+    const char* v = LCR_VERSION;
+    const size_t vl = strlen(v);
+    snprintf(ver, sizeof(ver), "fw %s", vl > 18 ? v + (vl - 18) : v);
+    ui.showMessage("AVVIO", ver);
+    delay(1800);  // il tempo di leggerla
+  }
   if (!pmuOk) fatal("alimentazione PMU");
   if (WifiConfig::bootRequest()) {  // richiesto dal menu: si cancella subito l'indicatore (niente ciclo di riavvii) e si configura
     WifiConfig::setBootRequest(false);

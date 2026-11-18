@@ -476,8 +476,8 @@ def draw_choose(font, title, text, footer_text):
 
 def screens(font):
     return [
-        ("1  Avvio", "Appena accesa, durante l'inizializzazione.",
-         show_message(font, "AVVIO")),
+        ("1  Avvio", "Appena accesa: la versione del firmware installato (ultima riga), per circa 2 secondi.",
+         show_message(font, "AVVIO", "fw v0.1.0-beta.2")),
         ("2  A riposo", "Pronta: in ascolto, nessuna ricezione precedente.",
          draw_screen(font)),
         ("3  Ricezione", "Un'altra stazione trasmette. RSSI e SNR dell'ultimo pacchetto.",

@@ -34,7 +34,7 @@ Vol 7/10   (Batt=4.12V)       ultima riga: volume a sinistra, batteria a destra
 
 | # | Quando compare | Cosa mostra |
 |---|---|---|
-| 1 | Avvio | "AVVIO" |
+| 1 | Avvio | "AVVIO" e **la versione del firmware** (`fw v0.1.0-beta.2`, o il codice del commit per le versioni di sviluppo) per circa 2 secondi, su tutte le schede e in tutti i ruoli (stazione, ripetitore RX e TX, nodo) |
 | 2 | A riposo, dopo l'avvio | "ASCOLTO", frequenza, "Premi PTT per parlare" |
 | 3 | Un'altra stazione trasmette | "RX" e nominativo, **RSSI** (dBm) e **SNR** (dB) dell'ultimo pacchetto |
 | 4 | Dopo una ricezione | "Ultimo" e nominativo, frame **persi** e pacchetti **recuperati** dalla parità |
