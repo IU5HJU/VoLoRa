@@ -606,3 +606,5 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Esito:** **la voce dalla rete alla radio sul nodo funziona** (`rete->radio`), nel senso opposto a quello già provato (radio -> rete). Insieme alla prova a 430.000 MHz (via reflector, RX e TX del ripetitore) la **voce attraverso il reflector è provata nei due sensi**, ascoltata con la chiavetta SDR.
 - **Altro dal registro:** gli **identificativi periodici** del nodo escono ogni 10 minuti (`id 1..4`, `Morse 1..3`, interrotti 0); dopo il riavvio l'**indirizzo pubblico** dichiarato è quello della rete cellulare. Ricompaiono `errore radio -24` e `-7` (pacchetti ricevuti rovinati), senza conseguenze.
 - **Limiti:** ascolto con la chiavetta, non con una scheda; non registrati l'intelligibilità della voce all'altoparlante né il ritardo; il flag `RELAYED` non si vede nel registro di `lcr_live`.
+
+- **Voce (18/11/2026, riferito dall'operatore):** all'altoparlante del portatile la voce arrivata dal reflector, nei due sensi (uscita del ripetitore a 430.000 MHz e uscita del nodo a 433.475 MHz), è **"perfettamente intelligibile"**. Non misurato il ritardo.
