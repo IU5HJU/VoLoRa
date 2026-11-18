@@ -609,3 +609,11 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 
 - **Voce (18/11/2026, riferito dall'operatore):** all'altoparlante del portatile la voce arrivata dal reflector, nei due sensi (uscita del ripetitore a 430.000 MHz e uscita del nodo a 433.475 MHz), è **"perfettamente intelligibile"**. Non misurato il ritardo.
 - **Ritardo (18/11/2026, misurato con il cronometro dall'operatore):** **2,5 secondi** fra il PTT della stazione e la voce ascoltata dall'altra parte (rete cellulare, reflector, ripetitore o nodo, ricezione SDR).
+
+### 18/11/2026, casa, IU5HJU (comandi del sysop sul nodo: tutti, con SPEGNI e RIACCENDI; firmware `b465287`)
+
+- **Comandi provati sul nodo** (stazione T3 e nodo T-Beam SX1278, risposte firmate tornate alla stazione, `esito=0`): **STATO** (29, 34), **SPEGNI** (30, 31: `spento=1 minuti=65535`), **SPEGNI 15 MIN** (32: `spento=1 minuti=15`), **RIACCENDI** (33: `spento=0`), **IDENTIFICA** (35), **RIAVVIA** (36: il nodo si è riavviato). Il registro del nodo dice per ognuno `comando del sysop <codice> contatore <n>: esito 0, risposta firmata TRASMESSA`. Insieme a POTENZA (prova precedente), **tutti i comandi del sysop sono provati sul nodo**.
+- **Mentre il nodo è spento:** non trasmette (`rete->radio` ferma a 74) e non manda identificativi (`id 4` fino a RIACCENDI), e **risponde ai comandi** (RIACCENDI funziona). Dopo RIACCENDI l'identificativo è stato ascoltato dalla stazione (-28 dBm, SNR 10 dB). IDENTIFICA ha fatto uscire un nuovo identificativo (`id 6`, Morse 6).
+- **Difetto trovato (operatore):** da spento il nodo **continuava a mandare in rete** al reflector le trasmissioni ricevute in radio (`radio->rete` da 195 a 279, transiti 9-11). Il nodo spento deve restare acceso e in ascolto (per RIACCENDI e RIAVVIA) ma **non mandare niente in rete e non trasmettere**.
+- **Correzione (non ancora provata su una scheda):** da spento i pacchetti ricevuti in radio non vanno in rete (`scartati da spento` nel registro), la schermata dice **"NODO SPENTO (sysop)"** e **"SPENTO dal sysop"**; il collegamento con il reflector resta attivo. Il test del PC ha il caso: spento, la voce ricevuta in radio non va in rete; riacceso, va.
+- **Da riprovare:** SPEGNI con il nuovo firmware (nessun `radio->rete` che sale mentre è spento) e **la potenza dopo un riavvio** (non verificata in questa serie).

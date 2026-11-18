@@ -45,6 +45,7 @@ class NodeCore {
     uint32_t sysopCommands = 0;   // comandi del sysop eseguiti (firma e nominativo giusti)
     uint32_t sysopRejected = 0;   // comandi del sysop rifiutati (nominativo o firma sbagliati, nessuna chiave)
     uint32_t sysopReplies = 0;    // risposte firmate trasmesse
+    uint32_t droppedOff = 0;      // pacchetti ricevuti in radio e non mandati in rete perche' il nodo e' spento dal sysop
   };
 
   // L'ultima stazione che e' transitata dal nodo (ricevuta in radio e mandata all'altro nodo): nominativo (nei pacchetti START e END), RSSI e SNR

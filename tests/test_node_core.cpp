@@ -563,6 +563,15 @@ static void testSysopCommands() {
   }
   r.run(3000);
   CHECK(r.a.core->stats().transmitted == tx0);  // spento: non trasmette (scarta come senza nominativo)
+  // spento: la voce ricevuta in radio non va nemmeno in rete (il nodo resta in ascolto dei comandi)
+  const uint32_t toNet0 = r.a.core->stats().toNet;
+  for (const Packet& m : makeMessage(0x79, 3)) {
+    uint8_t wire[kMaxWireBytes];
+    const size_t n = encodePacket(m, wire, sizeof(wire));
+    r.a.air.inbox[0].push_back(Bytes(wire, wire + n));
+  }
+  r.run(500);
+  CHECK(r.a.core->stats().toNet == toNet0 && r.a.core->stats().droppedOff > 0);
   // RIACCENDI arriva anche a nodo spento (la RX ascolta sempre) e la risposta esce
   before = r.a.air.log[0].size();
   injectSysop(r.a, "IU5HJU", NKEY, {kSysopOn, 0, 7});
@@ -576,6 +585,13 @@ static void testSysopCommands() {
   }
   r.run(3000);
   CHECK(r.a.core->stats().transmitted > tx0);
+  for (const Packet& m : makeMessage(0x7A, 3)) {  // acceso di nuovo: la voce ricevuta in radio va in rete
+    uint8_t wire[kMaxWireBytes];
+    const size_t n = encodePacket(m, wire, sizeof(wire));
+    r.a.air.inbox[0].push_back(Bytes(wire, wire + n));
+  }
+  r.run(500);
+  CHECK(r.a.core->stats().toNet > toNet0);
   // N0CALL (mayTransmit falso): il comando e' eseguito ma non si risponde
   r.txA = false;
   before = r.a.air.log[0].size();

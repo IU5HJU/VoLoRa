@@ -221,6 +221,10 @@ void NodeCore::tick(uint32_t nowMs, bool mayTransmit0) {
       if (sysopOn_) handleSysop(p, nowMs, mayTransmit0);
       continue;
     }
+    if (txOff(nowMs)) {  // spento dal sysop (o dalla sicurezza): il nodo resta acceso e ascolta i comandi, ma non manda niente in rete
+      stats_.droppedOff++;
+      continue;
+    }
     Packet out;
     if (rep_.onPacket(p, nowMs, out) != Repeater::Verdict::Forward) continue;
     if (!link_.linkUp(nowMs)) {
