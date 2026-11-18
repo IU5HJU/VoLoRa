@@ -695,3 +695,10 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 
 - **Riferito dall'operatore:** "con tre pressioni si esce senza più problemi". Durante la prova di potenza della sera la prova è stata accesa e spenta più volte con i tre clic sulle due schede (T3 e T-Beam) e lo schermo è tornato su ASCOLTO senza scritte di prova rimaste (la correzione del 18/11/2026, `testModeChanged(false)`).
 - **Limiti:** riferito a voce, senza foto e senza distinguere i tre casi della B3 (scheda ferma, mentre l'altra trasmette, a prova di potenza in corso).
+
+### 18/11/2026, casa, IU5HJU (posizione dal browser nella pagina di configurazione, T-Beam collegata)
+
+- **Pagina** (Chrome, `iu5hju.github.io/VoLoRa/`, scheda T-Beam letta: "Impostazioni lette (scheda tbeam)"): nella sezione "Posizione (facoltativa)" i campi della posizione fissa sono vuoti con i valori di esempio e il testo dice che **la posizione fissa non è impostata e si può proporre dal browser**.
+- **Dopo "Usa la posizione del browser"** (Chrome ha chiesto il permesso, icona della posizione nella barra): i due campi si riempiono con **4 decimali** e compare l'avviso **"Posizione del browser inserita (precisione circa 131 m). È una stima: da un computer è spesso poco precisa. Controllala, correggila se serve e premi Salva per scriverla nella scheda."** Il funzionamento è quello progettato (avviso, permesso, 4 decimali, valori nei campi finché non si salva).
+- **La posizione proposta dal browser era molto lontana da quella reale** (stima dal computer, non dal GPS: centinaia di chilometri di scarto, nonostante la "precisione circa 131 m" dichiarata dal browser). È proprio il motivo dell'avviso: **va sempre controllata prima di salvare**.
+- **Da vedere (A3):** `Salva` e poi `CFG GET` con il QTH scritto, per chiudere la prova.
