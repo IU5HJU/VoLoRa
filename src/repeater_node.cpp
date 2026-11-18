@@ -292,6 +292,8 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
 
   static WifiConfig lan;  // pagina di gestione sulla rete di casa (come il nodo), a Wi-Fi connesso: la RX configura anche la TX
   bool lanStarted = false;
+  char lanIp[20] = {0}, lanPw[16] = {0};  // per il display: indirizzo e password della pagina
+  uint32_t lanInfoUntilMs = 0;             // finche' non scade, il display mostra come raggiungere la pagina
 
   for (;;) {
     const uint32_t now = millis();
@@ -301,6 +303,9 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
       lanStarted = true;
       char pw[16];
       if (lan.beginLan(handler, pw, sizeof(pw))) {
+        snprintf(lanIp, sizeof(lanIp), "%s", WiFi.localIP().toString().c_str());
+        snprintf(lanPw, sizeof(lanPw), "%s", pw);
+        lanInfoUntilMs = now + 25000;  // per 25 s il display dice dove raggiungere la pagina e con quale password
         uint8_t mac[6] = {0};
         WiFi.macAddress(mac);
         char host[24];
@@ -467,7 +472,13 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
     logLink("RX", "TX", lastStatusMs != 0 && now - lastStatusMs < kLinkDeadMs, parser, now);
 
     // 4. display
-    if (now - lastDispMs >= kDisplayMs) {
+    if (lanInfoUntilMs && static_cast<int32_t>(now - lanInfoUntilMs) < 0 && now - lastDispMs >= kDisplayMs) {
+      lastDispMs = now;  // appena collegata alla rete di casa: indirizzo e password della pagina di gestione (poi l'indirizzo alterna con la riga della rete)
+      char i4[24], i5[24];
+      snprintf(i4, sizeof(i4), "utente volora");
+      snprintf(i5, sizeof(i5), "pass %s", lanPw);
+      ui.showLines("GESTIONE WI-FI", "Da rete di casa:", lanIp, i4, i5);
+    } else if (now - lastDispMs >= kDisplayMs) {
       lastDispMs = now;
       char l1[24], l2[24], l3[24], l4[24], l5[24];
       if (mon && mon->active()) snprintf(l1, sizeof(l1), "RX %s", mon->callsign());  // si sente: chi sta parlando
@@ -478,6 +489,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
                            static_cast<unsigned long>(uplink->stats().fromNet));
       else if (mon) snprintf(l4, sizeof(l4), "Scarti %lu  Vol %d/10", static_cast<unsigned long>(discarded), audio->volumeStep());
       else snprintf(l4, sizeof(l4), "Scarti %lu  Altri %lu", static_cast<unsigned long>(discarded), static_cast<unsigned long>(badPackets));
+      if (lanIp[0] && (now / 4000) % 2 == 1) snprintf(l4, sizeof(l4), "IP %s", lanIp);  // l'indirizzo della pagina alterna ogni 4 s con la riga della rete
       const bool linkOk = lastStatusMs != 0 && now - lastStatusMs < kLinkDeadMs;
       if (linkOk && txSync.enabled() && txSync.known() && !txSync.inSync()) snprintf(l5, sizeof(l5), "TX config %s", txSync.gaveUp() ? "RIFIUTATA" : "in invio");
       else snprintf(l5, sizeof(l5), "TX %s coda %u", linkOk ? "ok" : "NON RISPONDE", static_cast<unsigned>(txQueue));
