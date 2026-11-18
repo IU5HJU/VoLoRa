@@ -10,12 +10,12 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## Riepilogo (18/11/2026): quante ne restano
 
-**8 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+**7 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
 
 | Gruppo | Prove | Quante |
 |---|---|---|
 | E. Ripetitore e messaggi (nuovo) | E5 | ~~**Uscita dal modo prova con tre clic**~~ **fatto il 18/11/2026** (riferito: lo schermo torna su ASCOLTO senza scritte di prova; vedi B3 e [prove.md](prove.md)) | niente scritte di prova rimaste | foto |
-| A. Schede singole | A4 | 1 |
+| A. Schede singole | nessuna | 0 |
 | B. Due schede | nessuna | 0 |
 | C. Nodo e reflector | C1, C2, C3 | 3 |
 | D. Ripetitore vero | nessuna | 0 |
@@ -29,7 +29,7 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 | A1 | ~~Aggiornamento senza perdere le impostazioni~~ **fatto il 14/11/2026** su T3 (registri) e, riferito dall'operatore, su T-Beam SX1278 e SX1262: se si vuole un registro per le T-Beam, ripetere con `CFG GET` prima e dopo | dopo l'avvio `impostazioni: lette dalla memoria` e `CFG GET` uguale a prima | `CFG GET` prima e dopo, riga `[avvio]`, se compariva la casella "Erase device" |
 | A2 | **Prova dei toni** nel profilo Messaggio sulla **T-Beam SX1262**: `CFG TEST AUDIO` | arriva fino a `CFG AUDIO rf pkts=...` e `CFG AUDIO fine` **senza riavvio** (prima: `task_wdt`, `abort`) | l'intero blocco `CFG AUDIO ...` |
 | A3 | ~~**Posizione dal browser** sul sito~~ **fatto il 18/11/2026**: avviso, permesso, 4 decimali e valori nei campi; la posizione salvata nella scheda è usata dalla prova di potenza (vedi [prove.md](prove.md)); la stima del browser può essere lontana dalla reale: va controllata prima di salvare | compare l'avviso, il pulsante chiede il permesso e riempie i campi a 4 decimali | schermata |
-| A4 | **MeshCom ascolto**: menu → "MeshCom ascolto" | conto alla rovescia per `MCWINDOW` (di base 5 minuti), la lettera in alto è **T**, a fine tempo la scheda rientra da sola; con un altro dispositivo MeshCom che manda un testo a te o a un tuo gruppo, il testo arriva in casella | durata reale, se il testo è arrivato, riga `[meshcom] fine escursione ...` |
+| A4 | ~~**MeshCom ascolto**: menu → "MeshCom ascolto"~~ **superata il 18/11/2026**: conto alla rovescia e lettera T sul display, testo MeshCom fra le due schede mostrato, riga `fine escursione`, durata circa 300 s; senza un dispositivo MeshCom esterno e senza voce fra il rientro e il riavvio ([prove.md](prove.md)) | conto alla rovescia, lettera T, rientro | fatto |
 
 ## B. Due schede (in casa, poi in movimento)
 
