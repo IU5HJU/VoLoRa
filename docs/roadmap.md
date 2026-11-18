@@ -16,7 +16,7 @@ Firmware `b465287` (Build #391) e successivi. **Nessuna delle prove rimaste bloc
 - **Display:** la **versione del firmware all'avvio** (`fw <versione>`), l'uscita dal modo prova con tre clic che torna su ASCOLTO, la riga `RX identificativo` con il segnale giusto.
 - **Altro:** audio su **T-Beam SX1278** (microfono, amplificatore e altoparlante, anche attraverso il ripetitore) provato il 17/11/2026; "coda" rumorosa dopo il PTT risolta (ricezione di un pacchetto di parità isolato); lo **shift vale solo per Standard e Range di una stazione normale** (Diretta e Messaggio trasmettono dove ascoltano).
 
-**Prima della rc.1 resta da provare** (tutto in [prove-da-fare-rc1.md](prove-da-fare-rc1.md)): comandi del sysop sul nodo (IDENTIFICA, SPEGNI, RIACCENDI), profilo Diretta, prova di potenza con i km sul display di entrambe, registrazioni senza frame persi (T3), MeshCom fra due schede, le prove della T-Beam SX1262 (Standard, Range, trasmissione verso una SX1278, prova dei toni), shift con un ripetitore vero.
+**Prima della rc.1 resta da provare** (tutto in [prove-da-fare-rc1.md](prove-da-fare-rc1.md)): profilo Diretta, prova di potenza con i km sul display di entrambe, registrazioni senza frame persi (T3), MeshCom fra due schede, le prove della T-Beam SX1262 (Standard, Range, trasmissione verso una SX1278, prova dei toni), shift con un ripetitore vero.
 
 ## Stato al 14/11/2026: verso la prima release candidate
 

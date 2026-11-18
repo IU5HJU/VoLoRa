@@ -10,11 +10,11 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## Riepilogo (18/11/2026): quante ne restano
 
-**19 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+**18 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
 
 | Gruppo | Prove | Quante |
 |---|---|---|
-| E. Ripetitore e messaggi (nuovo) | E3, E5, E7 | 3 |
+| E. Ripetitore e messaggi (nuovo) | E5, E7 | 2 |
 | A. Schede singole | A3, A4 | 2 |
 | B. Due schede | B1, B2, B3, B4b, B5, B6 | 6 |
 | C. Nodo e reflector | C1, C2, C3 | 3 |
@@ -64,7 +64,7 @@ D2: **shift** con un ripetitore vero (frequenza di ascolto e di trasmissione). I
 |---|---|---|---|
 | E1 | ~~**Messaggio vocale via ripetitore**~~ **fatto il 18/11/2026**: "MESSAGGIO via RPT" sul display, registro della TX con 2 messaggi ascoltati e ritrasmessi, **le due copie ascoltate con la chiavetta SDR a 430.000 MHz** (diretta, poi "via ripetitore o nodo" 7 s dopo, 87 frame, 0 persi), **voce perfettamente intelligibile** nelle due copie (vedi [prove.md](prove.md)) | in casella "MESSAGGIO via RPT"; la TX scrive `[ripetitore] TX messaggi: ...` | foto, registro della TX |
 | E2 | ~~**Messaggio in diretta**~~ **fatto il 18/11/2026**: "MESSAGGIO DIRETTO" sul display; copia diretta ascoltata con la chiavetta SDR, perfettamente intelligibile; la **seconda copia via ripetitore** arriva 7 s dopo (sessione nuova, flag `RELAYED`; vedi [prove.md](prove.md)) | "MESSAGGIO DIRETTO", poi una seconda copia "via RPT" che sostituisce la prima | foto, registro della TX |
-| E3 | **Comandi del sysop sul nodo** (via radio): **tutti provati il 18/11/2026** (STATO, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA, RIAVVIA); da spento il nodo continuava a mandare in rete: **corretto e provato il 18/11/2026** (`scartati da spento 33`, `radio->rete` fermo); **RIACCENDI con la ripresa in rete provato**; resta la potenza dopo un riavvio | come sul ripetitore; la risposta firmata col nominativo del nodo torna alla stazione | registro della stazione e del nodo |
+| E3 | ~~**Comandi del sysop sul nodo** (via radio)~~ **fatto il 18/11/2026**: STATO, POTENZA (salvata dopo il riavvio), SPEGNI anche a tempo, RIACCENDI con ripresa in rete, IDENTIFICA, RIAVVIA; da spento il nodo scarta quello che riceve e non manda niente in rete (vedi [prove.md](prove.md)) | come sul ripetitore; la risposta firmata col nominativo del nodo torna alla stazione | registro della stazione e del nodo |
 | E4 | ~~**Versione sull'OLED all'avvio**~~ **fatto il 18/11/2026** su RX e TX del ripetitore (T3), T-Beam in ruolo normale (`339a198`) e **nodo T-Beam** (`f745ad6`): `fw <versione>` prima della schermata normale (vedi [prove.md](prove.md)) | compare prima della schermata normale | foto |
 | E5 | **Uscita dal modo prova con tre clic** (schermo torna su ASCOLTO) | niente scritte di prova rimaste | foto; è la parte "schermata" di B3 |
 | E6 | ~~**IP e password sull'OLED**~~ **fatto il 18/11/2026** sulla RX del ripetitore e sul **nodo**: "GESTIONE WI-FI" con IP, utente e password (vedi [prove.md](prove.md)) | "GESTIONE WI-FI" con IP e password | foto |

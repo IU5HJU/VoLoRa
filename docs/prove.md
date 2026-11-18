@@ -666,3 +666,8 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Ancora da vedere:** RIACCENDI e la ripresa del passaggio in rete (`radio->rete` che risale), e la potenza dopo un riavvio.
 - **RIACCENDI (stesso registro):** `comando del sysop 3 contatore 42: esito 0, risposta firmata TRASMESSA`, subito dopo `transito 1: <stazione> RSSI -34 dBm SNR 10.5 dB`: **il passaggio in rete riprende** (il transito si conta solo quando il pacchetto va al reflector). Il ciclo **SPEGNI, nodo spento che scarta, RIACCENDI, ripresa** è provato sul nodo.
 - **Resta:** la potenza dopo un riavvio.
+
+### 18/11/2026, casa, IU5HJU (potenza dopo un riavvio del nodo)
+
+- **Registro del nodo:** dopo **POTENZA 14 dBm** (i valori del menu del sysop sono 17, 14 e 10 dBm) e `CFG REBOOT`, `CFG GET` mostra **`power=14`** (prima `power=10`): **la potenza comandata dal sysop resta salvata nel nodo anche dopo il riavvio**.
+- **Esito:** con questa prova **E3 è chiusa**: tutti i comandi del sysop sul nodo (STATO, POTENZA con salvataggio, SPEGNI anche a tempo, RIACCENDI con ripresa in rete, IDENTIFICA, RIAVVIA) sono provati, e il nodo spento non manda niente in rete.
