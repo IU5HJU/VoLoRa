@@ -102,3 +102,5 @@ Quando il nodo è collegato al Wi-Fi di casa serve **la stessa pagina di configu
 - **Sicurezza:** è una pagina **in chiaro (http)** protetta da utente e password: va bene su una rete di casa fidata, **non** esporla su Internet (non aprire porte sul router).
 - **Costo:** il server resta acceso finché il nodo è acceso: qualche decina di KB di memoria, che il nodo ha (non usa audio né Codec2).
 
+
+**Indirizzo e password sul display del nodo (18/11/2026).** Appena il nodo si collega al Wi-Fi di casa il display mostra per **25 secondi** `GESTIONE WI-FI`, l'indirizzo IP, `utente volora` e `pass <password>` (come sulla RX del ripetitore); poi torna la schermata normale, che ha già l'indirizzo sulla seconda riga (`WiFi 192.168.1.x`). Per rivedere la password basta riavviare il nodo. La stessa riga resta sulla seriale.

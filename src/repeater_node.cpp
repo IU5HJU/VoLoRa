@@ -741,6 +741,8 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
   bool wasUp = false, wasWifi = false;
   static WifiConfig lan;  // pagina di gestione sulla rete di casa, a Wi-Fi connesso
   bool lanStarted = false;
+  char lanPw[16] = {0};          // password della pagina, per il display
+  uint32_t lanInfoUntilMs = 0;   // finche' non scade, il display mostra come raggiungere la pagina e la password
   int32_t lastLoggedSession = -1;
   uint8_t dgram[lcr::kNodeMaxDatagram];
   size_t dgramLen = 0;
@@ -778,6 +780,8 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
       lanStarted = true;
       char pw[16];
       if (lan.beginLan(handler, pw, sizeof(pw))) {
+        snprintf(lanPw, sizeof(lanPw), "%s", pw);
+        lanInfoUntilMs = now + 25000;  // per 25 s il display dice dove raggiungere la pagina e con quale password
         uint8_t mac[6] = {0};
         WiFi.macAddress(mac);
         char host[24];
@@ -806,7 +810,13 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
                     static_cast<unsigned long>(s.morseAborted), static_cast<unsigned long>(s.beaconDeferred), radio.lastError(), static_cast<unsigned>(ESP.getFreeHeap()));
     }
 
-    if (now - lastDispMs >= kDisplayMs) {
+    if (lanInfoUntilMs && static_cast<int32_t>(now - lanInfoUntilMs) < 0 && now - lastDispMs >= kDisplayMs) {
+      lastDispMs = now;  // appena collegato alla rete di casa: indirizzo e password della pagina di gestione
+      char i3[24], i5[24];
+      snprintf(i3, sizeof(i3), "%s", WiFi.localIP().toString().c_str());
+      snprintf(i5, sizeof(i5), "pass %s", lanPw);
+      ui.showLines("GESTIONE WI-FI", "Da rete di casa:", i3, "utente volora", i5);
+    } else if (now - lastDispMs >= kDisplayMs) {
       lastDispMs = now;
       char l2[24], l3[24], l4[40], l5[48];
       if (wifi) snprintf(l2, sizeof(l2), "WiFi %s", WiFi.localIP().toString().c_str());

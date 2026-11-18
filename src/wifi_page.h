@@ -31,7 +31,7 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <p class="hint">Due schede possono fare da ripetitore: una <strong>RX</strong> ascolta la frequenza di ingresso (quella del profilo, qui sopra) e una <strong>TX</strong> ritrasmette sulla frequenza di uscita. Con un ruolo da ripetitore la scheda non funziona più da stazione: dopo il riavvio mostra lo stato del ripetitore. <strong>Pagina di gestione:</strong> la <strong>RX</strong> con il Wi-Fi di casa configurato apre questa pagina sulla rete di casa (indirizzo e password sul display e sulla seriale all'avvio); la <strong>TX</strong> non ha pagina e si configura dalla RX. Senza Wi-Fi configurato la pagina non si apre: per tornare stazione serve il cavo USB (sito web delle impostazioni o terminale seriale, <code>CFG SET ROLE OFF</code>). Vale dal riavvio.</p>
 </div>
 <div id="nodebox" data-modes="node">
-<p class="hint"><strong>Nodo Internet:</strong> la scheda porta i pacchetti LoRa a un'altra scheda o a un reflector via Wi-Fi (UDP firmato). Solo profilo Standard. Dopo il riavvio la pagina si apre dalla rete di casa (indirizzo e password sono scritti sulla seriale all'avvio) e, per i primi 3 minuti, dal Wi-Fi della scheda.</p>
+<p class="hint"><strong>Nodo Internet:</strong> la scheda porta i pacchetti LoRa a un'altra scheda o a un reflector via Wi-Fi (UDP firmato). Solo profilo Standard. Dopo il riavvio la pagina si apre dalla rete di casa (indirizzo e password compaiono sul display per 25 secondi e sono scritti sulla seriale all'avvio) e, per i primi 3 minuti, dal Wi-Fi della scheda.</p>
 </div>
 <div id="netbox" data-modes="rptrx node">
 <h2>Wi-Fi e rete</h2>
