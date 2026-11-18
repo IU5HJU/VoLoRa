@@ -63,9 +63,9 @@ D2: **shift** con un ripetitore vero (frequenza di ascolto e di trasmissione). I
 | E1 | **Messaggio vocale via ripetitore**: ricevente **spenta** durante tutta la trasmissione del mittente (profilo Messaggio, sulla frequenza di uscita; shift non vale), riaccesa appena il mittente ha finito (la TX parte circa 5 s dopo l'ultimo pacchetto ascoltato, dopo i due annunci di occupato) | in casella **"MESSAGGIO via RPT"**; "Riproduco (via RPT)" all'ascolto | foto del display, **registro della TX** (riga `[ripetitore] TX messaggi: ...`), RSSI e SNR |
 | E2 | **Messaggio in diretta**, ricevente accesa | "MESSAGGIO DIRETTO", poi (se è nel raggio) una seconda copia "via RPT" che sostituisce la prima | foto, registro della TX |
 | E3 | **Comandi del sysop sul nodo** (via radio): STATO, POTENZA, SPEGNI, RIACCENDI, IDENTIFICA, RIAVVIA | come sul ripetitore; la risposta firmata col nominativo del nodo torna alla stazione | registro della stazione e del nodo |
-| E4 | **Versione sull'OLED all'avvio** (`fw <versione>`, 1,8 s) su T3, T-Beam, RX e TX del ripetitore | compare prima della schermata normale | foto |
+| E4 | **Versione sull'OLED all'avvio** (`fw <versione>`, 1,8 s) su T3, T-Beam, RX e TX del ripetitore (**RX provata il 18/11/2026**; restano le altre schede) | compare prima della schermata normale | foto |
 | E5 | **Uscita dal modo prova con tre clic** (schermo torna su ASCOLTO) | niente scritte di prova rimaste | foto; è la parte "schermata" di B3 |
-| E6 | **IP e password sull'OLED** all'avvio della RX del ripetitore e del nodo (25 s) | "GESTIONE WI-FI" con IP (alterna con la riga della rete) e password | foto |
+| E6 | **IP e password sull'OLED** all'avvio della RX del ripetitore (**provato il 18/11/2026**) e del nodo (25 s; resta il nodo) | "GESTIONE WI-FI" con IP (alterna con la riga della rete) e password | foto |
 | E7 | **SPEGNI a tempo**: durata e rientro in servizio | **provato il 18/11/2026** (la TX mostra "TX SPENTA (sysop)"); manca il registro con la durata e il rientro alla scadenza | registro della TX |
 
 **Il nodo non tiene né ritrasmette i messaggi** (una sola radio: non può ascoltare insieme Standard e Messaggio): non c'è una prova da fare, è un limite documentato in [ripetitore.md](ripetitore.md).
