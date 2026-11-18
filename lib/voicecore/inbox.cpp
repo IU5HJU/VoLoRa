@@ -13,6 +13,7 @@ void Inbox::setCallsign(const char* cs) {
 
 void Inbox::clear() {
   kind_ = Kind::None;
+  relayed_ = false;
   frames_ = 0;
   textLen_ = 0;
   text_[0] = 0;
@@ -39,12 +40,13 @@ bool Inbox::pushLost() {
   return true;
 }
 
-bool Inbox::commitVoice(const char* callsign) {
+bool Inbox::commitVoice(const char* callsign, bool relayed) {
   if (frames_ == 0) {
     clear();
     return false;
   }
   setCallsign(callsign);
+  relayed_ = relayed;
   kind_ = Kind::Voice;
   return true;
 }
@@ -56,10 +58,11 @@ bool Inbox::frameAt(size_t i, uint8_t* out) const {
   return true;
 }
 
-bool Inbox::setText(const char* callsign, const char* text, size_t len) {
+bool Inbox::setText(const char* callsign, const char* text, size_t len, bool relayed) {
   if (!isValidText(text, len)) return false;
   clear();
   setCallsign(callsign);
+  relayed_ = relayed;
   memcpy(text_, text, len);
   text_[len] = 0;
   textLen_ = len;

@@ -334,7 +334,7 @@ void UiNotifier::drawIncoming() {
   display_.print(inbox_->callsign());
   if (text) drawEnvelope(42, 11); else drawSpeaker(40, 10);
   display_.setCursor(0, 44);
-  display_.print("MESSAGGIO RICEVUTO");  // 18 caratteri
+  display_.print(inbox_->relayed() ? "MESSAGGIO via RPT" : "MESSAGGIO DIRETTO");  // 17 caratteri: arrivato da ripetitore o nodo, oppure dal mittente
   display_.setCursor(0, 55);
   display_.print(text ? "Premi PTT: leggi" : "Premi PTT: ascolta");
   display_.display();
@@ -348,7 +348,7 @@ void UiNotifier::drawPlaying() {
   display_.print(inbox_->callsign());
   drawSpeaker(40, 10);
   display_.setCursor(0, 44);
-  display_.print("Riproduco messaggio");
+  display_.print(inbox_->relayed() ? "Riproduco (via RPT)" : "Riproduco (diretto)");  // 19 caratteri
   display_.setCursor(0, 55);
   display_.print("PTT = stop");
   display_.display();
@@ -360,8 +360,9 @@ void UiNotifier::drawText() {
   display_.setTextSize(1);
   display_.setCursor(0, 0);
   const int pages = (textLineCount_ + 5) / 6;
-  if (pages > 1) display_.printf("da %s  %d/%d  VOL>", inbox_->callsign(), textPage_ + 1, pages);
-  else display_.printf("da %s", inbox_->callsign());
+  const bool via = inbox_->relayed();  // passato da un ripetitore o da un nodo
+  if (pages > 1) display_.printf(via ? "da %s RPT %d/%d >" : "da %s  %d/%d  VOL>", inbox_->callsign(), textPage_ + 1, pages);
+  else display_.printf(via ? "da %s via RPT" : "da %s", inbox_->callsign());
   display_.drawFastHLine(0, 9, 128, SSD1306_WHITE);
   for (int r = 0; r < 6; r++) {
     const int li = textPage_ * 6 + r;

@@ -513,7 +513,7 @@ void VoiceNode::drainToInbox(uint32_t nowMs) {
     if (o.kind == RxStream::Kind::End) {
       state_ = State::Idle;
       storing_ = false;
-      const bool got = inbox_.commitVoice(rx_.callsign());
+      const bool got = inbox_.commitVoice(rx_.callsign(), relayedNotified_);
       notify_.rxEnded(rx_.callsign(), rx_.lostFrames(), rx_.recoveredPackets());
       if (got) notify_.messageReceived(false, inbox_.callsign());
       return;
@@ -548,7 +548,7 @@ void VoiceNode::handleText(const Packet& p) {
     return;
   }
   if (lastTextValid_ && p.session == lastTextSession_ && strncmp(p.callsign, lastTextCall_, kMaxCallsign) == 0) return;
-  if (!inbox_.setText(p.callsign, reinterpret_cast<const char*>(p.payload), p.payloadLen)) return;
+  if (!inbox_.setText(p.callsign, reinterpret_cast<const char*>(p.payload), p.payloadLen, (p.flags & kFlagRelayed) != 0)) return;
   lastTextValid_ = true;
   lastTextSession_ = p.session;
   strncpy(lastTextCall_, p.callsign, kMaxCallsign);

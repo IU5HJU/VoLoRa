@@ -20,19 +20,21 @@ class Inbox {
   Kind kind() const { return kind_; }
   bool has() const { return kind_ != Kind::None; }
   const char* callsign() const { return callsign_; }
+  bool relayed() const { return relayed_; }  // passato da un ripetitore o da un nodo (altrimenti diretto)
 
   // Voce: beginVoice() svuota la casella, poi pushFrame()/pushLost() in ordine, infine commitVoice() (false e casella vuota
   // se non e' arrivato nessun frame).
   void beginVoice();
   bool pushFrame(const uint8_t* frame);  // kFrameBytes byte; false se la casella e' piena
   bool pushLost();
-  bool commitVoice(const char* callsign);
+  // relayed: il messaggio e' arrivato da un ripetitore o da un nodo (flag RELAYED), non direttamente dal mittente.
+  bool commitVoice(const char* callsign, bool relayed = false);
   size_t frames() const { return frames_; }
   // Copia il frame i in 'out' (kFrameBytes byte). false se il frame e' perso (o i fuori intervallo).
   bool frameAt(size_t i, uint8_t* out) const;
 
   // Testo: sostituisce il contenuto. false (casella invariata) se il testo non e' valido.
-  bool setText(const char* callsign, const char* text, size_t len);
+  bool setText(const char* callsign, const char* text, size_t len, bool relayed = false);
   const char* text() const { return text_; }
   size_t textLen() const { return textLen_; }
 
@@ -40,6 +42,7 @@ class Inbox {
   void setCallsign(const char* cs);
 
   Kind kind_ = Kind::None;
+  bool relayed_ = false;
   char callsign_[kMaxFrom + 1] = {0};
   uint8_t frameBuf_[kMaxTurnFrames * kFrameBytes];
   uint8_t lost_[(kMaxTurnFrames + 7) / 8];

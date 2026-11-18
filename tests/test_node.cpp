@@ -931,6 +931,27 @@ static void testViaRepeater() {
   CHECK(s.b.note.rxEnds == before + 1 && s.b.note.viaRepeater == 1);
 }
 
+static void testMessageOrigin() {
+  Sim s;
+  s.air.clock = &s.clock;
+  s.run(100);
+  CHECK(s.a.node.sendText("Ciao a tutti", s.clock));
+  s.run(3000);
+  CHECK(s.b.node.inbox().kind() == Inbox::Kind::Text && !s.b.node.inbox().relayed());  // dal mittente: diretto
+  // lo stesso testo ritrasmesso da un ripetitore o da un nodo (flag RELAYED, sessione nuova): sostituisce il messaggio e lo segna come ripetuto
+  std::vector<std::vector<uint8_t>> pk = s.air.log[0];
+  CHECK(!pk.empty());
+  Packet p;
+  CHECK(decodePacket(pk[0].data(), pk[0].size(), p));
+  p.session = static_cast<uint16_t>(p.session + 1);
+  p.flags = static_cast<uint8_t>(p.flags | kFlagRelayed);
+  uint8_t b[kMaxWireBytes];
+  const size_t m = encodePacket(p, b, sizeof(b));
+  s.air.inbox[1].push_back(std::vector<uint8_t>(b, b + m));
+  s.run(1000);
+  CHECK(s.b.node.inbox().kind() == Inbox::Kind::Text && s.b.node.inbox().relayed());
+}
+
 static void testTextMessage() {
   Sim s;
   s.air.clock = &s.clock;
@@ -1398,6 +1419,7 @@ int main() {
   testSysopReplyShown();
   testSysopReplyBetweenCopies();
   testTextMessage();
+  testMessageOrigin();
   testTextRules();
   testVoiceMessageStopAndReplace();
   testMessageProgress();

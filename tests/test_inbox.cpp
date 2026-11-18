@@ -22,6 +22,21 @@ int main() {
   CHECK(!b.frameAt(2, o));  // perso
   CHECK(b.frameAt(4, o) && o[5] == 5);
   CHECK(!b.frameAt(5, o));
+  CHECK(!b.relayed());  // di base: arrivato direttamente
+  b.clear();
+  b.beginVoice();
+  CHECK(b.pushFrame(f));
+  CHECK(b.commitVoice("IU5HJU", true) && b.relayed());  // da un ripetitore o da un nodo
+  b.beginVoice();
+  CHECK(!b.relayed());  // un messaggio nuovo azzera l'indicazione
+  CHECK(b.pushFrame(f));
+  CHECK(b.commitVoice("IU5HJU") && !b.relayed());
+  CHECK(b.setText("IW5ABC", "ciao", 4, true) && b.relayed());
+  b.clear();
+  CHECK(!b.relayed());
+  b.beginVoice();
+  for (int i = 0; i < 5; i++) { memset(f, i + 1, sizeof(f)); if (i == 2) b.pushLost(); else b.pushFrame(f); }
+  CHECK(b.commitVoice("IU5HJU"));
 
   // un messaggio nuovo cancella il vecchio
   CHECK(b.setText("IW5ABC", "ciao", 4));
