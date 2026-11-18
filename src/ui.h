@@ -187,6 +187,7 @@ class UiNotifier : public lcr::INotifier {
   lcr::VoiceNode::State state_ = lcr::VoiceNode::State::Idle;
   int volume_ = 0;
   int rssi_ = 0;
+  bool beaconLogPending_ = false;  // riga "RX identificativo" da stampare con il segnale aggiornato
   float snr_ = 0;
   float battery_ = -1.0f;        // ultima misura
   float batteryShown_ = -1.0f;   // valore a schermo (con isteresi, per non ridisegnare di continuo)

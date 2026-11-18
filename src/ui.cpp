@@ -186,7 +186,7 @@ void UiNotifier::beaconReceived(const char* callsign) {
   haveLast_ = true;
   lastVia_ = false;
   lastBeacon_ = true;
-  Serial.printf("RX identificativo: %s RSSI %d dBm SNR %.1f dB\n", rxCall_, rssi_, static_cast<double>(snr_));
+  beaconLogPending_ = true;  // la riga sulla seriale esce nel prossimo loop(), quando RSSI e SNR sono quelli di questo pacchetto (qui erano ancora quelli del precedente, o 0)
   dirty_ = true;
 }
 
@@ -648,6 +648,10 @@ void UiNotifier::loop(uint32_t nowMs, lcr::VoiceNode::State state, int volumeSte
   rssi_ = rssiDbm;
   snr_ = snrDb;
   battery_ = batteryVolts;
+  if (beaconLogPending_) {
+    beaconLogPending_ = false;
+    Serial.printf("RX identificativo: %s RSSI %d dBm SNR %.1f dB\n", rxCall_, rssi_, static_cast<double>(snr_));
+  }
   // Il valore a schermo cambia solo se la misura si sposta di almeno 0,03 V (oppure passa da/a
   // "non disponibile", oppure ogni 10 s): ridisegnare l'OLED costa circa 25 ms.
   const bool availabilityChanged = (battery_ < 0) != (batteryShown_ < 0);
