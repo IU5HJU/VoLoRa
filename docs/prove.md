@@ -657,3 +657,8 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
   3. schermata **NODO INTERNET** durante il collegamento ("WiFi: connessione...", `REF NO`, `R>N 0 N>R 0`, "Radio: nessuno");
   4. **GESTIONE WI-FI**: "Da rete di casa:", l'indirizzo IP, `utente volora` e `pass <password>` (non riportata qui): **E6 provata sul nodo**.
 - **Esito:** le due schermate nuove (versione all'avvio, IP e password) funzionano sul nodo, come già sulla RX e sulla TX del ripetitore.
+
+### 18/11/2026, casa, IU5HJU (nodo spento dal sysop: display, firmware `f745ad6`)
+
+- **Foto del display del nodo dopo SPEGNI:** **"NODO SPENTO (sysop)"** nella prima riga, la riga della rete (`WiFi ...`), `REF ok <reflector>` (**il collegamento con il reflector resta attivo**), `R>N 0  N>R 0` e nell'ultima riga **"SPENTO dal sysop"**. La schermata nuova funziona e sta nelle 21 colonne.
+- **Ancora da vedere (registro del nodo):** che mentre il nodo è spento `radio->rete` non salga e salga `scartati da spento`, e che dopo RIACCENDI la voce ricevuta in radio torni in rete.
