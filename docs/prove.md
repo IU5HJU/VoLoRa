@@ -641,3 +641,10 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Esito:** `Morse a tono: <nominativo del nodo> <nominativo del nodo>` (**decodificato correttamente, due volte**), **tono 700 Hz** (atteso 700), **punto 80 ms, linea 240 ms, 15,0 parole al minuto** (attese 15), 42 toni in 41,8 s, **rapporto tono/fondo 60 dB**. I valori coincidono con quelli di progetto.
 - **Cosa è misurato:** tono, lunghezza di punto e linea, velocità e testo. **Non misurata** la deviazione (±2,5 kHz): l'audio di `rtl_fm` non è tarato in kHz. Sul ripetitore (stessa funzione di invio, `TxScheduler`) il Morse è stato ascoltato a orecchio ("funziona, non perfetto") ma **non ancora misurato con l'SDR**.
 - **Perché due volte:** il nominativo compare due volte nella registrazione di 60 s (due identificativi, per esempio IDENTIFICA e il periodico, o due comandi): non indagato.
+
+### 18/11/2026, casa, IU5HJU (Morse a tono in FM del ripetitore: misura con la chiavetta SDR a 430.000 MHz)
+
+- **Ricezione:** NESDR con `rtl_fm` (FM stretta, guadagno 10 dB) sull'**uscita del ripetitore, 430.000 MHz**, 60 s di registrazione; IDENTIFICA mandato dalla stazione del sysop durante la registrazione; analisi con `tools/sdr/analizza_morse.py`.
+- **Esito:** `Morse a tono: IR5XXX` (il nominativo del ripetitore, **decodificato correttamente**), **tono 700 Hz** (atteso 700), **punto 81 ms, linea 243 ms, 14,8 parole al minuto** (attese 15), 22 toni in 5,9 s, **rapporto tono/fondo 62 dB**. Scarto dai valori di progetto entro la risoluzione della misura (5 ms).
+- **Con la prova del nodo** (stesso giorno, tono 700 Hz, 15,0 parole al minuto) **il Morse a tono è misurato sia sul nodo sia sul ripetitore**, con la chiavetta SDR. **Non misurata** la deviazione (±2,5 kHz).
+- **Comando IDENTIFICA** sul ripetitore: ha fatto uscire il Morse come previsto (in 5,9 s il nominativo di 6 caratteri).
