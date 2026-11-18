@@ -737,3 +737,10 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Valutazione dell'operatore:** la prova D2 (shift con un ripetitore, frequenza di ascolto e di trasmissione) **è passata da sola**: **tutte le prove sul ripetitore** (16-18/11/2026) sono state fatte con le stazioni con **shift +10000** (ascolto sull'uscita a 430.000 MHz, trasmissione sull'ingresso a 440.000 MHz) e **senza lo shift il ripetitore non funziona** (le stazioni non arriverebbero all'ingresso della RX).
 - **Evidenze nel registro** ([prove.md](prove.md), prove del 17-18/11/2026): stazione con `shift=+10000`, `Via ripetitore: ascolto su 430.000 MHz, trasmetto su 440.000 MHz (shift +10000 kHz)`; voce, comandi del sysop e messaggi che passano dal ripetitore (RX su 440, TX su 430). **D2 chiusa**; il Messaggio non usa lo shift (trasmette dove ascolta) ed è provato a parte.
 - **Limite:** non provato con una radio a doppia frequenza vera (ricetrasmettitore con ripetitore), ma con le due schede T3 (RX in ingresso, TX in uscita).
+
+### 18/11/2026, casa, IU5HJU (B5: registrazioni di fila, prova incrociata T3 e T-Beam)
+
+- **Prova:** profilo Messaggio, registrazioni di fila a coppie incrociate (una scheda trasmette, l'altra riceve), registro seriale di entrambe.
+- **T3 (5 registrazioni):** 31, 53, 68, 67, 58 frame (1,2-2,7 s), `frame persi dal microfono 0` su tutte; codifica Codec2 media 18,2-18,3 ms, massimo 19,8-21,3 ms (limite 40 ms). Ricezione dalla T-Beam: frame persi 0, pacchetti recuperati 0, errori CRC 0, ritardo massimo di lettura 10-27 ms.
+- **T-Beam (4 registrazioni):** 51, 70, 89, 63 frame (2,0-3,6 s), `frame persi dal microfono 0` su tutte; codifica media 18,4-18,6 ms, massimo 20,6-20,9 ms. Ricezione dalla T3: frame persi 0, recuperati 0, CRC 0, ritardo massimo di lettura 0-28 ms.
+- **Esito:** 9 registrazioni in totale, **nessun frame perso** (il 14/11 una registrazione ne aveva persi 18). Sulla T3 sono 5 di fila, non 10: **B5 resta aperta** per le altre 5 registrazioni sulla T3.
