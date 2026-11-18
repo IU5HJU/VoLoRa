@@ -648,3 +648,12 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Esito:** `Morse a tono: IR5XXX` (il nominativo del ripetitore, **decodificato correttamente**), **tono 700 Hz** (atteso 700), **punto 81 ms, linea 243 ms, 14,8 parole al minuto** (attese 15), 22 toni in 5,9 s, **rapporto tono/fondo 62 dB**. Scarto dai valori di progetto entro la risoluzione della misura (5 ms).
 - **Con la prova del nodo** (stesso giorno, tono 700 Hz, 15,0 parole al minuto) **il Morse a tono è misurato sia sul nodo sia sul ripetitore**, con la chiavetta SDR. **Non misurata** la deviazione (±2,5 kHz).
 - **Comando IDENTIFICA** sul ripetitore: ha fatto uscire il Morse come previsto (in 5,9 s il nominativo di 6 caratteri).
+
+### 18/11/2026, casa, IU5HJU (nodo T-Beam `f745ad6`: schermate all'avvio con il firmware nuovo)
+
+- **Foto del display del nodo** (T-Beam SX1278 in ruolo nodo, firmware `f745ad6`, Build #405): in sequenza
+  1. **AVVIO** con la riga `fw f745ad6` (la versione installata): **E4 provata sulla T-Beam** (dopo la T-Beam in ruolo normale, `339a198`, vista prima, e RX e TX del ripetitore);
+  2. **finestra di configurazione Wi-Fi**: nome della rete `VoLoRa-XXXX`, password, `http://192.168.4.1` e **"il nodo parte in 2:58"**, cioè il conto alla rovescia dei **3 minuti** della finestra (C2: si apre e conta; manca ancora il momento in cui si chiude con un telefono collegato);
+  3. schermata **NODO INTERNET** durante il collegamento ("WiFi: connessione...", `REF NO`, `R>N 0 N>R 0`, "Radio: nessuno");
+  4. **GESTIONE WI-FI**: "Da rete di casa:", l'indirizzo IP, `utente volora` e `pass <password>` (non riportata qui): **E6 provata sul nodo**.
+- **Esito:** le due schermate nuove (versione all'avvio, IP e password) funzionano sul nodo, come già sulla RX e sulla TX del ripetitore.
