@@ -32,7 +32,7 @@ class LiveRx {
   // 40 ms: chi riproduce (aplay) ha un cuscinetto di leadMs contro i piccoli ritardi e non va in "underrun" (vuoti nell'audio).
   // Costa leadMs di ritardo in meno, non in piu': l'audio parte prima, non dopo. 0 = ritmo reale esatto.
   LiveRx(Sink& sink, bool message = false, bool acceptBadCrc = false, uint32_t leadMs = 240)
-      : sink_(sink), acceptBad_(acceptBadCrc), lead_(leadMs) {
+      : sink_(sink), message_(message), acceptBad_(acceptBadCrc), lead_(leadMs) {
     const Profile& p = profileFor(message ? kProfileMessage : kProfileRange);
     RxStream::Config rc;
     rc.prebufferFrames = p.rxPrebufferFrames;
@@ -74,7 +74,8 @@ class LiveRx {
       if (isTest_) lt_.begin(p.session);
       char b[128];
       const char* what = isTest_ ? "prova di collegamento"
-                                 : (p.mode == kModeCodec2_3200 ? "trasmissione Standard (Codec2 3200)" : "trasmissione Range (Codec2 1200)");
+                                 : (p.mode == kModeCodec2_3200 ? "trasmissione Standard (Codec2 3200)"
+                                                               : (message_ ? "messaggio vocale (Codec2 1200)" : "trasmissione Range (Codec2 1200)"));
       // flag RELAYED: il pacchetto e' stato ritrasmesso da un ripetitore o da un nodo (altrimenti arriva direttamente dal mittente)
       const char* via = (p.flags & kFlagRelayed) ? " via ripetitore o nodo," : " diretta,";
       std::snprintf(b, sizeof(b), "inizio %s%s sessione %u", what, via, p.session);
@@ -171,6 +172,7 @@ class LiveRx {
   }
 
   Sink& sink_;
+  bool message_;  // ascolto del profilo Messaggio (voce Codec2 1200 in pacchetti SF12): nel registro si chiama messaggio, non Range
   bool acceptBad_;
   uint32_t lead_;
   RxStream rx_;
