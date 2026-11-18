@@ -617,3 +617,11 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Difetto trovato (operatore):** da spento il nodo **continuava a mandare in rete** al reflector le trasmissioni ricevute in radio (`radio->rete` da 195 a 279, transiti 9-11). Il nodo spento deve restare acceso e in ascolto (per RIACCENDI e RIAVVIA) ma **non mandare niente in rete e non trasmettere**.
 - **Correzione (non ancora provata su una scheda):** da spento i pacchetti ricevuti in radio non vanno in rete (`scartati da spento` nel registro), la schermata dice **"NODO SPENTO (sysop)"** e **"SPENTO dal sysop"**; il collegamento con il reflector resta attivo. Il test del PC ha il caso: spento, la voce ricevuta in radio non va in rete; riacceso, va.
 - **Da riprovare:** SPEGNI con il nuovo firmware (nessun `radio->rete` che sale mentre è spento) e **la potenza dopo un riavvio** (non verificata in questa serie).
+
+### 18/11/2026, casa, IU5HJU (messaggio vocale diretto ascoltato con la chiavetta SDR nel profilo Messaggio)
+
+- **Ricezione:** NESDR (`ricevitore-live.sh`, voce 2 "Messaggio", SF12, 125 kHz, **433.475 MHz**, guadagno 10 dB), cioè la frequenza della stazione, **non** l'uscita del ripetitore: è la copia **diretta** del messaggio.
+- **Esito (`lcr_live`):** `inizio trasmissione ... diretta, sessione 29278`, avanzamento dall'1% al 100% in circa 46 s, `fine: ... 115 frame (4.6 s), persi 0, pacchetti recuperati 1`. **Un pacchetto perso dalla ricezione è stato ricostruito con la parità**, nessun frame perso alla fine. Prima volta che il profilo Messaggio SF12/125 kHz viene decodificato con la chiavetta.
+- **Voce (riferito dall'operatore):** il messaggio è **"perfettamente intelligibile, con la caratteristica modulazione Codec2"**.
+- **Limiti:** copia diretta, non ripetuta; la copia del ripetitore (430.000 MHz, dopo gli annunci di occupato) resta da ascoltare con l'SDR a 430.000 MHz per E1 e E2.
+- **Corretto nello strumento:** in ascolto del Messaggio la riga di inizio diceva "Range (Codec2 1200)"; ora dice "messaggio vocale (Codec2 1200)".
