@@ -67,6 +67,10 @@ Prove da fare:
 | Voce di rete in corso | l'identificativo non parte nel mezzo e, se dovuto, esce 3 s dopo la fine |
 | Nominativo `N0CALL` | nessun identificativo |
 
+## Comandi del sysop sul nodo (dal 17/11/2026, STATO, POTENZA e RIAVVIA provati il 18/11/2026)
+
+Con `CFG SET SYSOP <nominativo>` e `CFG SET SYSOPKEY <32 cifre>` sul nodo (all'avvio: `comandi del sysop <nominativo> via radio: attivi`) la stazione del sysop (stesso nominativo e chiave, modo Sysop acceso) lo comanda come un ripetitore. Il nodo scrive `[nodo] comando del sysop <codice> contatore <n>: esito <n>, risposta firmata TRASMESSA`. Provati: **STATO** (risposta con la potenza attuale), **POTENZA** (salvata in memoria, la risposta dice la nuova), **RIAVVIA** (riavvio dopo 3 s). Con un contatore troppo basso il nodo risponde `esito=4` con l'ultimo accettato e la stazione si risincronizza. **Da provare:** IDENTIFICA, SPEGNI, RIACCENDI e la potenza dopo un riavvio. **Il nodo non tiene né ritrasmette i messaggi** (una sola radio). Con il nodo sulla stessa frequenza dell'uscita di un ripetitore, il nodo ascolta anche l'identificativo del ripetitore e lo manda in rete: sul banco conviene separare le frequenze.
+
 ## Cosa mandarmi
 Le righe `[nodo]` dell'avvio (con la memoria libera), le righe ogni 30 s dopo una prova con traffico, l'esito di ogni prova della tabella e, se qualcosa non va, il display e **dove** (rete, radio, firma).
 

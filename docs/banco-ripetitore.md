@@ -61,6 +61,14 @@ Serve una **terza T3 normale** con un nominativo vero, `CFG SET POWER 2` (la pot
 3. Atteso sulla TX: riga 4 `da RX n` (il numero che ricorda la RX) e riga 3 `Voce 0  Coda 0` (la TX scarta senza trasmettere).
 4. Con il monitor acceso la voce si sente dall'altoparlante.
 
+## Prova dei messaggi via ripetitore (18/11/2026)
+
+Con il ripetitore in funzione (RX e TX, firmware `833fcd5` o successivo): una **stazione mittente** e una **ricevente** nel profilo Messaggio con `freqmsg` uguale all'uscita del ripetitore (shift ignorato). **Ricevente spenta** durante tutta la trasmissione del mittente (un messaggio breve dura 25-30 s, uno di 15 s di voce circa 100 s); riaccesa appena il mittente ha finito (la TX parte circa 5 s dopo l'ultimo pacchetto ascoltato e manda due annunci di occupato prima del messaggio). Sulla ricevente deve comparire **"MESSAGGIO via RPT"**; con la ricevente accesa si vede prima **"MESSAGGIO DIRETTO"** e poi la copia via RPT. Sulla seriale della TX, `[ripetitore] TX messaggi: pacchetti ascoltati ..., messaggi completi ..., in archivio ..., ritrasmessi ...`. Esiti del 18/11/2026 in [prove.md](prove.md).
+
+## Comandi del sysop via radio (provati sul ripetitore, 17-18/11/2026)
+
+Stazione con `CFG SET SYSOP <nominativo>`, la stessa chiave del ripetitore e il modo Sysop acceso: dal menu "Comandi Sysop" STATO, POTENZA, SPEGNI (anche a tempo), RIACCENDI, IDENTIFICA, RIAVVIA. La TX risponde firmata; la RX non risponde mai. Il nominativo sysop sulla RX deve essere quello della stazione che trasmette.
+
 ## Cosa mandarmi
 Per ogni fase che hai fatto: una foto dei due display (o le righe lette), l'esito `ok` o `NON RISPONDE`, e le righe della seriale USB dell'avvio (due righe per scheda). Se qualcosa non va, dimmi **quale pin e quale scheda**: i pin sono in `src/board_pins_t3_v161.h` (`kLinkRx`, `kLinkTx`) e si cambiano in un minuto. Se la linea sembra disturbata (display che dice `ok` e poi `NON RISPONDE`), prova un resistore da 10 kΩ fra S_VP e 3,3 V sulle due schede: l'ingresso S_VP non ha il pull-up interno.
 

@@ -1,5 +1,7 @@
 # T-Beam V1.2 con radio SX1262: differenze e firmware
 
+> **Stato al 18/11/2026.** **Provata in ricezione** (14/11/2026): la radio parte, la scheda riceve un messaggio (profilo Messaggio) da una T3 con SX1278 (RSSI -125 dBm, SNR -11 dB, nessun frame perso) e le impostazioni restano dopo l'aggiornamento dalla pagina. **Da provare:** Standard e Range (nei due versi con una SX1278, a breve distanza), la **trasmissione** verso una SX1278, la prova dei toni nel profilo Messaggio dopo la correzione del watchdog, MeshCom ascolto. Elenco e modi di riportare gli esiti in [prove-da-fare-rc1.md](prove-da-fare-rc1.md); esiti in [prove.md](prove.md).
+
 13/11/2026. Una scheda di un collega (foto: circuito **"TBeam-AXP2101-V1.2" 20230508**, GPS **u-blox NEO-M8N**, modulo radio **"LILYGO 433/470MHz Model:LoRa32 SX1262"**) è la **stessa T-Beam V1.2 con AXP2101 che usiamo noi**, con un altro modulo LoRa: **SX1262** al posto dell'SX1278. Il resto (ESP32, AXP2101, GPS, OLED, tasto, I2S) è uguale. Stato: **scritto e compilato in CI, mai provato su una scheda SX1262**; sotto c'è l'elenco di cosa verificare.
 
 Ambiente di compilazione: `pio run -e tbeam1262` (stessa scheda `-DBOARD_TBEAM_V12` più `-DRADIO_SX1262`). Artefatto della CI `firmware-tbeam-v12-sx1262`; nella pagina di installazione è la scheda **"T-Beam V1.2 (AXP2101) con radio SX1262"**. Per il resto del progetto la scheda si chiama sempre `tbeam` (GPS sì, ripetitore no); `CFG VERSION` aggiunge in coda `radio=SX1262`.

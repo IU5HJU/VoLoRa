@@ -6,6 +6,15 @@ Il display è l'SSD1306 128×64 della T3 V1.6.1. L'immagine **non è una foto**:
 `tools/render_display.py` con lo stesso font 5×7 di Adafruit_GFX, le stesse coordinate e lo stesso ritorno a capo
 automatico del codice in `src/ui.cpp`. Sul display reale i colori dipendono dal pannello (di solito bianco o azzurro).
 
+## Novità del 18/11/2026
+
+- **Versione all'avvio:** appena accesa la scheda mostra "AVVIO" con la riga `fw <versione>` (nominativo in alto) per 1,8 s; è quella di `git describe --tags --always`: sul commit di un tag solo il tag (per esempio `v0.1.0-rc.1`), dopo il tag `<tag>-<N>-g<commit>`, senza tag raggiungibili solo il codice del commit (come nelle prove del 18/11/2026: `833fcd5`). **Provata sulla RX e sulla TX del ripetitore e su una T-Beam** (foto del 18/11/2026).
+- **Messaggio in casella** (profilo Messaggio): sotto l'icona, **"MESSAGGIO via RPT"** se è passato da un ripetitore o da un nodo (flag `RELAYED`) e **"MESSAGGIO DIRETTO"** se è arrivato dal mittente; lo stesso all'ascolto ("Riproduco (via RPT)" / "Riproduco (diretto)") e nel titolo del testo ("da N0CALL via RPT"). Provato su una T3 (foto, 18/11/2026).
+- **Gestione Wi-Fi** (RX del ripetitore e nodo, **25 s dopo l'avvio**): "GESTIONE WI-FI", "Da rete di casa:", l'**indirizzo IP**, `utente volora` e `pass <password>`; poi l'IP alterna con la riga della rete. Provata sulla RX del ripetitore (foto, 18/11/2026); **non ancora sul nodo**.
+- **TX del ripetitore:** "RIPETITORE TX forz." se la scheda è stata forzata dalla RX; ultima riga `RX ok ascolto M<in archivio>/<ritrasmessi>` e, se il sysop l'ha spenta, **"TX SPENTA (sysop)"** (provata, foto).
+- **Uscita dal modo prova** con tre clic: lo schermo torna su ASCOLTO (corretto il 18/11/2026; da riprovare).
+- Sulla seriale la riga `RX identificativo: <nominativo> RSSI <dBm> SNR <dB>` ha ora il segnale del pacchetto (prima quello del precedente).
+
 ## Novità del 10/11/2026
 
 - **Lettera del profilo:** in alto a destra, su ogni schermata, una lettera grande (bianca su nero, 10×9 punti) indica il profilo in uso: **S** Standard, **R** Range, **M** Messaggio. La riga del nominativo è stata accorciata (`IU5HJU 433.475MHz`) per farle posto.

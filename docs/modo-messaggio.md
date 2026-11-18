@@ -50,6 +50,10 @@ Il messaggio vocale ricevuto **non si riproduce più da solo**: finita la ricezi
 - **Da definire insieme:** i gesti con più messaggi in coda (oggi ce n'è uno solo), l'ingresso nel menu dei messaggi dal tasto volume, e in futuro una tastiera o un'app per telefono (Bluetooth) per scrivere testi liberi.
 - **Stato:** scritto e provato sul PC (`make test`, prove della pagina); **da provare su scheda**.
 
+## Messaggi via ripetitore (18/11/2026)
+
+Il mittente trasmette il messaggio sulla **frequenza di uscita** del ripetitore (nel Messaggio lo shift non vale): la **TX del ripetitore** lo ascolta, lo tiene (fino a 3 messaggi, 15 s di voce, 30 minuti) e lo **ritrasmette** con una sessione nuova e il flag `RELAYED`, dopo due annunci di occupato (modo 6). **Provato il 18/11/2026** (la TX ha ascoltato 2 messaggi, 8 e 9 pacchetti, e li ha ritrasmessi entrambi senza perdite). Non c'è un indirizzo: chi è nel raggio del mittente riceve **due copie**, la diretta subito e quella del ripetitore dopo qualche secondo. Chi riceve legge sul display da dove arriva: **"MESSAGGIO DIRETTO"** oppure **"MESSAGGIO via RPT"**. Il **nodo Internet non ritrasmette i messaggi** (una sola radio: non può ascoltare insieme Standard e Messaggio). Come provarli: [banco-ripetitore.md](banco-ripetitore.md).
+
 ## Cosa cambia per chi usa il profilo Messaggio
 
 - Il modo "registra e trasmetti" è **sempre acceso** (`CFG REC OFF` non lo spegne).

@@ -2,7 +2,21 @@
 
 > **Nota del 12/11/2026 sui nomi dei profili.** Questo documento è stato scritto con i nomi di allora: *Standard* (Codec2 1200, SF8), *Messaggio* e *Qualità* (Codec2 3200, SF7). Da quel giorno si chiamano **Range** (1200, SF8, lettera R), **Messaggio** (M) e **Standard** (3200, SF7, lettera S). Le parti storiche non sono state riscritte.
 
-Aggiornato il 14 novembre 2026 (sezione "Stato al 14/11/2026" qui sotto; sezione "Stato al 10/11/2026" qui sotto; le decisioni dell'8 novembre sono più sotto).
+Aggiornato il 18 novembre 2026 (sezione "Stato al 18/11/2026" qui sotto; sezione "Stato al 14/11/2026" qui sotto; sezione "Stato al 10/11/2026" qui sotto; le decisioni dell'8 novembre sono più sotto).
+
+## Stato al 18/11/2026: la rc.1 è vicina
+
+Firmware `b465287` (Build #391) e successivi. **Nessuna delle prove rimaste blocca la rc.1**: le note di rilascio devono dire che non sono provate. L'elenco completo, con cosa fare e cosa riportare, è in [prove-da-fare-rc1.md](prove-da-fare-rc1.md) (25 voci, alcune già avviate).
+
+**Fatto dal 14/11/2026** (esiti e limiti in [prove.md](prove.md)):
+
+- **Ripetitore a due T3, provato a banco (16-18/11/2026):** la **RX configura la TX** sul filo seriale (uscita, potenza, profilo, identificativo, nominativo, chiave del sysop; con firma di controllo e ripetizione) e la **TX si forza da sola**: una scheda in ruolo normale che sente i battiti della RX sul filo seriale diventa TX del ripetitore senza toccare il ruolo salvato. **Comandi del sysop via radio** (modo 5, firmati con HMAC-SHA256): STATO, RIAVVIA, POTENZA (salvata), SPEGNI (anche a tempo), RIACCENDI, IDENTIFICA, con risposta firmata della TX. Pagina di gestione della **RX dalla rete di casa**, con IP e password sul display per 25 s. La **RX non trasmette mai** (contatore in registro). Il ripetitore ripete **solo lo Standard** (profilo e frequenze degli altri nascosti nelle pagine) e **ignora lo shift**.
+- **Messaggi vocali via ripetitore (18/11/2026):** la TX ascolta i messaggi sulla frequenza di uscita, li tiene (fino a 3) e li **ritrasmette** con il flag `RELAYED` dopo l'annuncio di occupato; la TX scrive nel registro `[ripetitore] TX messaggi: ...`. Chi riceve legge sul display **"MESSAGGIO via RPT"** oppure **"MESSAGGIO DIRETTO"**.
+- **Nodo Internet:** accetta i **comandi del sysop via radio** come il ripetitore (STATO, POTENZA, RIAVVIA provati il 18/11/2026) e mostra IP e password sul display per 25 s. Il nodo **non tiene né ritrasmette i messaggi** (una sola radio: non può ascoltare insieme Standard e Messaggio).
+- **Display:** la **versione del firmware all'avvio** (`fw <versione>`), l'uscita dal modo prova con tre clic che torna su ASCOLTO, la riga `RX identificativo` con il segnale giusto.
+- **Altro:** audio su **T-Beam SX1278** (microfono, amplificatore e altoparlante, anche attraverso il ripetitore) provato il 17/11/2026; "coda" rumorosa dopo il PTT risolta (ricezione di un pacchetto di parità isolato); lo **shift vale solo per Standard e Range di una stazione normale** (Diretta e Messaggio trasmettono dove ascoltano).
+
+**Prima della rc.1 resta da provare** (tutto in [prove-da-fare-rc1.md](prove-da-fare-rc1.md)): voce attraverso il reflector, comandi del sysop sul nodo (IDENTIFICA, SPEGNI, RIACCENDI), versione all'avvio sul nodo e sulle T-Beam, IP e password sul nodo, profilo Diretta, prova di potenza con i km sul display di entrambe, registrazioni senza frame persi (T3), MeshCom fra due schede, le prove della T-Beam SX1262 (Standard, Range, trasmissione verso una SX1278, prova dei toni), shift con un ripetitore vero.
 
 ## Stato al 14/11/2026: verso la prima release candidate
 

@@ -66,3 +66,11 @@ Il tag lo crea chi pubblica, a mano: i documenti non lo creano.
 
 Il tag e la release li crea chi pubblica, a mano.
 
+## Stato della checklist per la rc.1 (18/11/2026)
+
+1. **`main` verde:** sì, Build #391 (commit `b465287`) e successive; `make test` completo passa in locale e in CI.
+2. **Documenti allineati:** README, [roadmap.md](roadmap.md), [ripetitore.md](ripetitore.md), [firmware.md](firmware.md), [display.md](display.md), [modo-messaggio.md](modo-messaggio.md), [banco-ripetitore.md](banco-ripetitore.md), [banco-nodo.md](banco-nodo.md), [prove.md](prove.md), [prove-da-fare-rc1.md](prove-da-fare-rc1.md) e le note di rilascio riflettono il firmware di quel commit.
+3. **Note di rilascio:** [v0.1.0-rc.1.md](note-rilascio/v0.1.0-rc.1.md), aggiornate al 18/11/2026 con ripetitore, messaggi via ripetitore, comandi del sysop sul nodo e prove ancora mancanti.
+4. **Provato su due schede:** voce a turni, prova di potenza (5,02 km), ripetitore a due T3 con la voce (T-Beam come stazione) e i messaggi, comandi del sysop (ripetitore: tutti; nodo: STATO, POTENZA, RIAVVIA), pagina di gestione dalla rete di casa, versione all'avvio sulle schede del ripetitore. **Mancano** le prove elencate in [prove-da-fare-rc1.md](prove-da-fare-rc1.md): nessuna blocca la rc.1, le note le dicono.
+
+Il tag e la release li crea chi pubblica, a mano.

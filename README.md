@@ -22,22 +22,23 @@ Funzionamento in breve:
 4. Tutte le stazioni in ascolto sulla frequenza ricevono e riproducono. Dopo 5-10 s di attesa si risponde.
 
 > **Progetto sperimentale, in preparazione della prima release candidate (rc.1).** La voce passa da una scheda all'altra ed è
-> **provata sulle schede** (T3 e T-Beam, nei tre profili, 10/11/2026) e **in aria a 5,02 km in movimento** (prova di potenza,
-> 14/11/2026): esiti in [docs/prove.md](docs/prove.md). **Mancano ancora misure sul campo oltre quella distanza** e diverse
-> prove su schede (elenco in [docs/note-rilascio/v0.1.0-rc.1.md](docs/note-rilascio/v0.1.0-rc.1.md)). Possono trasmettere solo radioamatori con il proprio nominativo, sulle frequenze e con le
+> **provata sulle schede** (T3 e T-Beam, nei tre profili, 10/11/2026), **in aria a 5,02 km in movimento** (prova di potenza,
+> 14/11/2026) e **attraverso il ripetitore a due T3** (16-18/11/2026): esiti in [docs/prove.md](docs/prove.md). **Mancano ancora misure sul campo oltre quella distanza** e diverse
+> prove su schede (elenco in [docs/prove-da-fare-rc1.md](docs/prove-da-fare-rc1.md) e [docs/note-rilascio/v0.1.0-rc.1.md](docs/note-rilascio/v0.1.0-rc.1.md)). Possono trasmettere solo radioamatori con il proprio nominativo, sulle frequenze e con le
 > potenze consentite. Il nominativo viaggia in chiaro e i contenuti non sono cifrati.
 
 > **Nuovo? Parti dalla [guida rapida](docs/guida-rapida.md).** Indice della documentazione: [docs/README.md](docs/README.md).
 
 ## Oltre alla voce a turni
 
-Sulle stesse schede, dalla beta.2 (09/11/2026) a oggi (14/11/2026):
+Sulle stesse schede, dalla beta.2 (09/11/2026) a oggi (18/11/2026):
 
 - **Testi brevi** (stile SMS, fino a 150 caratteri), **casella dei messaggi**, **MeshCom** (escursione a tempo sulle reti di testo a 433,175 MHz) e **posizione/GPS**: [docs/meshcom-testo.md](docs/meshcom-testo.md), [docs/protocollo.md](docs/protocollo.md).
-- **Ripetitore con due T3** (RX e TX) con identificativo periodico, anche in **Morse a tono in FM** per chi non ha le schede LoRa, e comandi firmati del sysop: [docs/ripetitore.md](docs/ripetitore.md).
+- **Ripetitore con due T3** (RX e TX), **provato a banco** (16-18/11/2026): la RX configura la TX sul filo seriale e la TX si riconosce da sola; identificativo periodico anche in **Morse a tono in FM** per chi non ha le schede LoRa; **comandi firmati del sysop via radio** (STATO, POTENZA, SPEGNI, RIACCENDI, IDENTIFICA, RIAVVIA), provati; pagina di gestione della RX dalla rete di casa; **messaggi vocali ritrasmessi** (chi riceve legge "MESSAGGIO via RPT" o "MESSAGGIO DIRETTO"): [docs/ripetitore.md](docs/ripetitore.md).
 - **Shift** per operare via ripetitore, libero da 0 a 10 MHz in positivo o negativo (come l'offset di una radio): [docs/firmware.md](docs/firmware.md).
 - **Nodo Internet** (due schede su Wi-Fi che si portano i pacchetti, UDP firmato) e **reflector**: un server a cui si collegano nodi e ripetitori **senza aprire porte sul router**, con pagina di amministrazione (password) e pagina pubblica di sola lettura, con il Wi-Fi di configurazione all'avvio e la pagina di gestione dalla rete di casa, e sul display l'ultima stazione transitata: [docs/reflector.md](docs/reflector.md), [docs/banco-nodo.md](docs/banco-nodo.md).
 - **Prova di potenza** fra due schede: cerca da sola la potenza minima con cui si sentono, e l'esito compare sul display di entrambe, con la **distanza in km** se la posizione è attiva (`CFG SET POS ON`): [docs/prova-collegamento.md](docs/prova-collegamento.md).
+- **Versione del firmware sul display all'avvio** (`fw <versione>`): sul commit di un tag solo il tag, altrimenti anche il commit ([docs/display.md](docs/display.md)).
 - **T-Beam con radio SX1262** (la stessa scheda col modulo LoRa diverso dall'SX1278): firmware dedicato, **provato in ricezione di un messaggio da una T3 il 14/11/2026** (Standard e Range non verificati): [docs/tbeam-sx1262.md](docs/tbeam-sx1262.md).
 
 ## Per provare il firmware
