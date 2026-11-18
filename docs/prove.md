@@ -625,3 +625,11 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Voce (riferito dall'operatore):** il messaggio è **"perfettamente intelligibile, con la caratteristica modulazione Codec2"**.
 - **Limiti:** copia diretta, non ripetuta; la copia del ripetitore (430.000 MHz, dopo gli annunci di occupato) resta da ascoltare con l'SDR a 430.000 MHz per E1 e E2.
 - **Corretto nello strumento:** in ascolto del Messaggio la riga di inizio diceva "Range (Codec2 1200)"; ora dice "messaggio vocale (Codec2 1200)".
+
+### 18/11/2026, casa, IU5HJU (messaggio via ripetitore: le due copie ascoltate con la chiavetta SDR a 430.000 MHz)
+
+- **Ricezione:** NESDR (`ricevitore-live.sh`, voce 2 "Messaggio", SF12, 125 kHz, **430.000 MHz**, guadagno 10 dB), l'uscita del ripetitore. La stazione trasmetteva un messaggio nel profilo Messaggio con `freqmsg=430.000`.
+- **Prima copia (diretta):** `inizio messaggio vocale (Codec2 1200) diretta, sessione 52564`, dalle 20:25:08 alle 20:25:45, `fine: 87 frame (3.5 s), persi 0, pacchetti recuperati 1`.
+- **Seconda copia (dal ripetitore):** `inizio messaggio vocale (Codec2 1200) via ripetitore o nodo, sessione 34297` (**sessione nuova e flag `RELAYED`**), dalle 20:25:52 alle 20:26:29, `fine: 87 frame (3.5 s), persi 0, pacchetti recuperati 0`. Parte **7 secondi dopo la fine della copia diretta** (5 s di pausa dopo l'ultimo pacchetto ascoltato dalla TX più gli annunci di occupato, che l'SDR in Messaggio non sente).
+- **Esito:** **la TX del ripetitore ritrasmette il messaggio**, con lo stesso numero di frame (87), senza perdite, e la ricevente distingue le due copie dal flag (E1 ed E2). La copia ripetuta non ha richiesto nessun recupero con la parità, mentre la diretta ne ha avuto uno (la prima ricezione dell'SDR a guadagno basso).
+- **Limiti:** ricezione con la chiavetta; la voce della copia ripetuta non è ancora stata giudicata all'ascolto (quella della copia diretta, il 18/11/2026, era "perfettamente intelligibile"); i messaggi `underrun!!!` di `aplay` nel registro (43,7 s) sono i vuoti tra le riproduzioni, non un difetto.
