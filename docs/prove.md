@@ -532,3 +532,8 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 
 - **Esito:** foto del display di una **T3 ricevente**: "Voce da IU5HJU", icona dell'altoparlante, **"MESSAGGIO DIRETTO"** e "Premi PTT: ascolta". L'indicazione di un messaggio arrivato **direttamente dal mittente** (senza ripetitore) funziona e **sta nelle 21 colonne dello schermo**.
 - **Limiti:** foto senza registro; non è indicato il firmware (si presume quello della Build #380 o successivo, ma la riga `fw` non è nella foto). **Resta da vedere "MESSAGGIO via RPT"** con la prova via ripetitore (E1).
+
+### 18/11/2026, casa, IU5HJU (messaggio vocale passato dal ripetitore: "MESSAGGIO via RPT")
+
+- **Esito:** foto del display della **T3 ricevente** (stessa scheda della foto "DIRETTO"): "Voce da IU5HJU", icona dell'altoparlante, **"MESSAGGIO via RPT"** e "Premi PTT: ascolta". **Il messaggio vocale è passato dal ripetitore** (la TX lo ha ascoltato sull'uscita, tenuto e ritrasmesso con il flag `RELAYED`) **e la ricevente lo distingue da quello diretto.** Con la foto "MESSAGGIO DIRETTO" qui sopra le due indicazioni sono viste entrambe.
+- **Limiti:** foto senza registro della TX (la riga `[ripetitore] TX messaggi: ...` non è stata incollata), senza RSSI/SNR, e non si sa se l'audio ascoltato era integro (non indicato). Non è provato che i frame persi si ricostruiscano con la parità: da riportare con il registro.
