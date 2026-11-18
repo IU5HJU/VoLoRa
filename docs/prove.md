@@ -608,4 +608,4 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Limiti:** ascolto con la chiavetta, non con una scheda; non registrati l'intelligibilità della voce all'altoparlante né il ritardo; il flag `RELAYED` non si vede nel registro di `lcr_live`.
 
 - **Voce (18/11/2026, riferito dall'operatore):** all'altoparlante del portatile la voce arrivata dal reflector, nei due sensi (uscita del ripetitore a 430.000 MHz e uscita del nodo a 433.475 MHz), è **"perfettamente intelligibile"**. Non misurato il ritardo.
-- **Ritardo (18/11/2026, stima dell'operatore):** circa **2,5 secondi** fra il PTT della stazione e la voce ascoltata dall'altra parte (rete cellulare, reflector, ripetitore o nodo, ricezione SDR). Non misurato con uno strumento.
+- **Ritardo (18/11/2026, misurato con il cronometro dall'operatore):** **2,5 secondi** fra il PTT della stazione e la voce ascoltata dall'altra parte (rete cellulare, reflector, ripetitore o nodo, ricezione SDR).
