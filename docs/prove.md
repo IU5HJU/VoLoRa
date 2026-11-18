@@ -504,3 +504,11 @@ Stazione T-Beam SX1278 con firmware `471ac35`, come nella prova del 17/11/2026. 
 **Sintomo:** uscendo dal modo prova con tre pressioni brevi del PTT il bip lo conferma ma l'OLED resta sulla schermata della prova (esito dell'ultima prova o prova di potenza); tornava normale con la prima trasmissione.
 **Causa (nel codice):** le schermate dell'ultimo esito e della prova di potenza restano mostrate finché non scade un tempo, e `testModeChanged(false)` non le spegneva: lo schermo si ridisegnava, ma con la stessa schermata.
 **Correzione:** uscendo dalla prova si azzerano le schermate dell'esito e della prova di potenza (e la distanza); lo schermo torna su `ASCOLTO`. **Da riprovare sulla scheda.**
+
+### 18/11/2026, casa, IU5HJU (SPEGNI, RIACCENDI, IDENTIFICA e RIAVVIA via radio: log della stazione)
+
+Stazione T-Beam SX1278 `471ac35`, ripetitore a due T3 (RX `471ac35`).
+- **SPEGNI** (contatore 19): `esito=0 spento=1 potenza=10 minuti=65535` (65535 = spento senza scadenza). **RIACCENDI** (contatore 20): `esito=0 spento=0 potenza=10 minuti=0`. Confermato dall'operatore: a ripetitore spento la voce non passa e RIACCENDI lo riporta in servizio.
+- **IDENTIFICA:** funziona (operatore). **RIAVVIA** (contatore 21): risposta `esito=0`, poi `RX identificativo: IR5XXX RSSI -44 dBm SNR 6,8 dB` dopo il riavvio.
+- **RX dopo il riavvio:** `trasmissioni radio della scheda RX 0 (devono essere 0)`, seriale con la TX attiva (120 frame validi, 0 errori CRC), memoria libera **102.940 byte** (prima della pagina sulla rete di casa erano circa 126.000: i 23 kB in meno sono il server della pagina e mDNS, margine ampio).
+- **Esito:** i comandi del sysop STATO, RIAVVIA, POTENZA, SPEGNI, RIACCENDI e IDENTIFICA funzionano sul ripetitore. Manca SPEGNI a tempo e il nodo Internet.
