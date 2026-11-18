@@ -110,3 +110,16 @@ tail -n0 -F cattura.txt | build/lcr_live --standard | c2dec 3200 - - | aplay -q 
 | nessun audio riconoscibile | controlla `frame persi` in `lcr_decode`: sotto il 5% la voce e' comprensibile; il Codec2 a 1200 bps ha comunque un suono "robotico" |
 
 Il ricevitore usa il blocco `frame_sync` ... `crc_verif` di `gr-lora_sdr` come nell'esempio `examples/lora_RX.py` del progetto; se una versione futura cambia la firma dei blocchi, confronta `tools/sdr/lora_rx.py` con quell'esempio.
+
+## 5. Morse a tono in FM (ripetitore e nodo, 18/11/2026)
+
+L'identificativo in Morse non è LoRa: è FM stretta con un tono di 700 Hz (15 parole al minuto, ±2,5 kHz). La chiavetta lo ascolta con `rtl_fm` e `tools/sdr/analizza_morse.py` misura **tono, lunghezza del punto e della linea, parole al minuto** e **decodifica il nominativo**.
+
+Il modo più semplice è lo script **`tools/sdr/morse-fm.sh`** (si collega a un'icona come `ricevitore-live.sh`; aggiorna da solo il clone): chiede frequenza (di base 430.000 MHz, l'uscita del ripetitore), guadagno e secondi di registrazione; quando compare «REGISTRO» si manda **IDENTIFICA** dalla stazione del sysop. A mano:
+
+```bash
+timeout 60 /usr/bin/rtl_fm -f 430.0M -M fm -s 24000 -g 20 > morse.raw    # con il programma di sistema, non quello di conda
+conda activate lora && python3 tools/sdr/analizza_morse.py morse.raw
+```
+
+Si legge, per esempio: `Morse a tono: N0CALL`, `tono 700 Hz, punto 80 ms, linea 240 ms, 15.0 parole al minuto`. La **deviazione** (±2,5 kHz) non si misura da qui, perché l'audio di `rtl_fm` non è tarato in kHz. La prova sul PC è `tests/sdr/test_morse.py` (Morse sintetico con rumore: testo, tono e velocità a 12, 15 e 20 parole al minuto).
