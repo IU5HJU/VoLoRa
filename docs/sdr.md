@@ -86,6 +86,8 @@ tail -n0 -F cattura.txt | build/lcr_live --standard | c2dec 3200 - - | aplay -q 
 - **Cuscinetto contro gli "underrun" (10/11/2026):** `aplay` può stampare `underrun!!!` (un vuoto nell'audio) se per un attimo non riceve dati: con i frame consegnati esattamente a ritmo reale il suo buffer resta sempre quasi vuoto. `lcr_live` fa quindi uscire i primi 7 frame in blocco e poi uno ogni 40 ms, così l'audio ha **240 ms di margine** (`--anticipo MS`, 0 = ritmo reale esatto). L'audio parte prima, non dopo.
 - Si usa `aplay` e non `ffplay`: `ffplay` con dati che arrivano a rilento si blocca nel suo "probe" iniziale.
 - Lo script **`tools/sdr/ricevitore-live.sh`** fa tutto (ambiente conda, scelta del modo, frequenza e guadagno, ascolto, riepilogo finale) e si può collegare a un'icona su Ubuntu MATE. **All'avvio fa da solo `git pull`** del clone (se c'è la rete e non ci sono modifiche locali) e poi riparte con la versione nuova di se stesso, poi ricompila `lcr_live` e `lcr_decode`: l'icona tiene sempre allineato il ricevitore al progetto. La prima volta dopo questa modifica serve un `git pull` a mano nella cartella del progetto (l'icona vecchia non aggiorna).
+
+**Icone sul desktop (Ubuntu MATE, 18/11/2026):** tutte puntano al clone `~/VoLoRa` (non più a `~/LoRa-Codec-2-RTX`): *VoLoRa ricevitore SDR* (`tools/sdr/ricevitore-live.sh`), *Prova protocolli audio* (`tools/confronta-codec.sh`) e *Aggiorna progetto VoLoRa* (`tools/aggiorna-progetto.sh`: scarica gli aggiornamenti, elenca le novità e ricompila gli strumenti). Le prime due si aggiornano anche da sole all'avvio.
 - Provato sul PC con orologio finto (`tests/test_live.cpp`) e con una trasmissione sintetica (600 byte in 4,9 s). **Da provare con la chiavetta e una scheda vera.**
 
 ## 4. Controllo di una scheda
