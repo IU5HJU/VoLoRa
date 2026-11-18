@@ -10,7 +10,7 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## Riepilogo (18/11/2026): quante ne restano
 
-**11 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+**10 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
 
 | Gruppo | Prove | Quante |
 |---|---|---|
@@ -18,7 +18,7 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 | A. Schede singole | A4 | 1 |
 | B. Due schede | B5, B6 | 2 |
 | C. Nodo e reflector | C1, C2, C3 | 3 |
-| D. Ripetitore vero | D2 | 1 |
+| D. Ripetitore vero | nessuna | 0 |
 | Con l'altro radioamatore (T-Beam SX1262) | A2, B4, trasmissione SX1262 → SX1278, A4 sulla sua scheda | 4 |
 
 
@@ -56,7 +56,7 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## D. Ripetitore con una radio vera
 
-D2: **shift** con un ripetitore vero (frequenza di ascolto e di trasmissione). Il collegamento RX-TX, l'identificativo in testo e in Morse FM e i comandi del sysop sono già provati a banco ([prove.md](prove.md), 16-18/11/2026).
+D2: ~~**shift** con un ripetitore vero~~ **superata il 18/11/2026**: tutte le prove sul ripetitore (voce, comandi del sysop, messaggi) sono state fatte con lo shift +10000 (ascolto 430, trasmissione 440 MHz) e senza shift il ripetitore non funziona; il collegamento RX-TX, l'identificativo in testo e in Morse FM e i comandi del sysop sono provati ([prove.md](prove.md)).
 
 ## E. Ripetitore e messaggi (aggiunte del 16-18/11/2026, firmware dalla Build #380)
 
