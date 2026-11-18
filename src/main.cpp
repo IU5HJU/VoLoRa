@@ -218,6 +218,26 @@ void setup() {
   Serial.println("[avvio] Codec2...");
   if (!codec.begin(lcr::profileFor(settings.profile).codecMode)) fatal("Codec2");
   Serial.printf("[avvio] Codec2 ok, heap libero %u byte\n", static_cast<unsigned>(ESP.getFreeHeap()));
+  {
+    // Prova dei tempi a vuoto (nessun altro lavoro in corso): separa la velocita' della scheda dalle interferenze durante la ricezione.
+    // Sul registro del 18/11/2026 la T3 decodificava in 33-37 ms per frame, la T-Beam in 16 ms: qui si vede se il divario c'e' anche a vuoto.
+    int16_t pcm[lcr::kFrameSamples];
+    uint8_t frame[lcr::kMaxFrameBytes];
+    for (size_t i = 0; i < lcr::kFrameSamples; i++)
+      pcm[i] = static_cast<int16_t>(6000.0f * sinf(0.15f * static_cast<float>(i)) + 2000.0f * sinf(0.61f * static_cast<float>(i)));
+    codec.resetTiming();
+    for (int i = 0; i < 10; i++) {
+      codec.encode(pcm, frame);
+      codec.decode(frame, pcm);
+    }
+    Serial.printf("[avvio] CPU %u MHz, chip %s rev %u, Codec2 a vuoto: codifica media %u.%u ms, decodifica media %u.%u ms (massimo %u.%u ms) per frame\n",
+                  static_cast<unsigned>(getCpuFrequencyMhz()), ESP.getChipModel(), static_cast<unsigned>(ESP.getChipRevision()),
+                  static_cast<unsigned>(codec.encodeAvgUs() / 1000), static_cast<unsigned>((codec.encodeAvgUs() % 1000) / 100),
+                  static_cast<unsigned>(codec.decodeAvgUs() / 1000), static_cast<unsigned>((codec.decodeAvgUs() % 1000) / 100),
+                  static_cast<unsigned>(codec.decodeMaxUs() / 1000), static_cast<unsigned>((codec.decodeMaxUs() % 1000) / 100));
+    codec.resetTiming();
+    codec.logReset();
+  }
 
   ui.showMessage("AUDIO");
   Serial.println("[avvio] audio I2S...");
