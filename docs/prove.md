@@ -749,4 +749,5 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 
 - **Seconda tornata, sempre a coppie incrociate:** sulla T3 altre 4 registrazioni (54, 61, 73, 52 frame, 2,1-2,9 s), sulla T-Beam altre 3 (60, 70, 54 frame, 2,2-2,8 s). `frame persi dal microfono 0` su tutte; codifica Codec2 media 18,1-18,7 ms, massimo 20,2-21,3 ms (limite 40 ms); ricezione con frame persi 0, recuperati 0, errori CRC 0, ritardo massimo di lettura 28 ms. La T-Beam ha anche decodificato il messaggio da 58 frame della T3: media 16,6 ms, massimo 19,5 ms.
 - **Totale:** **9 registrazioni sulla T3 e 7 sulla T-Beam, 16 in tutto, nessun frame perso** (il 14/11 una registrazione ne aveva persi 18).
-- **Valutazione dell'operatore:** bastano; **B5 chiusa** con 9 registrazioni sulla T3 invece di 10, cioe' una in meno di quanto previsto, compensata dalle 7 sulla T-Beam.
+- **Valutazione dell'operatore:** bastano; B5 chiusa.
+- **Decima registrazione sulla T3 (stesso giorno):** su richiesta di completare il numero previsto, la T3 ha registrato un'altra volta: 57 frame (2,3 s), `frame persi dal microfono 0`, codifica media 18,2 ms, massimo 20,6 ms; ricezione dalla T-Beam con frame persi 0, CRC 0. **Totale sulla T3: 10 registrazioni di fila su 10 senza frame persi** (piu' 7 sulla T-Beam): B5 completa come da scheda.
