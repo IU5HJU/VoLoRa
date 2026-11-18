@@ -471,6 +471,12 @@ void UiNotifier::testModeChanged(bool on) {
   noticeUntilMs_ = millis() + 1500;
   testMode_ = on;
   dirty_ = true;
+  if (!on) {  // uscendo dalla prova le schermate dell'ultima prova (esito, prova di potenza) non devono restare: prima si vedevano fino a una trasmissione normale
+    testShown_ = false;
+    sweepShown_ = false;
+    sweepRunning_ = false;
+    testDist_[0] = 0;
+  }
   if (on) {
     audio_.beep(1000, 60);
     audio_.beep(1400, 60);

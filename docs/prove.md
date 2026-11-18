@@ -496,3 +496,9 @@ Stazione T-Beam SX1278 con firmware `471ac35`, come nella prova del 17/11/2026. 
 - **STATO** (contatore 18): `CFG SYSCMD RISPOSTA da=IR5XXX codice=1 esito=0 contatore=18 spento=0 potenza=10 minuti=0`: **la TX trasmette a 10 dBm** (prima della POTENZA era 2) e la RX non l'ha riportata a 2. **Esito: POTENZA via radio funziona e non viene sovrascritta dalla configurazione della RX.**
 - **Da verificare ancora:** il testo sul display della stazione dopo POTENZA (`RIP: PWR 10dBm`), SPEGNI e RIACCENDI, IDENTIFICA e gli stessi comandi sul nodo.
 - Nello stesso log: una prova di potenza iniziata con la stazione e subito interrotta (`PROVA POTENZA INTERROTTA: 0 passi`, potenza rimessa a 10 dBm): atteso, perché l'altra scheda (la RX del ripetitore) non è in modo prova e non risponde.
+
+### 18/11/2026, casa, IU5HJU (modo prova: lo schermo non tornava su ASCOLTO uscendo con tre clic)
+
+**Sintomo:** uscendo dal modo prova con tre pressioni brevi del PTT il bip lo conferma ma l'OLED resta sulla schermata della prova (esito dell'ultima prova o prova di potenza); tornava normale con la prima trasmissione.
+**Causa (nel codice):** le schermate dell'ultimo esito e della prova di potenza restano mostrate finché non scade un tempo, e `testModeChanged(false)` non le spegneva: lo schermo si ridisegnava, ma con la stessa schermata.
+**Correzione:** uscendo dalla prova si azzerano le schermate dell'esito e della prova di potenza (e la distanza); lo schermo torna su `ASCOLTO`. **Da riprovare sulla scheda.**
