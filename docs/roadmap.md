@@ -25,7 +25,7 @@ Firmware `b465287` (Build #391) e successivi. **Nessuna delle prove rimaste bloc
 **Prima della release candidate, da fare o da confermare su schede** (nessuna di queste cose blocca la rc, ma le note di rilascio devono dire che non sono provate):
 
 1. Prova di potenza in aria fra due schede: **fatta il 14/11/2026 a 5,02 km** ([prove.md](prove.md)); resta da documentare l'esito sul display di **entrambe** le schede e la distanza in km (nuova, 14/11/2026).
-2. **Voce attraverso il reflector** fra schede: **provata il 18/11/2026 nei due sensi**, ascoltata con la chiavetta SDR (nodo mobile, reflector, RX e TX del ripetitore; resta l'ascolto con una scheda).
+2. **Voce attraverso il reflector** fra schede: **provata il 18/11/2026 nei due sensi**, ascoltata con la chiavetta SDR (nodo mobile, reflector, RX e TX del ripetitore). **Prova superata.**
 3. **T-Beam con radio SX1262**: provata il 14/11/2026 in ricezione di un messaggio da una SX1278 ([prove.md](prove.md)); restano da provare Standard e Range, la trasmissione verso una SX1278 e la prova dei toni dopo la correzione del watchdog ([tbeam-sx1262.md](tbeam-sx1262.md)).
 4. **Aggiornamento dalla pagina senza perdere le impostazioni**: **confermato il 14/11/2026** su una T3 ([prove.md](prove.md)) e, secondo l'operatore, sulle due T-Beam (SX1278 e SX1262, senza registri).
 5. **Ripetitore** a banco ([banco-ripetitore.md](banco-ripetitore.md)) e **shift** con un ripetitore vero.
