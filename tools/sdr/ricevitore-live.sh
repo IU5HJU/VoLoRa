@@ -23,7 +23,7 @@ command -v conda >/dev/null || { echo "conda non trovato"; fine 1; }
 conda activate lora || { echo "Ambiente conda 'lora' non trovato (vedi docs/sdr.md)"; fine 1; }
 command -v c2dec >/dev/null || { echo "Manca c2dec: sudo apt install codec2"; fine 1; }
 command -v aplay >/dev/null || { echo "Manca aplay: sudo apt install alsa-utils"; fine 1; }
-# Si ricompila sempre (make rifa solo cio' che e' cambiato): un lcr_live vecchio, compilato prima del modo Qualita', scarta in
+# Si ricompila sempre (make rifa solo cio' che e' cambiato): un lcr_live vecchio, compilato prima dello Standard a 3200, scarta in
 # silenzio i pacchetti a 3200 e non si sente nulla.
 make -C "$REPO" lcr_live lcr_decode >/dev/null || { echo "Compilazione di lcr_live fallita (make nel repository $REPO)"; fine 1; }
 
@@ -31,7 +31,7 @@ echo "=== Ricevitore SDR in tempo reale ==="
 echo "Antenna collegata e scheda a piu' di un metro dalla chiavetta."
 echo
 echo "Che modo ascolti?"
-select M in "Standard (SF8, banda 250 kHz): voce in diretta" "Messaggio (SF12, banda 125 kHz): si sente a messaggio completo" "Qualita' (SF7, banda 250 kHz, Codec2 3200): voce in diretta" "Esci"; do
+select M in "Range (SF8, banda 250 kHz, Codec2 1200): voce in diretta" "Messaggio (SF12, banda 125 kHz): si sente a messaggio completo" "Standard (SF7, banda 250 kHz, Codec2 3200): voce in diretta, il profilo del ripetitore" "Esci"; do
   case $REPLY in
     1) SF=8;  BW=250000; OPT=""; C2=1200; break ;;
     2) SF=12; BW=125000; OPT="--messaggio"; C2=1200; break ;;
