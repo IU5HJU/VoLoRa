@@ -743,4 +743,10 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Prova:** profilo Messaggio, registrazioni di fila a coppie incrociate (una scheda trasmette, l'altra riceve), registro seriale di entrambe.
 - **T3 (5 registrazioni):** 31, 53, 68, 67, 58 frame (1,2-2,7 s), `frame persi dal microfono 0` su tutte; codifica Codec2 media 18,2-18,3 ms, massimo 19,8-21,3 ms (limite 40 ms). Ricezione dalla T-Beam: frame persi 0, pacchetti recuperati 0, errori CRC 0, ritardo massimo di lettura 10-27 ms.
 - **T-Beam (4 registrazioni):** 51, 70, 89, 63 frame (2,0-3,6 s), `frame persi dal microfono 0` su tutte; codifica media 18,4-18,6 ms, massimo 20,6-20,9 ms. Ricezione dalla T3: frame persi 0, recuperati 0, CRC 0, ritardo massimo di lettura 0-28 ms.
-- **Esito:** 9 registrazioni in totale, **nessun frame perso** (il 14/11 una registrazione ne aveva persi 18). Sulla T3 sono 5 di fila, non 10: **B5 resta aperta** per le altre 5 registrazioni sulla T3.
+- **Esito:** 9 registrazioni in totale, **nessun frame perso** (il 14/11 una registrazione ne aveva persi 18). Sulla T3 sono 5 di fila, non 10: B5 restava aperta per le altre registrazioni sulla T3 (vedi sotto).
+
+### 18/11/2026, casa, IU5HJU (B5 chiusa: seconda tornata di registrazioni, T3 e T-Beam)
+
+- **Seconda tornata, sempre a coppie incrociate:** sulla T3 altre 4 registrazioni (54, 61, 73, 52 frame, 2,1-2,9 s), sulla T-Beam altre 3 (60, 70, 54 frame, 2,2-2,8 s). `frame persi dal microfono 0` su tutte; codifica Codec2 media 18,1-18,7 ms, massimo 20,2-21,3 ms (limite 40 ms); ricezione con frame persi 0, recuperati 0, errori CRC 0, ritardo massimo di lettura 28 ms. La T-Beam ha anche decodificato il messaggio da 58 frame della T3: media 16,6 ms, massimo 19,5 ms.
+- **Totale:** **9 registrazioni sulla T3 e 7 sulla T-Beam, 16 in tutto, nessun frame perso** (il 14/11 una registrazione ne aveva persi 18).
+- **Valutazione dell'operatore:** bastano; **B5 chiusa** con 9 registrazioni sulla T3 invece di 10, cioe' una in meno di quanto previsto, compensata dalle 7 sulla T-Beam.
