@@ -10,14 +10,14 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## Riepilogo (18/11/2026): quante ne restano
 
-**7 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+**6 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
 
 | Gruppo | Prove | Quante |
 |---|---|---|
 | E. Ripetitore e messaggi (nuovo) | E5 | ~~**Uscita dal modo prova con tre clic**~~ **fatto il 18/11/2026** (riferito: lo schermo torna su ASCOLTO senza scritte di prova; vedi B3 e [prove.md](prove.md)) | niente scritte di prova rimaste | foto |
 | A. Schede singole | nessuna | 0 |
 | B. Due schede | nessuna | 0 |
-| C. Nodo e reflector | C1, C2, C3 | 3 |
+| C. Nodo e reflector | C2, C3 | 2 |
 | D. Ripetitore vero | nessuna | 0 |
 | Con l'altro radioamatore (T-Beam SX1262) | A2, B4, trasmissione SX1262 → SX1278, A4 sulla sua scheda | 4 |
 
@@ -47,7 +47,7 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 | # | Prova | Cosa deve succedere | Da riportare |
 |---|---|---|---|
-| C1 | **Scheda nuova nel ruolo nodo**: da `CFG SET ROLE NODE` senza altre impostazioni | il display mostra la schermata Wi-Fi (rete `VoLoRa-XXXX`, password, indirizzo) con in fondo cosa manca (`manca NODEKEY`...), senza scadenza; la seriale dice `non pronto`; dal telefono (`http://192.168.4.1`) si impostano Wi-Fi di casa, reflector, `NODEID`, `NODEKEY`; salvando la scheda riparte | foto dei display, cosa è andato storto |
+| C1 | ~~**Scheda nuova nel ruolo nodo**: da `CFG SET ROLE NODE` senza altre impostazioni~~ **superata il 18/11/2026**: da scheda azzerata `manca NODEID` sul display e `non pronto` in seriale, rete `VoLoRa-XXXX` e pagina dal telefono, partenza dopo la finestra, Wi-Fi di casa, collegamento con il reflector; `NODEID` impostato da seriale (l'impostazione dei dati dal telefono si prova con C2) ([prove.md](prove.md)) | schermata Wi-Fi con cosa manca, `non pronto`, partenza | fatto |
 | C2 | **Finestra di 3 minuti** su un nodo già configurato (14/11/2026: si apre, si chiude e il nodo parte, vedi `prove.md`; manca la durata; dal 15/11/2026 la finestra si prolunga solo con richieste alla pagina, **da provare**: un telefono collegato senza aprire la pagina non deve tenerla aperta oltre i 3 minuti) | all'accensione compare la schermata Wi-Fi con il conto alla rovescia; se un telefono è collegato la finestra si prolunga; allo scadere il nodo parte e si collega | durata reale, se il nodo si è collegato dopo |
 | C3 | **Gestione dalla rete di casa** (14/11/2026: aperta da un telefono con utente e password, configurazione letta, `prove.md`; mancano `volora-XXXX.local`, la password sbagliata, una modifica e la nuova scritta in cima alla pagina, corretta dopo la prova: da rivedere sul telefono): dal computer `http://<indirizzo>/` (e `http://volora-XXXX.local/`) | chiede utente `volora` e la password; con una password sbagliata non si apre; con quella giusta la pagina funziona | indirizzo, se `.local` funziona, un `CFG SET` cambiato dalla pagina |
 | C4 (**fatto il 14/11/2026 su T-Beam SX1278, vedi `prove.md`**) | **Ultima stazione transitata**: una scheda trasmette in radio verso il nodo | ultima riga `RX <nominativo> RSSI SNR`, dopo 5 s `Ult ...`; sulla seriale `[nodo] transito N` | foto, riga seriale |
