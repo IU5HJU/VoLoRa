@@ -74,3 +74,12 @@ Il tag e la release li crea chi pubblica, a mano.
 4. **Provato su due schede:** voce a turni, prova di potenza (5,02 km), ripetitore a due T3 con la voce (T-Beam come stazione) e i messaggi, comandi del sysop (ripetitore: tutti; nodo: STATO, POTENZA, RIAVVIA), pagina di gestione dalla rete di casa, versione all'avvio sulle schede del ripetitore. **Mancano** le prove elencate in [prove-da-fare-rc1.md](prove-da-fare-rc1.md): nessuna blocca la rc.1, le note le dicono.
 
 Il tag e la release li crea chi pubblica, a mano.
+
+## Stato della checklist per la rc.1 (19/11/2026)
+
+1. **`main` verde:** l'ultima modifica al firmware è del commit `6ab584c` (Build #460, verde); i commit successivi sono solo documenti (da controllare che l'ultima Build sia verde prima del tag).
+2. **Documenti allineati:** README, [roadmap.md](roadmap.md), [prove.md](prove.md), [prove-da-fare-rc1.md](prove-da-fare-rc1.md) e le note di rilascio riflettono il firmware di quel commit.
+3. **Note di rilascio:** [v0.1.0-rc.1.md](note-rilascio/v0.1.0-rc.1.md), aggiornate al 19/11/2026.
+4. **Provato su due schede:** tutto ciò che è elencato nelle note sotto "Cosa è stato provato". **Mancano** 4 prove con la T-Beam SX1262 di un altro radioamatore (A2, B4, trasmissione verso una SX1278, A4 sulla sua scheda): nessuna blocca la rc.1, le note le dicono. Osservazione aperta: tempo di decodifica sulla T3 in Diretta vicino al limite.
+
+Il tag e la release li crea chi pubblica, a mano.
