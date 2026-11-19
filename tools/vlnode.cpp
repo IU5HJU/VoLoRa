@@ -4,7 +4,7 @@
 //
 //   make vlnode
 //   build/vlnode --id 2 --peer-id 1 --key 000102030405060708090a0b0c0d0e0f --listen 5400 --peer 192.168.1.50:5400   (--peer puo' essere anche un nome; --listen 0 sceglie una porta)
-//                [--send-text IU5HJU "Prova del nodo" [--every 10]] [--send-voice IU5HJU [--frames 100]] [--duration 60] [--public-addr A.B.C.D]
+//                [--send-text IU5HJU "Prova del nodo" [--every 10]] [--send-voice IU5HJU [--frames 100] [--position LAT,LON]] [--duration 60] [--public-addr A.B.C.D]
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -48,6 +48,7 @@ int main(int argc, char** argv) {
   NodeLink::Config cfg;
   int listenPort = 5400, peerPort = 0, duration = 0, every = 0, frames = 100;
   std::string peerHost, textCall, text, voiceCall;
+  Position position;  // --position LAT,LON: la voce finta porta una posizione nel pacchetto di inizio
   bool haveKey = false;
   uint32_t publicAddr = 0;  // l'indirizzo pubblico che il nodo dichiara al reflector (per provare)
   for (int i = 1; i < argc; i++) {
@@ -67,6 +68,14 @@ int main(int argc, char** argv) {
       text = next();
     } else if (a == "--send-voice") voiceCall = next();
     else if (a == "--frames") frames = atoi(next());
+    else if (a == "--position") {
+      double la = 0, lo = 0;
+      if (sscanf(next(), "%lf,%lf", &la, &lo) == 2) {
+        position.valid = true;
+        position.latE7 = static_cast<int32_t>(la * 1e7);
+        position.lonE7 = static_cast<int32_t>(lo * 1e7);
+      }
+    }
     else if (a == "--every") every = atoi(next());
     else if (a == "--duration") duration = atoi(next());
     else if (a == "--public-addr") { unsigned a1, a2, a3, a4; if (sscanf(next(), "%u.%u.%u.%u", &a1, &a2, &a3, &a4) == 4 && a1 < 256 && a2 < 256 && a3 < 256 && a4 < 256) publicAddr = (a1 << 24) | (a2 << 16) | (a3 << 8) | a4; }
@@ -126,6 +135,7 @@ int main(int argc, char** argv) {
       Packet p;
       while (tx.popPacket(p)) voice.push_back(p);
     };
+    if (position.valid) tx.setPosition(position);
     tx.begin();
     drain();
     for (int i = 0; i < frames; i++) {

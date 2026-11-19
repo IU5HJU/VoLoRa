@@ -9,7 +9,7 @@ Un reflector è un programma su un server che fa da centro-stella: **nodi e ripe
 ```
 make vlreflector
 build/vlreflector --config reflector.conf [--port 5400] [--id 1000] [--voice-mode 4] [--status-every 300]
-                  [--web 8080 [--web-bind 127.0.0.1] [--admin-token-file FILE] [--public-name nome:5400]]
+                  [--web 8080 [--web-bind 127.0.0.1] [--admin-token-file FILE] [--public-name nome:5400]] [--aprs-file FILE]
                   vlreflector --set-password [--config FILE | --admin-token-file FILE]   (password della pagina di amministrazione)
                   [--public-web 8081 [--public-bind 0.0.0.0]]
 ```
@@ -75,6 +75,30 @@ Sicurezza:
   ```
   Il primo comando la chiede due volte senza mostrarla (da 8 a 64 caratteri ASCII, senza spazi all'inizio o alla fine) e la scrive in `admin.token`, accanto al file dei client, **non in chiaro** (una riga `pw1:` con sale e SHA-256; permessi riservati). Il secondo la fa rileggere al servizio **senza riavviarlo**: da quel momento vale la nuova e la vecchia no. Per cambiarla di nuovo basta ripetere i due comandi. Finché non ne scegli una vale il vecchio token casuale (`sudo cat /var/lib/vlreflector/admin.token`), che alla prima volta viene creato da solo. Il collegamento è HTTP semplice: la password viaggia in chiaro nella rete di casa, per questo la pagina non va inoltrata nel router.
 - È HTTP semplice: **non metterla su Internet** senza un HTTPS davanti (per esempio un proxy con un certificato). La porta UDP dei nodi, invece, è l'unica da aprire.
+
+## Server APRS (posizione delle stazioni)
+
+19/11/2026, **da provare su un vero server APRS-IS**. Il reflector può mandare sul server APRS-IS la **posizione delle stazioni che trasmettono**, così compaiono su aprs.fi e simili. È **spento di base**: lo accende il sysop dalla pagina di amministrazione, nel riquadro **Server APRS**.
+
+Cosa scrive il sysop:
+- **Indirizzo del server APRS-IS** (per esempio `rotate.aprs2.net`) e **porta** (14580 di base, quella dei server con filtro: accetta anche chi solo manda);
+- **Nominativo del reflector con SSID** (per esempio `N0CALL-10`, con il tuo nominativo): è con quello che il reflector si presenta al server, come un iGate;
+- **Password APRS-IS** di quel nominativo. Non viene mai mostrata né rimandata alla pagina: se la lasci vuota nel salvataggio resta quella di prima. Con `-1` il server risponde "non verificato" e **non pubblica** niente: la pagina dice "collegato ma password non accettata" e il reflector non manda posizioni (serve solo per controllare che l'indirizzo e la porta si raggiungano);
+- **Intervallo**: una stazione si ripete al massimo ogni tanti minuti (10 di base; da 1 minuto a un giorno; il circuito APRS chiede di non ripetersi più spesso).
+
+Cosa succede:
+- La posizione viene dal pacchetto di **inizio** della voce: la manda la scheda **solo se l'operatore ha acceso `pos`** (la posizione viaggia già in chiaro via radio, vedi [protocollo.md](protocollo.md)). Una stazione senza posizione non compare su APRS.
+- Il reflector manda una riga APRS "senza orario" con la stazione come sorgente e se stesso come iGate, come fa un iGate quando porta su Internet un pacchetto arrivato via radio: `IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18N/01052.84E-VoLoRa` (`APZ...` è il prefisso dei programmi sperimentali non registrati; `/-` è il simbolo della stazione fissa).
+- Non si manda: un nominativo segnaposto (`N0CALL`), un nominativo che AX.25 non ammette (con `/P`, più di 6 caratteri), una posizione non valida, una stazione che si ripete prima dell'intervallo.
+- Il collegamento sta in un **thread a parte**: un server APRS lento o irraggiungibile non ferma mai l'inoltro della voce. Se cade, il reflector si ricollega da solo con attese di 15 s fino a 5 minuti; cambiare la configurazione lo fa ricollegare subito. Ogni minuto manda un commento come segnale di vita.
+- La pagina dice lo stato (**spento / collegamento in corso / collegato e verificato / collegato ma password non accettata / non collegato**) e i conteggi (posizioni viste, inviate, in coda, troppo ravvicinate, scartate). Nel registro: `[aprs] collegato a ...`, la risposta del server e una riga per ogni posizione inviata. **La password non va mai nel registro.**
+
+Dove sta la password: nel file **`aprs.conf`**, accanto al file dei client (o dove dice `--aprs-file`), con permessi **0600**; si rilegge con `systemctl reload` come l'elenco dei client. Non va pubblicato né messo nel repository. La password APRS-IS arriva dal browser al reflector con la pagina di amministrazione: con `--web-bind 127.0.0.1` e un tunnel ssh (come descritto sopra) non passa in chiaro sulla rete.
+
+Attenzione:
+- **Pubblicare su APRS è pubblico**: chiunque nel mondo vede la posizione. Il reflector manda solo posizioni che la stazione ha scelto di trasmettere via radio, ma chi gestisce un reflector sta pubblicando a nome di altri: vale la pena dirlo ai collegati.
+- Chi gestisce un reflector **si fida dei nodi registrati**: un nodo registrato può scrivere un nominativo qualsiasi nel pacchetto (la firma dice chi ha mandato il pacchetto al reflector, non chi era davanti alla radio), quindi può far comparire su APRS una posizione con un nominativo non suo. È lo stesso limite di tutta la rete (vedi "Limiti noti").
+- Il formato della riga non è stato provato su un vero server APRS-IS (la prova sul PC usa un server finto: `make reflector-smoke`, `tests/fake_aprs_server.py`). Per controllare soltanto che il server si raggiunga, senza pubblicare niente, usa la password `-1`.
 
 ## La pagina pubblica (per i colleghi)
 

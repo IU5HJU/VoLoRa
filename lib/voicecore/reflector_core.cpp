@@ -178,6 +178,7 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
     }
     // La parita' puo' arrivare dopo il pacchetto di fine: non inizia una trasmissione e non tiene il canale (passa solo se e' libero o e' di chi parla)
     if (!p.isParity()) {
+      if (onPosition_ && p.hasCallsign() && p.hasPosition()) onPosition_(p.callsign, p.position, nowMs);
       if (!hanging || talkerId_ != c->id || talkSession_ != p.session) {
         endTalk();  // quella di prima (dello stesso client con un'altra sessione) e' finita
         stats_.talks++;

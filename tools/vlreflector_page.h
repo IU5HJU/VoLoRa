@@ -85,6 +85,29 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     </section>
 
     <section>
+      <h2>Server APRS</h2>
+      <p class="muted">Il reflector può mandare sul server APRS-IS la posizione delle stazioni che trasmettono, quando la loro scheda la manda via radio (impostazione <code>pos</code>). Serve un nominativo con cui il reflector si presenta al server (il tuo, con un SSID, per esempio <code>N0CALL-10</code>) e la password APRS-IS di quel nominativo. Ogni stazione è mandata al massimo una volta ogni intervallo.</p>
+      <div id="aprsState" class="msg" hidden></div>
+      <label><input id="aprsOn" type="checkbox" style="width:auto"> Invia le posizioni al server APRS</label>
+      <label for="aprsHost">Indirizzo del server APRS-IS</label>
+      <input id="aprsHost" maxlength="253" autocomplete="off" spellcheck="false" placeholder="rotate.aprs2.net">
+      <label for="aprsPort">Porta</label>
+      <input id="aprsPort" type="number" min="1" max="65535" value="14580">
+      <label for="aprsLogin">Nominativo del reflector (con SSID)</label>
+      <input id="aprsLogin" maxlength="9" autocomplete="off" spellcheck="false" placeholder="N0CALL-10">
+      <label for="aprsPass">Password APRS-IS</label>
+      <input id="aprsPass" type="password" maxlength="32" autocomplete="new-password" spellcheck="false" placeholder="">
+      <p class="muted" id="aprsPassHint">Non viene mai mostrata. Lasciala vuota per tenere quella già salvata.</p>
+      <label for="aprsInterval">Una stazione si ripete al massimo ogni (minuti)</label>
+      <input id="aprsInterval" type="number" min="1" max="1440" value="10">
+      <div>
+        <button id="aprsSave" type="button">Salva</button>
+      </div>
+      <div id="aprsMsg" class="msg" hidden></div>
+      <p class="muted" id="aprsStats"></p>
+    </section>
+
+    <section>
       <h2>Registra un nodo</h2>
       <p class="muted">Il collega genera la chiave dalla pagina di configurazione della sua scheda e te la manda (su un canale privato) con il suo nominativo e, se ne ha più d'uno, il nome del nodo. Scrivili qui: l'id lo assegna il reflector. Un nominativo può avere <strong>più nodi</strong> (casa, mare, hotspot): ognuno ha il suo id e la sua chiave, e una chiave non si può usare due volte.</p>
       <label for="call">Nominativo</label>
@@ -152,7 +175,45 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     const rb = $('recent'); rb.innerHTML = '';
     for (const t of s.recent) { const tr = document.createElement('tr'); cell(tr, fmtAgo(t.agoMs)); cell(tr, t.callsign); cell(tr, t.client); cell(tr, fmtDur(t.durationMs)); cell(tr, t.packets); rb.appendChild(tr); }
     $('recentEmpty').hidden = s.recent.length > 0;
+    refreshAprs();
   }
+  // Server APRS: i campi si riempiono la prima volta (e dopo un salvataggio); poi si aggiorna solo lo stato, senza toccare quello che stai scrivendo
+  let aprsLoaded = false;
+  function aprsFill(a) {
+    $('aprsOn').checked = !!a.enabled;
+    $('aprsHost').value = a.host;
+    $('aprsPort').value = a.port;
+    $('aprsLogin').value = a.login;
+    $('aprsPass').value = '';
+    $('aprsPass').placeholder = a.passSet ? '(salvata)' : '';
+    $('aprsPassHint').textContent = a.passSet ? 'La password è salvata e non viene mai mostrata. Lasciala vuota per tenerla, oppure scrivine una nuova.' : 'Non è ancora stata scritta nessuna password.';
+    $('aprsInterval').value = Math.round(a.intervalS / 60);
+  }
+  function aprsStatus(a) {
+    const el = $('aprsState');
+    el.hidden = false;
+    el.className = 'msg ' + (a.state === 'verified' ? 'ok' : a.state === 'unverified' ? 'err' : a.state === 'down' ? 'warn' : '');
+    el.textContent = 'Stato: ' + a.stateText + (a.detail && a.state !== 'verified' && a.state !== 'off' ? ' — ' + a.detail : '');
+    $('aprsStats').textContent = a.enabled ? 'Posizioni viste ' + a.seen + ', inviate ' + a.sent + ', in coda ' + a.queued + ', troppo ravvicinate ' + a.tooSoon + ', scartate (nominativo o posizione non validi) ' + a.invalid + '.' : '';
+  }
+  async function refreshAprs() {
+    let a;
+    try { a = await api('/api/aprs'); } catch (e) { return; }
+    if (!aprsLoaded) { aprsFill(a); aprsLoaded = true; }
+    aprsStatus(a);
+  }
+  $('aprsSave').addEventListener('click', async () => {
+    const minutes = parseInt($('aprsInterval').value, 10);
+    if (!(minutes >= 1 && minutes <= 1440)) { show($('aprsMsg'), 'L\'intervallo va da 1 minuto a 1440 (un giorno).', 'err'); return; }
+    const body = 'enabled=' + ($('aprsOn').checked ? '1' : '0') + '&host=' + encodeURIComponent($('aprsHost').value.trim()) + '&port=' + encodeURIComponent($('aprsPort').value.trim()) +
+      '&login=' + encodeURIComponent($('aprsLogin').value.trim()) + '&pass=' + encodeURIComponent($('aprsPass').value) + '&interval=' + (minutes * 60);
+    let r;
+    try { r = await api('/api/aprs', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body }); } catch (e) { return; }
+    if (r.ok === false) { show($('aprsMsg'), r.error || 'Errore.', 'err'); return; }
+    show($('aprsMsg'), 'Salvato. ' + (r.enabled ? 'Il reflector si collega al server.' : 'L\'invio è spento.'), 'ok');
+    aprsFill(r);
+    aprsStatus(r);
+  });
   const normCall = () => $('call').value.trim().toUpperCase();
   async function check() {
     const c = normCall();

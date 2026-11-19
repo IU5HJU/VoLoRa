@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "node_link.h"
+#include "position.h"
 
 namespace lcr {
 
@@ -107,6 +108,9 @@ class ReflectorCore {
   const std::vector<Talk>& recentTalks() const { return recent_; }
   // Registro (facoltativo): una riga per evento (client collegato, trasmissione iniziata e finita, ...).
   void setLog(std::function<void(const std::string&)> f) { log_ = f; }
+  // Facoltativo: chiamato quando una trasmissione di voce porta nominativo e posizione (pacchetto START di un client collegato). Serve a mandare
+  // la posizione al server APRS (aprs_gate.h). Non si chiama per la voce scartata perche' un altro sta parlando.
+  void setPositionHandler(std::function<void(const std::string& callsign, const Position& pos, uint32_t nowMs)> f) { onPosition_ = f; }
 
  private:
   struct Client {
@@ -139,6 +143,7 @@ class ReflectorCore {
   Talk cur_;
   std::vector<Talk> recent_;
   std::function<void(const std::string&)> log_;
+  std::function<void(const std::string&, const Position&, uint32_t)> onPosition_;
 };
 
 }  // namespace lcr

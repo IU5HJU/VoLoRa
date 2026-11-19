@@ -5,7 +5,7 @@
 //   make vlreflector
 //   build/vlreflector --config reflector.conf [--port 5400] [--id 1000] [--voice-mode 4] [--status-every 300] [--duration SECONDI]
 //                     [--web 8080 [--web-bind 127.0.0.1] [--admin-token-file FILE] [--public-name nome:5400]]
-//                     [--public-web 8081 [--public-bind 0.0.0.0]]
+//                     [--public-web 8081 [--public-bind 0.0.0.0]] [--aprs-file FILE]
 //   build/vlreflector --set-password [--config FILE | --admin-token-file FILE]    (sceglie la password della pagina di amministrazione)
 //
 // File dei client (una riga per client; righe vuote e # si ignorano):   <id> <chiave: 32 cifre esadecimali> <nome (il nominativo)>
@@ -14,6 +14,10 @@
 // Pagina di amministrazione (--web PORTA): chi e' collegato, chi trasmette adesso, le ultime trasmissioni e la registrazione dei nodi. Di base ascolta
 // solo su 127.0.0.1 (si raggiunge con un tunnel ssh); con --web-bind 0.0.0.0 e' raggiungibile dalla rete locale. Ogni richiesta dei dati vuole il
 // token di amministrazione (file admin.token accanto al file dei client, creato se manca). Non metterla su Internet senza HTTPS.
+//
+// Server APRS (facoltativo): il sysop scrive dalla pagina di amministrazione l'indirizzo del server APRS-IS, il nominativo con cui il reflector si
+// presenta e la password; il reflector manda la posizione delle stazioni che trasmettono (se la scheda la trasmette, impostazione "pos"). Il file
+// aprs.conf sta accanto al file dei client (o --aprs-file), con permessi 0600 perche' contiene la password. Vedi docs/reflector.md.
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netinet/in.h>
@@ -35,6 +39,8 @@
 #include <vector>
 
 #include "admin_auth.h"
+#include "aprs_client.h"
+#include "aprs_gate.h"
 #include "http_mini.h"
 #include "packet.h"
 #include "reflector_config.h"
@@ -244,6 +250,8 @@ struct Admin {
   uint32_t startMs = 0;
   std::vector<ReflectorEntry> entries;
   ReflectorCore* core = nullptr;
+  AprsGate* aprs = nullptr;
+  std::string aprsPath;
   int authFails = 0;
   uint32_t authWindowMs = 0;
 
@@ -280,6 +288,43 @@ struct Admin {
     std::vector<ReflectorEntry> next;
     if (!parseReflectorConfig(text, reflectorId, next, err)) return false;  // un errore nel file: non si cambia niente
     apply(next);
+    return true;
+  }
+
+
+  // Il server APRS: configurazione (la password non esce mai, si dice solo se c'e'), stato del collegamento e conteggi.
+  std::string aprsJson() const {
+    const AprsConfig c = aprs->config();
+    const AprsGate::State st = aprs->state();
+    const AprsGate::Stats s = aprs->stats();
+    const char* code = st == AprsGate::State::Off ? "off" : st == AprsGate::State::Connecting ? "connecting" : st == AprsGate::State::Verified ? "verified"
+                       : st == AprsGate::State::Unverified ? "unverified" : "down";
+    std::ostringstream o;
+    o << "{\"enabled\":" << (c.enabled ? "true" : "false") << ",\"host\":\"" << jsonEscape(c.host) << "\",\"port\":" << c.port << ",\"login\":\"" << jsonEscape(c.login)
+      << "\",\"passSet\":" << (c.pass.empty() ? "false" : "true") << ",\"intervalS\":" << c.minIntervalS << ",\"state\":\"" << code << "\",\"stateText\":\"" << aprsStateText(st)
+      << "\",\"detail\":\"" << jsonEscape(aprs->detail()) << "\",\"queued\":" << aprs->pending() << ",\"seen\":" << s.seen << ",\"sent\":" << s.sent
+      << ",\"tooSoon\":" << s.tooSoon << ",\"invalid\":" << s.invalid << ",\"dropped\":" << s.dropped << "}";
+    return o.str();
+  }
+  // Applica una configurazione nuova: la scrive (permessi 0600) e la passa al collegamento, che si ricollega da solo.
+  bool saveAprs(const AprsConfig& c, std::string& err) {
+    if (!validateAprsConfig(c, err)) return false;
+    if (!writeFileAtomic(aprsPath, formatAprsConfig(c))) {
+      err = "non riesco a scrivere " + aprsPath + " (permessi della cartella?)";
+      return false;
+    }
+    aprs->setConfig(c);
+    return true;
+  }
+  bool reloadAprs(std::string& err) {
+    std::string text;
+    if (!readFile(aprsPath, text)) {  // senza file il collegamento resta spento
+      aprs->setConfig(AprsConfig());
+      return true;
+    }
+    AprsConfig c;
+    if (!parseAprsConfig(text, c, err)) return false;
+    aprs->setConfig(c);
     return true;
   }
 
@@ -382,6 +427,32 @@ struct Admin {
     if (req.path == "/api/status") {
       if (req.method != "GET") return fail(405, "metodo non ammesso");
       return json(statusJson(now));
+    }
+    if (req.path == "/api/aprs") {
+      if (req.method == "GET") return json(aprsJson());
+      if (req.method != "POST") return fail(405, "metodo non ammesso");
+      AprsConfig c = aprs->config();
+      const std::string en = formParam(req.body, "enabled");
+      if (en != "0" && en != "1") return fail(400, "manca se il collegamento e' acceso o spento");
+      c.enabled = en == "1";
+      c.host = formParam(req.body, "host");
+      c.login = formParam(req.body, "login");
+      for (auto& ch : c.login) ch = static_cast<char>(toupper(static_cast<unsigned char>(ch)));
+      const std::string portText = formParam(req.body, "port"), intervalText = formParam(req.body, "interval");
+      char* end = nullptr;
+      const long port = strtol(portText.c_str(), &end, 10);
+      if (portText.empty() || *end != 0) return fail(400, "la porta deve essere un numero");
+      c.port = static_cast<int>(port < 0 || port > 100000 ? 100000 : port);
+      const long interval = strtol(intervalText.c_str(), &end, 10);
+      if (intervalText.empty() || *end != 0 || interval < 0) return fail(400, "l'intervallo deve essere un numero di secondi");
+      c.minIntervalS = static_cast<uint32_t>(interval > 10000000 ? 10000000 : interval);
+      const std::string pass = formParam(req.body, "pass");
+      if (!pass.empty()) c.pass = pass;  // vuota = resta quella di prima (la password non torna mai alla pagina)
+      std::string err;
+      if (!saveAprs(c, err)) return fail(400, err);
+      logLine(std::string("[aprs] configurazione salvata: ") + (c.enabled ? "acceso" : "spento") + (c.host.empty() ? "" : ", server " + c.host + ":" + std::to_string(c.port)) +
+              (c.login.empty() ? "" : ", nominativo " + c.login));
+      return json(aprsJson());
     }
     if (req.path == "/api/lookup") {
       if (req.method != "GET") return fail(405, "metodo non ammesso");
@@ -539,6 +610,7 @@ int main(int argc, char** argv) {
     else if (a == "--admin-token-file") tokenFile = next();
     else if (a == "--set-password") setPassword = true;
     else if (a == "--public-name") adm.publicName = next();
+    else if (a == "--aprs-file") adm.aprsPath = next();
     else {
       fprintf(stderr, "parametro sconosciuto: %s (vedi l'inizio di tools/vlreflector.cpp)\n", a.c_str());
       return 2;
@@ -557,6 +629,16 @@ int main(int argc, char** argv) {
   core.setLog(logLine);
   adm.core = &core;
   adm.startMs = nowMs();
+  // Server APRS: configurazione dal file (se c'e'), posizione delle stazioni dal reflector, collegamento in un thread a parte
+  AprsGate aprsGate;
+  adm.aprs = &aprsGate;
+  if (adm.aprsPath.empty()) adm.aprsPath = dirOf(adm.configPath) + "/aprs.conf";
+  {
+    std::string aerr;
+    if (!adm.reloadAprs(aerr)) logLine("[aprs] " + adm.aprsPath + ": " + aerr + " (il collegamento resta spento finche' non lo correggi dalla pagina di amministrazione)");
+  }
+  core.setPositionHandler([&aprsGate](const std::string& callsign, const Position& pos, uint32_t now) { aprsGate.onPosition(callsign, pos, now); });
+  AprsClient aprsClient(aprsGate, logLine);
   {
     std::string text, err;
     if (!readFile(adm.configPath, text)) {
@@ -630,6 +712,8 @@ int main(int argc, char** argv) {
   if (webListen >= 0) listeners.push_back({webListen, false, {}});
   if (pubListen >= 0) listeners.push_back({pubListen, true, {}});
   uint32_t lastStatus = adm.startMs;
+  aprsClient.start();
+  if (aprsGate.config().enabled) logLine("[aprs] invio delle posizioni acceso verso " + aprsGate.config().host + ":" + std::to_string(aprsGate.config().port));
   while (!g_stop) {
     const uint32_t t0 = nowMs();
     if (duration > 0 && t0 - adm.startMs > static_cast<uint32_t>(duration) * 1000u) break;
@@ -638,6 +722,9 @@ int main(int argc, char** argv) {
       std::string err;
       if (adm.reload(err)) logLine("file dei client ricaricato (" + std::to_string(adm.entries.size()) + " client)");
       else logLine("ricaricamento non riuscito, resta l'elenco di prima: " + err);
+      std::string aerr;
+      if (adm.reloadAprs(aerr)) logLine("[aprs] configurazione riletta");
+      else logLine("[aprs] configurazione non riletta, resta quella di prima: " + aerr);
       if (webListen >= 0) {  // anche la password: si cambia con --set-password e un reload
         AdminAuth na;
         std::string aerr;
@@ -727,6 +814,7 @@ int main(int argc, char** argv) {
       logLine(s);
     }
   }
+  aprsClient.stop();
   const ReflectorCore::Stats& s = core.stats();
   snprintf(b, sizeof(b), "fine: datagrammi %u, sconosciuti %u, firme errate %u, ripetuti %u, voce inoltrata %u, testi %u, voce bloccata %u, trasmissioni %u", s.datagrams,
            s.unknownClient, s.badSignature, s.replays, s.voiceForwarded, s.textForwarded, s.voiceBlocked, s.talks);

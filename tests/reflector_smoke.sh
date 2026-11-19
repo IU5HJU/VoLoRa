@@ -18,7 +18,7 @@ ok() { echo "ok    $1"; }
 ko() { echo "FALLITO $1"; fail=1; }
 check() { if grep -q -- "$2" "$1"; then ok "$3"; else ko "$3"; fi; }
 
-build/vlreflector --config "$D/ref.conf" --port $PORT --id 1000 --voice-mode 1 --web $WEB --public-web $PUB --public-bind 127.0.0.1 --public-name prova.example:$PORT --duration 60 > "$D/ref.out" 2>&1 &
+build/vlreflector --config "$D/ref.conf" --port $PORT --id 1000 --voice-mode 1 --web $WEB --public-web $PUB --public-bind 127.0.0.1 --public-name prova.example:$PORT --duration 120 > "$D/ref.out" 2>&1 &
 REF=$!
 sleep 0.7
 TOKEN=$(tr -d '\n' < "$D/admin.token")
@@ -65,6 +65,45 @@ check "$D/b.out" "modo 1 sessione .* flags C9 IZ5IOF (ripetuto)" "B riceve l'ini
 n=$(grep -c "^\[pacchetto\] modo 1 " "$D/b.out")
 [ "$n" -ge 12 ] && ok "B riceve i pacchetti di voce ($n)" || ko "B riceve solo $n pacchetti di voce"
 grep -q "pacchetto" "$D/a.out" && ko "A riceve indietro i suoi pacchetti" || ok "A non riceve indietro i suoi pacchetti"
+
+# Server APRS: il sysop scrive dalla pagina l'indirizzo del server, il nominativo e la password; il reflector manda la posizione di chi trasmette.
+# Il server APRS e' finto (tests/fake_aprs_server.py): accetta l'accesso e scrive le righe che riceve.
+APRS=$((PORT + 3))
+python3 tests/fake_aprs_server.py $APRS "$D/aprs.rows" 60 &
+sleep 0.6
+A0=$(api "http://127.0.0.1:$WEB/api/aprs")
+echo "$A0" | grep -q '"enabled":false' && echo "$A0" | grep -q '"state":"off"' && echo "$A0" | grep -q '"passSet":false' && ok "APRS: all'inizio e' spento e senza password" || ko "APRS stato iniziale ($A0)"
+[ "$(curl -s -m 5 -o /dev/null -w '%{http_code}' http://127.0.0.1:$WEB/api/aprs)" = "401" ] && [ "$(curl -s -m 5 -o /dev/null -w '%{http_code}' $P/api/aprs)" = "404" ] && ok "APRS: senza token 401, e sulla pagina pubblica non esiste" || ko "APRS accessibile senza token"
+api -X POST -d "enabled=1&host=127.0.0.1&port=$APRS&login=XX&pass=1&interval=600" "http://127.0.0.1:$WEB/api/aprs" | grep -q '"ok":false' && ok "APRS: nominativo non valido rifiutato" || ko "APRS: nominativo non valido accettato"
+api -X POST -d "enabled=1&host=127.0.0.1&port=$APRS&login=N0CALL-10&pass=&interval=600" "http://127.0.0.1:$WEB/api/aprs" | grep -q '"ok":false' && ok "APRS: acceso senza password rifiutato" || ko "APRS: senza password accettato"
+api -X POST -d "enabled=1&host=bad%20host&port=$APRS&login=N0CALL-10&pass=1&interval=600" "http://127.0.0.1:$WEB/api/aprs" | grep -q '"ok":false' && ok "APRS: indirizzo non valido rifiutato" || ko "APRS: indirizzo non valido accettato"
+api -X POST -d "enabled=1&host=127.0.0.1&port=$APRS&login=N0CALL-10&pass=1&interval=5" "http://127.0.0.1:$WEB/api/aprs" | grep -q '"ok":false' && ok "APRS: intervallo troppo corto rifiutato" || ko "APRS: intervallo corto accettato"
+[ ! -e "$D/aprs.conf" ] && ok "APRS: le richieste rifiutate non scrivono niente" || ko "APRS: file scritto da una richiesta rifiutata"
+# password sbagliata: il server risponde unverified e la pagina lo dice
+A1=$(api -X POST -d "enabled=1&host=127.0.0.1&port=$APRS&login=n0call-10&pass=sbagliata&interval=60" "http://127.0.0.1:$WEB/api/aprs")
+sleep 2
+A1=$(api "http://127.0.0.1:$WEB/api/aprs")
+echo "$A1" | grep -q '"state":"unverified"' && echo "$A1" | grep -q '"login":"N0CALL-10"' && ok "APRS: password non accettata: lo stato lo dice (e il nominativo e' in maiuscolo)" || ko "APRS: password sbagliata ($A1)"
+# password giusta
+A2=$(api -X POST -d "enabled=1&host=127.0.0.1&port=$APRS&login=N0CALL-10&pass=12345&interval=60" "http://127.0.0.1:$WEB/api/aprs")
+echo "$A2" | grep -q '"passSet":true' && ok "APRS: configurazione salvata (la risposta dice solo che la password c'e')" || ko "APRS: salvataggio ($A2)"
+echo "$A2" | grep -q '12345' && ko "APRS: la password torna alla pagina" || ok "APRS: la password non torna mai alla pagina"
+sleep 2
+A3=$(api "http://127.0.0.1:$WEB/api/aprs")
+echo "$A3" | grep -q '"state":"verified"' && ok "APRS: collegato e verificato" || ko "APRS: non verificato ($A3)"
+echo "$A3" | grep -q '12345' && ko "APRS: la password compare nello stato" || ok "APRS: la password non compare nello stato"
+check "$D/aprs.rows" "^user N0CALL-10 pass 12345 vers VoLoRa-reflector 0.1$" "APRS: il server riceve l'accesso con nominativo e password"
+[ -f "$D/aprs.conf" ] && [ "$(stat -c %a "$D/aprs.conf")" = "600" ] && grep -q "pass=12345" "$D/aprs.conf" && ok "APRS: aprs.conf scritto con permessi 600" || ko "APRS: aprs.conf ($(stat -c %a "$D/aprs.conf" 2>&1))"
+grep -q "12345" "$D/ref.out" && ko "APRS: la password e' nel registro del reflector" || ok "APRS: la password non e' nel registro del reflector"
+# una trasmissione con posizione arriva al server APRS
+build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --position 43.7696,10.8807 --frames 30 --duration 12 > "$D/a2.out" 2>&1
+sleep 0.5
+check "$D/aprs.rows" "^IZ5IOF>APZVLR,qAR,N0CALL-10:!4346.18N/01052.84E-VoLoRa$" "APRS: la posizione della stazione che trasmette e' arrivata al server"
+[ "$(grep -c '^IZ5IOF>' "$D/aprs.rows")" = "1" ] && ok "APRS: una sola posizione per quella trasmissione" || ko "APRS: posizioni ripetute"
+check "$D/ref.out" "\[aprs\] inviato: IZ5IOF>APZVLR" "APRS: il registro scrive la posizione inviata"
+# spento: il collegamento si chiude
+A4=$(api -X POST -d "enabled=0&host=127.0.0.1&port=$APRS&login=N0CALL-10&pass=&interval=60" "http://127.0.0.1:$WEB/api/aprs")
+echo "$A4" | grep -q '"enabled":false' && echo "$A4" | grep -q '"passSet":true' && ok "APRS: spento, la password resta salvata" || ko "APRS: spegnimento ($A4)"
 
 # password al posto del token: si sceglie con --set-password e si applica con un reload (SIGHUP)
 OLDTOKEN=$TOKEN

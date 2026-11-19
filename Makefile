@@ -5,7 +5,7 @@ CXXFLAGS ?= -std=c++17 -Wall -Wextra -O1 -g -fsanitize=address,undefined -Ilib/v
 
 CORE := $(wildcard lib/voicecore/*.cpp)
 HDRS := $(wildcard lib/voicecore/*.h tests/*.h tools/*.h)
-TESTS := packet stream node button audio output pins battery settings link level tone decode amp profile menu position morse nmea live repeater repeater_link message_store inbox text_picker rx_monitor meshcom_frame text_template choice_picker tx_scheduler sha256 sysop radio_test node_link node_core reflector_core peer_resolve repeater_uplink reflector_config http_mini admin_auth nvs repeater_config repeater_force
+TESTS := packet stream node button audio output pins battery settings link level tone decode amp profile menu position morse nmea live repeater repeater_link message_store inbox text_picker rx_monitor meshcom_frame text_template choice_picker tx_scheduler sha256 sysop radio_test node_link node_core reflector_core peer_resolve repeater_uplink reflector_config aprs_gate aprs_client http_mini admin_auth nvs repeater_config repeater_force
 
 .PHONY: test test-page test-py lcr_decode lcr_live codec_compare pdf clean vlnode vlreflector reflector-smoke
 test: $(addprefix build/test_,$(TESTS))
@@ -15,6 +15,11 @@ test: $(addprefix build/test_,$(TESTS))
 build/test_nvs: tests/nvs/test_nvs.cpp src/settings_nvs.cpp tests/nvs/Preferences.h tests/nvs/Arduino.h $(CORE) $(HDRS)
 	@mkdir -p build
 	$(CXX) $(CXXFLAGS) -Itests/nvs -Isrc -o $@ tests/nvs/test_nvs.cpp src/settings_nvs.cpp $(CORE)
+
+# Collegamento con il server APRS: socket veri su 127.0.0.1 con un server finto e un thread (tools/aprs_client.h).
+build/test_aprs_client: tests/test_aprs_client.cpp tools/aprs_client.h $(CORE) $(HDRS)
+	@mkdir -p build
+	$(CXX) $(CXXFLAGS) -pthread -Itools -o $@ $< $(CORE)
 
 build/test_%: tests/test_%.cpp $(CORE) $(HDRS)
 	@mkdir -p build
@@ -33,7 +38,7 @@ build/vlnode: tools/vlnode.cpp $(CORE) $(HDRS)
 vlreflector: build/vlreflector
 build/vlreflector: tools/vlreflector.cpp $(CORE) $(HDRS)
 	@mkdir -p build
-	$(CXX) -std=c++17 -Wall -Wextra -O1 -Ilib/voicecore -o $@ $< $(CORE)
+	$(CXX) -std=c++17 -Wall -Wextra -O1 -pthread -Ilib/voicecore -Itools -o $@ $< $(CORE)
 
 reflector-smoke: build/vlreflector build/vlnode
 	tests/reflector_smoke.sh

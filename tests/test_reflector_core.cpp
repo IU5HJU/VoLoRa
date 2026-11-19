@@ -1,4 +1,5 @@
 // Il reflector: client finti (veri NodeLink) collegati a un ReflectorCore con una rete finta che ricorda da dove arriva ogni datagramma.
+#include <cstdlib>
 #include <cstring>
 #include <deque>
 #include <map>
@@ -462,6 +463,51 @@ static void testPublicIpv4() {
   CHECK(!isPublicIpv4(0) && !isPublicIpv4(ip(224, 0, 0, 1)) && !isPublicIpv4(ip(255, 255, 255, 255)));
 }
 
+
+static void testPositionHandler() {
+  Rig r;
+  Client& a = r.add(1, 0xA1, 5001);
+  Client& b = r.add(2, 0xB2, 5002);
+  r.run(4000);
+  std::vector<std::string> calls;
+  std::vector<Position> positions;
+  r.core.setPositionHandler([&](const std::string& cs, const Position& pos, uint32_t) {
+    calls.push_back(cs);
+    positions.push_back(pos);
+  });
+  Position here;
+  here.valid = true;
+  here.latE7 = 437696000;
+  here.lonE7 = 108807000;
+  // Una trasmissione con nominativo e posizione: il gestore la riceve una volta
+  Packet start = voicePacket(4, 0x0100, 0, kFlagStart, "IU5HJU");
+  start.position = here;
+  r.sendPacket(a, start);
+  CHECK(calls.size() == 1u);
+  CHECK(calls[0] == "IU5HJU");
+  CHECK(positions[0].valid);
+  CHECK(std::abs(positions[0].latE7 - here.latE7) < 200);  // il formato arrotonda a circa 1 m
+  CHECK(std::abs(positions[0].lonE7 - here.lonE7) < 400);
+  // I pacchetti dopo lo START non hanno ne' nominativo ne' posizione: niente
+  r.sendPacket(a, voicePacket(4, 0x0100, 1, 0));
+  CHECK(calls.size() == 1u);
+  // Voce senza posizione: niente
+  r.run(4000);
+  r.sendPacket(a, voicePacket(4, 0x0101, 0, kFlagStart | kFlagEnd, "IU5HJU"));
+  CHECK(calls.size() == 1u);
+  // Voce scartata perche' un altro sta parlando: la sua posizione non conta
+  r.run(4000);
+  r.sendPacket(a, voicePacket(4, 0x0102, 0, kFlagStart, "IU5HJU"));
+  Packet blocked = voicePacket(4, 0x0200, 0, kFlagStart, "IK5XXX");
+  blocked.position = here;
+  r.sendPacket(b, blocked);
+  CHECK(calls.size() == 1u);
+  // Senza gestore non succede niente di male
+  r.core.setPositionHandler(nullptr);
+  r.run(4000);
+  r.sendPacket(a, start);
+}
+
 int main() {
   testHandshake();
   testTextAndRelayed();
@@ -476,5 +522,6 @@ int main() {
   testTalkHistory();
   testDeclaredAddress();
   testPublicIpv4();
+  testPositionHandler();
   TEST_MAIN_END();
 }
