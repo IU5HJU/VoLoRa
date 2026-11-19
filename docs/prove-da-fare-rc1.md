@@ -10,14 +10,14 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 
 ## Riepilogo (18/11/2026): quante ne restano
 
-**5 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
+**4 prove** ancora da fare (con B1 e B2 contate separate; il totale esclude le misure sul campo, che restano per la stabile), **nessuna blocca la rc.1** ([roadmap.md](roadmap.md)): le note di rilascio devono dire che non sono provate. Le **provate** dal 14/11/2026 sono in [prove.md](prove.md): ripetitore a due T3 (configurazione dalla RX, TX forzata, pagina di gestione della RX), comandi del sysop sul ripetitore (STATO, RIAVVIA, POTENZA, SPEGNI anche a tempo, RIACCENDI, IDENTIFICA), audio sulla T-Beam SX1278, coda rumorosa, Morse FM del ripetitore e del nodo ("funziona, non perfetto"), C4 e A1.
 
 | Gruppo | Prove | Quante |
 |---|---|---|
 | E. Ripetitore e messaggi (nuovo) | E5 | ~~**Uscita dal modo prova con tre clic**~~ **fatto il 18/11/2026** (riferito: lo schermo torna su ASCOLTO senza scritte di prova; vedi B3 e [prove.md](prove.md)) | niente scritte di prova rimaste | foto |
 | A. Schede singole | nessuna | 0 |
 | B. Due schede | nessuna | 0 |
-| C. Nodo e reflector | C2 | 1 |
+| C. Nodo e reflector | nessuna | 0 |
 | D. Ripetitore vero | nessuna | 0 |
 | Con l'altro radioamatore (T-Beam SX1262) | A2, B4, trasmissione SX1262 → SX1278, A4 sulla sua scheda | 4 |
 
@@ -48,7 +48,7 @@ Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `d
 | # | Prova | Cosa deve succedere | Da riportare |
 |---|---|---|---|
 | C1 | ~~**Scheda nuova nel ruolo nodo**: da `CFG SET ROLE NODE` senza altre impostazioni~~ **superata il 18/11/2026**: da scheda azzerata `manca NODEID` sul display e `non pronto` in seriale, rete `VoLoRa-XXXX` e pagina dal telefono, partenza dopo la finestra, Wi-Fi di casa, collegamento con il reflector; `NODEID` impostato da seriale (l'impostazione dei dati dal telefono si prova con C2) ([prove.md](prove.md)) | schermata Wi-Fi con cosa manca, `non pronto`, partenza | fatto |
-| C2 | **Finestra di 3 minuti** su un nodo già configurato (14/11/2026: si apre, si chiude e il nodo parte, vedi `prove.md`; manca la durata; dal 15/11/2026 la finestra si prolunga solo con richieste alla pagina, **da provare**: un telefono collegato senza aprire la pagina non deve tenerla aperta oltre i 3 minuti) | all'accensione compare la schermata Wi-Fi con il conto alla rovescia; se un telefono è collegato la finestra si prolunga; allo scadere il nodo parte e si collega | durata reale, se il nodo si è collegato dopo |
+| C2 | ~~**Finestra di 3 minuti** su un nodo già configurato~~ **superata il 19/11/2026**: conto alla rovescia da 3:00, chiusura a 190 s dall'accensione (180 s più l'avvio) senza richieste e con il telefono collegato, 210 s con richieste fino a tardi (ultima richiesta più 60 s); NODEID cambiato dal telefono applicato (dopo la correzione del riavvio automatico alla chiusura della finestra) e collegamento con il reflector ([prove.md](prove.md)) | conto alla rovescia, durata, partenza | fatto |
 | C3 | ~~**Gestione dalla rete di casa**~~ **superata il 19/11/2026**: dal computer `http://volora-XXXX.local/` e l'indirizzo numerico chiedono utente e password, la password sbagliata non apre la pagina, quella giusta si; il display mostra indirizzo e password per 25 secondi; una modifica (`IDMORSE`) salvata dalla pagina arriva alla scheda ([prove.md](prove.md)) | utente e password, `.local`, un `CFG SET` | fatto |
 | C4 (**fatto il 14/11/2026 su T-Beam SX1278, vedi `prove.md`**) | **Ultima stazione transitata**: una scheda trasmette in radio verso il nodo | ultima riga `RX <nominativo> RSSI SNR`, dopo 5 s `Ult ...`; sulla seriale `[nodo] transito N` | foto, riga seriale |
 | C4b | ~~**Morse del nodo e del ripetitore**~~ **fatto il 18/11/2026 con la chiavetta SDR** (`tools/sdr/morse-fm.sh`): nodo a 433.475 MHz e ripetitore a 430.000 MHz, nominativo decodificato, **tono 700 Hz, punto 80-81 ms, linea 240-243 ms, 15,0 e 14,8 parole al minuto, 60 dB sul fondo**; resta solo la misura della deviazione ([prove.md](prove.md)) | il Morse si decodifica e i tempi sono quelli di progetto | tono, velocità, testo |
