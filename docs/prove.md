@@ -803,3 +803,12 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 ### 19/11/2026 (C1 chiusa su valutazione dell'operatore)
 
 - **C1 chiusa** con il limite dichiarato: il nodo e' stato configurato da seriale (`NODEID` compreso) e la pagina del telefono e' provata in lettura e riavvio; l'impostazione dei dati dal telefono (cambio di `NODEID`) si prova insieme a C2.
+
+### 19/11/2026, casa, IU5HJU (C2: finestra di 3 minuti e cambio di NODEID dal telefono)
+
+- **Scheda (T-Beam SX1278, firmware f745ad6)** riportata da seriale alle impostazioni di nodo (nominativo corretto, Wi-Fi del telefono come rete di casa, `NODEID 2`, chiave nuova) e `CFG REBOOT`: `configurazione dal Wi-Fi: rete VoLoRa-XXXX ... (per qualche minuto, poi parte il nodo)`.
+- **Dal telefono:** collegato (192.168.4.2), pagina caricata, lettura della configurazione, poi un salvataggio completo dalla pagina con **`CFG SET NODEID 10`** (la pagina non rinvia password e chiave: restano quelle salvate), riletture `CFG GET SYSOP/IDINT/IDMORSE/NODE/MONITOR`, il client si scollega. **La pagina non ha riavviato la scheda** (nessun `CFG REBOOT`: la pagina ha un tasto "Riavvia la scheda" a parte).
+- **Finestra:** `finestra di configurazione Wi-Fi chiusa` e il nodo parte **con `id 2`**, non 10: le impostazioni salvate valgono dal riavvio (`CFG GET` dice `reboot=1` finche' non coincidono con quelle in uso) e il nodo parte con quelle in uso alla accensione. Il cambio e' stato quindi accettato e salvato, ma **non applicato**.
+- **Durata della finestra:** il messaggio di errore del Wi-Fi alla chiusura porta l'orologio `(190022)`, cioe' la finestra si chiude 190 s dopo l'accensione; sottratti i circa 5-10 s di avvio e di annuncio, **circa 3 minuti** (180 s di progetto), con richieste alla pagina fatte durante la finestra.
+- **Altre righe:** `E (190022) wifi_init_default: netstack cb reg failed with 12308` alla commutazione da rete di configurazione a Wi-Fi di casa (errore di avvio del Wi-Fi, non fatale: il nodo prende l'indirizzo subito dopo, `Wi-Fi 10.x.x.x`); poi `nome ... non risolto, riprovo` (rete del telefono in condivisione): il collegamento al reflector non e' nel registro.
+- **Correzione scritta in firmware (non provata sulla scheda):** dopo la finestra, se `CFG GET` dice `reboot=1` il nodo si riavvia da solo per applicare le impostazioni salvate (`[nodo] impostazioni cambiate durante la finestra: riavvio per applicarle`), come previsto dalla scheda di prova C1 ("salvando la scheda riparte").

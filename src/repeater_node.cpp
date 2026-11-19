@@ -728,6 +728,18 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
   if (settings.nodeId == 0) nodeNotReady(ui, handler, "manca NODEID");
   if (!settings.nodeKeySet) nodeNotReady(ui, handler, "manca NODEKEY");
   configWindow(ui, handler, kConfigWindowMs, nullptr);  // la configurazione dal Wi-Fi, poi parte il nodo
+  {  // Impostazioni salvate durante la finestra (dalla pagina o dalla seriale) ma non ancora in uso (CFG GET dice reboot=1): il nodo partirebbe con
+    // quelle vecchie (prova del 19/11/2026: NODEID cambiato dal telefono, il nodo e' partito con l'id di prima). Si riavvia per applicarle.
+    char reply[512];
+    reply[0] = 0;
+    handler("CFG GET", reply, sizeof(reply));
+    if (strstr(reply, "reboot=1")) {
+      Serial.println("[nodo] impostazioni cambiate durante la finestra: riavvio per applicarle");
+      ui.showMessage("NODO INTERNET", "Riavvio: applico");
+      delay(1000);
+      restartNow(ui);
+    }
+  }
 
   RadioLora radio;
   if (!radio.begin(settings)) stopWithError(ui, "radio", radio.lastError());
