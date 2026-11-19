@@ -838,3 +838,7 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 ### 19/11/2026 (C3 chiusa)
 
 - **Password sbagliata (riferito dall'operatore):** con la password sbagliata la pagina non si apre; con quella giusta si apre. Insieme a `volora-XXXX.local` dal computer, all'indirizzo numerico che chiede utente e password, alla schermata di 25 secondi sul display e alla modifica `IDMORSE` salvata dalla pagina, **C3 chiusa**.
+
+### 19/11/2026, casa, IU5HJU (C2: finestra senza richieste alla pagina, foto di inizio)
+
+- **Foto del display alle 10:55:29** (ora del nome del file): `il nodo parte in 2:33` con la schermata Wi-Fi della scheda, dopo un riavvio senza aprire la pagina. Con 180 s di base il conto alla rovescia dovrebbe essere partito 27 s prima (circa 10:55:02). **Manca la foto o l'ora di fine** (o la riga `finestra di configurazione Wi-Fi chiusa` con l'ora) per misurare la durata reale.
