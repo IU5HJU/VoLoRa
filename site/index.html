@@ -399,7 +399,7 @@
     dev: 'Sviluppo: l\'ultima modifica del progetto, più recente ma meno provata.',
   };
   function optionLabel(e, recommended) {
-    const k = { stable: 'stabile', rc: 'candidata al rilascio', beta: 'BETA', dev: 'sviluppo, per chi vuole le novità' }[e.kind] || e.kind;
+    const k = { stable: 'stabile', rc: 'RC', beta: 'BETA', dev: 'sviluppo, per chi vuole le novità' }[e.kind] || e.kind;
     return (e.kind === 'dev' ? 'Sviluppo ' : '') + e.version + ' — ' + k + (recommended ? ' (consigliata)' : '');
   }
   function manifestPath() {
