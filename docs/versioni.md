@@ -83,3 +83,8 @@ Il tag e la release li crea chi pubblica, a mano.
 4. **Provato su due schede:** tutto ciò che è elencato nelle note sotto "Cosa è stato provato". **Mancano** 4 prove con la T-Beam SX1262 di un altro radioamatore (A2, B4, trasmissione verso una SX1278, A4 sulla sua scheda): nessuna blocca la rc.1, le note le dicono. Osservazione aperta: tempo di decodifica sulla T3 in Diretta vicino al limite.
 
 Il tag e la release li crea chi pubblica, a mano.
+
+## Pubblicazione della rc.1 (19/11/2026)
+
+- Tag `v0.1.0-rc.1` sul commit `0efa2a3` (Build #473 su `main` e #474 sul tag, verdi), pre-release con i binari delle tre schede e `SHA256SUMS`; note incollate a mano dalla pagina della release.
+- **Pagine:** il tag e `main` avevano lo stesso commit, e la pubblicazione di GitHub Pages del tag ha lo stesso identificativo (`pages_build_version` = commit) di quella di `main`: il sito è rimasto quello di `main` (`version.json` dice `main-19/11/2026`) e il menu non mostrava la rc.1 finché non è partita una nuova pubblicazione da `main` dopo la release (che scarica le release esistenti, rc.1 compresa). Per le prossime release: il commit del tag conviene sia diverso da quello dell'ultima pubblicazione di `main`.
