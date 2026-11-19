@@ -188,6 +188,21 @@ async function scenario(name, fn, opts = {}) {
     check('collegamento alle note di rilascio', !(await p.isHidden('#relnotes')) && (await p.getAttribute('#relnoteslink', 'href')) === 'https://github.com/IU5HJU/VoLoRa/releases/tag/v0.1.0-beta.1');
     check('dice di lasciare quella proposta', (await p.textContent('#verhelp')).includes('lascia quella proposta'));
   });
+  // La candidata al rilascio compare fra le versioni rilasciate, si legge come RC ed e' la proposta (prima delle beta).
+  const RC = { id: 'v0.1.0-rc.1', version: 'v0.1.0-rc.1', kind: 'rc', commit: null, date: '2026-11-19' };
+  versionsData = { default: RC.id, versions: [RC, BETA, DEV] };
+  await scenario('menu delle versioni: la candidata al rilascio e\' etichettata RC e consigliata', async (p) => {
+    await until(p, () => !document.getElementById('fwverbox').hidden);
+    const opts = await p.$$eval('#fwver option', (o) => o.map((x) => ({ v: x.value, t: x.textContent })));
+    check('tre voci: rc, beta e sviluppo', opts.map((o) => o.v).join() === 'v0.1.0-rc.1,v0.1.0-beta.1,dev', JSON.stringify(opts));
+    check('la rc dice RC e e\' consigliata', opts[0].t.includes('RC') && opts[0].t.includes('v0.1.0-rc.1') && opts[0].t.includes('(consigliata)'), opts[0].t);
+    check('la beta non e\' consigliata', !opts[1].t.includes('(consigliata)') && opts[1].t.includes('BETA'), opts[1].t);
+    check('proposta: la rc', (await p.inputValue('#fwver')) === 'v0.1.0-rc.1');
+    check('manifest della rc', (await p.getAttribute('#installer', 'manifest')) === 'firmware/v0.1.0-rc.1/t3/manifest.json', await p.getAttribute('#installer', 'manifest'));
+    check('spiegazione della fase rc', (await p.textContent('#fwverhint')).includes('Candidata al rilascio'), await p.textContent('#fwverhint'));
+    check('riga della versione con RC e la data', (await p.textContent('#ver')).includes('RC') && (await p.textContent('#ver')).includes('19/11/2026'), await p.textContent('#ver'));
+  });
+  versionsData = { default: BETA.id, versions: [BETA, DEV] };
   await scenario('menu delle versioni: cambiare versione o scheda aggiorna il manifest', async (p) => {
     await until(p, () => !document.getElementById('fwverbox').hidden);
     await p.selectOption('#fwver', 'dev');
