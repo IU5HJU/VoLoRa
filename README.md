@@ -8,11 +8,11 @@ La voce è compressa con Codec2 e trasmessa con LoRa, con quattro **profili** da
 | Profilo | Radio | Codec2 | Uso |
 |---|---|---|---|
 | **Standard** (S) | SF7, banda 250 kHz | 3200 bps | voce in tempo reale più naturale; è il profilo di base, quello del ripetitore e del nodo Internet |
-| **Range** (R) | SF8, banda 250 kHz | 1200 bps | voce in tempo reale con un po' più di portata (circa 2,5 dB teorici, non misurati) |
+| **Range** (R) | SF8, banda 250 kHz | 1200 bps | voce in tempo reale con un po' più di portata (circa 2,5 dB teorici; sul campo, prova del 19/11/2026 su una T3 con un'altra stazione, a circa -115 dBm e SNR circa -0,5 dB: in Standard si sentiva solo un debole borbottio, voce non decifrabile (36 frame persi); in Range ci si sentiva, 0 frame persi: [prove.md](docs/prove.md)) |
 | **Messaggio** (M) | SF12, banda 125 kHz | 1200 bps | lungo raggio: si registra un messaggio (fino a 15 s); chi riceve lo trova in una casella e lo ascolta premendo il PTT, con la percentuale sul display |
 | **Diretta** (D) | SF7, banda 250 kHz | 3200 bps | **come lo Standard** (si sente con una stazione in Standard sulla stessa frequenza) ma con **una frequenza tutta sua, impostabile a piacere, e senza shift**: per il traffico in simplex con un corrispondente vicino, quando di solito lavori via ripetitore o nodo, senza riconfigurare niente |
 
-**Perché lo Standard è il 3200 (decisione del 12/11/2026):** il guadagno di portata del 1200 (Range) è modesto, circa 2,5 dB teorici e non misurati, mentre la voce a 3200 bit/s suona meglio. Il **Range** resta nel firmware per i collegamenti in condizioni difficili, quando serve quel poco di portata in più a scapito della qualità vocale ([decisione](docs/roadmap.md)).
+**Perché lo Standard è il 3200 (decisione del 12/11/2026):** il guadagno di portata del 1200 (Range) è modesto, circa 2,5 dB teorici (la misura in dB non c'è, ma sul campo, prova del 19/11/2026 su una T3 con un'altra stazione, a circa -115 dBm e SNR circa -0,5 dB: in Standard si sentiva solo un debole borbottio, voce non decifrabile (36 frame persi); in Range ci si sentiva, 0 frame persi: [prove.md](docs/prove.md)), mentre la voce a 3200 bit/s suona meglio. Il **Range** resta nel firmware per i collegamenti in condizioni difficili, quando serve quel poco di portata in più a scapito della qualità vocale ([decisione](docs/roadmap.md)).
 
 Funzionamento in breve:
 

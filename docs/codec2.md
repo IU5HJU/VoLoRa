@@ -13,7 +13,7 @@ Verifiche del punto "Codec2" della [roadmap](roadmap.md), fatte **sul PC con gli
 | 1600 | 40 ms | 64 | 8 | |
 | 1400 | 40 ms | 56 | 7 | |
 | 1300 | 40 ms | 52 | 7 | |
-| **1200** | 40 ms | 48 | 6 | il profilo **Range**: dal 12/11/2026 non è più il modo di base ma resta per i collegamenti in condizioni difficili (circa 2,5 dB teorici in più di portata rispetto al 3200 su SF7, non misurati; [roadmap.md](roadmap.md)) |
+| **1200** | 40 ms | 48 | 6 | il profilo **Range**: dal 12/11/2026 non è più il modo di base ma resta per i collegamenti in condizioni difficili (circa 2,5 dB teorici in più di portata rispetto al 3200 su SF7; sul campo, prova del 19/11/2026 su una T3 con un'altra stazione, a circa -115 dBm e SNR circa -0,5 dB: in Standard si sentiva solo un debole borbottio, voce non decifrabile (36 frame persi); in Range ci si sentiva, 0 frame persi: [prove.md](prove.md); [roadmap.md](roadmap.md)) |
 
 | 700C | 40 ms | **28** | 4 | non è intero: in pacchetto serve l'impacchettamento a bit |
 | 450 | 40 ms | **18** | 3 | idem |
