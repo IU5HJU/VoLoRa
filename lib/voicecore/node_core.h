@@ -106,6 +106,7 @@ class NodeCore {
   void setRadioInfo(uint8_t sf) { quality_.setInfo(sf); }
   // L'ultimo rapporto mandato (nullptr se nessuno).
   const QualityReport* lastReport() const { return haveLastReport_ ? &lastReport_ : nullptr; }
+  uint32_t lastReportAtMs() const { return lastReportMs_; }  // quando e' partito
 
   bool linkUp(uint32_t nowMs) const { return link_.linkUp(nowMs); }
   // L'indirizzo pubblico della scheda (vedi NodeLink::setPublicAddress), da aggiornare quando cambia.
@@ -137,6 +138,7 @@ class NodeCore {
   QualityTracker quality_;
   QualityReport lastReport_;
   bool haveLastReport_ = false;
+  uint32_t lastReportMs_ = 0;
   char callsign_[kMaxCallsign + 1] = {0};
   uint32_t beaconIntervalMs_ = 0;
   uint32_t freqKhz_ = 0;

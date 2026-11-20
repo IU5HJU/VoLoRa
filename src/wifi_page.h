@@ -33,6 +33,7 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <div id="nodebox" data-modes="node">
 <p class="hint"><strong>Nodo Internet:</strong> la scheda porta i pacchetti LoRa a un'altra scheda o a un reflector via Wi-Fi (UDP firmato). Solo profilo Standard. Dopo il riavvio la pagina si apre dalla rete di casa (indirizzo e password compaiono sul display per 25 secondi e sono scritti sulla seriale all'avvio) e, per i primi 3 minuti, dal Wi-Fi della scheda.</p>
 </div>
+<div id="statbox" data-modes="node" hidden><h2>Stato del nodo</h2><p id="statlink" class="hint"></p><p id="statlast"></p><p id="statq"></p><p class="hint">Si aggiorna da solo ogni pochi secondi, solo dalla rete di casa. <strong>Ultima stazione</strong>: nominativo, RSSI e SNR dell'ultimo pacchetto ricevuto in radio. <strong>Ultima trasmissione</strong>: il rapporto che il nodo ha mandato al reflector a fine trasmissione, con il <strong>margine</strong> dell'SNR sopra il limite di demodulazione LoRa (per l'SF del nodo: sotto 4 dB in media o 1,5 dB al minimo il segnale è al limite) e i pacchetti persi in radio.</p></div>
 <div id="netbox" data-modes="rptrx node">
 <h2>Wi-Fi e rete</h2>
 <p class="hint"><strong>Nodo Internet:</strong> tutti i campi servono. <strong>Ripetitore:</strong> si imposta sulla scheda RX (la TX non ha il Wi-Fi); con la rete vuota il ripetitore resta solo in radio. Non serve aprire porte sul router: la scheda scrive lei per prima.</p>
@@ -189,6 +190,30 @@ $('f').addEventListener('submit',async ev=>{
   }catch(e){st('Errore di comunicazione: '+e.message,'err');}
 });
 $('reboot').addEventListener('click',async()=>{try{await cmd('CFG REBOOT');}catch(e){}st('Scheda in riavvio: puoi chiudere la pagina.','ok');});
-load();
+// Stato del nodo e qualita' dell'ultima trasmissione (solo dalla rete di casa; con ?stato=1 anche altrove, per le prove)
+const LANPAGE=()=>!['192.168.4.1','127.0.0.1','localhost'].includes(location.hostname)||/[?&]stato=1/.test(location.search);
+const ago=s=>s<60?s+' s fa':s<3600?Math.round(s/60)+' min fa':Math.round(s/3600)+' h fa';
+const hh=s=>String(s).replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';');
+const limDb=sf=>-7.5-2.5*((sf>=7&&sf<=12?sf:7)-7);
+function qualityVerdict(m){const l=limDb(+m.qsf),a=m.qsnr==='n.d.'?null:+m.qsnr-l,mi=m.qsnrmin==='n.d.'?null:+m.qsnrmin-l;const weak=a!==null&&(a<4||mi<1.5),loss=+m.qmiss>0||+m.qcrc>0;return {a,mi,weak,loss,ok:!weak&&!loss,text:weak&&loss?'segnale al limite e pacchetti persi in radio':weak?'segnale al limite':loss?'pacchetti persi in radio':'buona'};}
+async function nodeStat(){
+  const box=$('statbox');
+  if($('role').value!=='node'||!LANPAGE()){box.hidden=true;return;}
+  try{
+    const r=await cmd('CFG GET NODESTAT');if(!r.startsWith('CFG NODESTAT '))throw 0;
+    const m=parse(r);
+    $('statlink').textContent='Collegamento con il reflector: '+(m.link==='up'?'attivo':'NON attivo')+'. Trasmissioni passate dal nodo: '+m.transits+', pacchetti mandati in rete: '+m.sent+', rapporti di ricezione mandati: '+m.qrep+'.';
+    $('statlast').innerHTML=m.last&&m.last!=='-'?'<strong>Ultima stazione:</strong> '+hh(m.last)+', '+ago(+m.age)+', RSSI '+hh(m.rssi)+' dBm, SNR '+(m.snr==='n.d.'?'n.d.':hh(m.snr)+' dB'):'<strong>Ultima stazione:</strong> nessuna è ancora passata dal nodo.';
+    if(m.qrep!=='0'&&m.qsf!==undefined){
+      const v=qualityVerdict(m);
+      $('statq').innerHTML='<strong>Ultima trasmissione</strong> ('+ago(+m.qage)+'): '+(m.qsnr==='n.d.'?'SNR n.d.':'SNR medio '+hh(m.qsnr)+' dB (minimo '+hh(m.qsnrmin)+')'+(v.a!==null?', margine '+v.a.toFixed(1)+' dB (minimo '+v.mi.toFixed(1)+')':''))+', RSSI '+hh(m.qrssi)+' dBm (minimo '+hh(m.qrssimin)+'), pacchetti ricevuti '+hh(m.qrx)+', mancanti '+hh(m.qmiss)+', errori CRC '+hh(m.qcrc)+' &rarr; <strong style="color:'+(v.ok?'#1a7f37':'#9a6700')+'">'+v.text+'</strong>';
+    }else $('statq').textContent='';
+    box.hidden=false;
+  }catch(e){box.hidden=true;}
+}
+$('role').addEventListener('change',nodeStat);
+setInterval(nodeStat,3000);
+
+load().then(nodeStat);
 </script></body></html>
 )HTML";

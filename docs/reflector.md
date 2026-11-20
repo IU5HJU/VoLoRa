@@ -120,6 +120,7 @@ Come funziona:
 - **Radio contro rete:** il rapporto dice quanti pacchetti il nodo ha mandato; il reflector sa quanti ne sono arrivati. La differenza è la perdita di rete. Quello che il nodo non ha mai ricevuto in radio non lo ha mandato, e si vede nei suoi "mancanti".
 - **Compatibilità:** un tipo di datagramma sconosciuto è trattato come un controllo valido e ignorato, quindi un reflector vecchio non si rompe con un nodo nuovo e un nodo vecchio con un reflector nuovo compare con «n.d.». Il protocollo radio non cambia.
 - Non si manda per i testi, solo per la voce; non si manda se il collegamento con il reflector non è attivo.
+- **Sul nodo** lo stesso rapporto si vede anche sulla **pagina di gestione dalla rete di casa** (riquadro "Stato del nodo", [banco-nodo.md](banco-nodo.md)) e, una riga per trasmissione, sulla seriale (`[nodo] rapporto di ricezione N: ...`).
 
 Limiti:
 - Il nodo non decodifica la voce, quindi non c'è un "BER": gli equivalenti sono l'SNR e i pacchetti persi. Un pacchetto di parità XOR ogni quattro recupera una perdita isolata (se il nodo ne ha persa una, la voce può essere comunque buona).

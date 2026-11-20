@@ -176,14 +176,14 @@ static long hundredthsOfMinute(int32_t e7) {
 
 std::string aprsLatitude(int32_t latE7) {
   const long t = hundredthsOfMinute(latE7);
-  char b[16];
+  char b[24];
   snprintf(b, sizeof(b), "%02ld%02ld.%02ld%c", t / 6000, (t % 6000) / 100, t % 100, latE7 < 0 ? 'S' : 'N');
   return b;
 }
 
 std::string aprsLongitude(int32_t lonE7) {
   const long t = hundredthsOfMinute(lonE7);
-  char b[16];
+  char b[24];
   snprintf(b, sizeof(b), "%03ld%02ld.%02ld%c", t / 6000, (t % 6000) / 100, t % 100, lonE7 < 0 ? 'W' : 'E');
   return b;
 }

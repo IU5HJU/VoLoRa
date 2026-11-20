@@ -20,6 +20,7 @@ const st = {
   idint: '10',
   idmorse: 'on',
   sysop: { call: 'none', key: 'none', mode: 'off', keyHex: '' },
+  nodeStat: null,   // risposta a CFG GET NODESTAT (null = firmware che non la conosce)
   noShift: false,   // firmware senza shift (piu' vecchio)
   shift: 0,
   drop: null,   // chiave che la scheda "dimentica" di salvare
@@ -28,6 +29,7 @@ const st = {
 const KEYS = ['callsign', 'freq', 'freqmsg', 'freqrange', 'freqdir', 'power', 'volume', 'micfloor', 'profile', 'pos', 'qth', 'gps', 'role', 'freqout'];
 function handle(line) {
   st.cmds.push(line);
+  if (line === 'CFG GET NODESTAT') return st.nodeStat !== null ? st.nodeStat : 'CFG ERR comando sconosciuto';
   if (line === 'CFG GET MONITOR') return 'CFG MONITOR=' + st.monitor;
   const mo = /^CFG SET MONITOR (on|off)$/.exec(line);
   if (mo) { st.monitor = mo[1]; return 'CFG OK monitor=' + mo[1]; }
@@ -326,6 +328,43 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   check('T-Beam: il ripetitore non si sceglie, il nodo si', !(await p.isDisabled('#role')) && (await p.$eval('#role option[value=rptrx]', (o) => o.disabled)) &&
         (await p.$eval('#role option[value=rpttx]', (o) => o.disabled)) && !(await p.$eval('#role option[value=node]', (o) => o.disabled)) && (await p.isVisible('#rolenote')));
   check('GPS sulla T-Beam', st.cmds.includes('CFG SET GPS on') && st.cfg.gps === 'on', st.cmds.slice(-3).join('|'));
+
+  // Stato del nodo dalla rete di casa: la pagina legge CFG GET NODESTAT e mostra l'ultima stazione e la qualita' dell'ultima trasmissione
+  // (qui senza ?stato=1 non lo chiede mai: si comporta come il Wi-Fi della scheda)
+  check('senza ?stato=1 (come dal Wi-Fi della scheda) la pagina non chiede lo stato del nodo', !st.cmds.includes('CFG GET NODESTAT'));
+  st.cfg.role = 'node';
+  st.nodeStat = 'CFG NODESTAT link=up transits=12 sent=340 qrep=11 last=IK5PWR age=34 rssi=-95 snr=4.5 qage=30 qsession=4D7E qsnr=4.5 qsnrmin=2.0 qrssi=-95 qrssimin=-101 qrx=57 qmiss=0 qcrc=0 qsf=7';
+  const q = await browser.newPage();
+  await q.goto(url + '?stato=1');
+  await q.waitForFunction(() => !document.getElementById('statbox').hidden, null, { timeout: 15000 });
+  const sl = await q.textContent('#statlink'), sa = await q.textContent('#statlast'), sq = await q.textContent('#statq');
+  check('stato del nodo: collegamento, transiti e rapporti', /attivo/.test(sl) && /passate dal nodo: 12/.test(sl) && /mandati in rete: 340/.test(sl) && /mandati: 11/.test(sl), sl);
+  check('stato del nodo: ultima stazione con RSSI e SNR', /IK5PWR/.test(sa) && /34 s fa/.test(sa) && /RSSI -95 dBm/.test(sa) && /SNR 4\.5 dB/.test(sa), sa);
+  check('stato del nodo: rapporto dell\'ultima trasmissione con il margine (SF7: limite -7,5 dB, margine 12 dB) e giudizio buona',
+        /SNR medio 4\.5 dB \(minimo 2\.0\)/.test(sq) && /margine 12\.0 dB \(minimo 9\.5\)/.test(sq) && /pacchetti ricevuti 57, mancanti 0, errori CRC 0/.test(sq) && /buona/.test(sq), sq);
+  // segnale al limite e pacchetti persi in radio (SF8: limite -10 dB; SNR medio -7 = margine 3 dB)
+  st.nodeStat = 'CFG NODESTAT link=down transits=13 sent=350 qrep=12 last=IZ5ABC age=3 rssi=-121 snr=-8.0 qage=2 qsession=4D7F qsnr=-7.0 qsnrmin=-9.5 qrssi=-118 qrssimin=-121 qrx=40 qmiss=3 qcrc=1 qsf=8';
+  await q.evaluate(() => nodeStat());
+  const sq2 = await q.textContent('#statq');
+  check('stato del nodo: segnale al limite e pacchetti persi in radio', /segnale al limite e pacchetti persi in radio/.test(sq2) && /mancanti 3, errori CRC 1/.test(sq2) && /NON attivo/.test(await q.textContent('#statlink')), sq2);
+  // nessuna trasmissione ancora, nessuna stazione
+  st.nodeStat = 'CFG NODESTAT link=up transits=0 sent=0 qrep=0 last=- age=0 rssi=0 snr=n.d.';
+  await q.evaluate(() => nodeStat());
+  check('stato del nodo: ancora niente da dire', /nessuna è ancora passata/.test(await q.textContent('#statlast')) && (await q.textContent('#statq')) === '');
+  // SNR non disponibile
+  st.nodeStat = 'CFG NODESTAT link=up transits=1 sent=9 qrep=1 last=IK5PWR age=5 rssi=-90 snr=n.d. qage=4 qsession=0001 qsnr=n.d. qsnrmin=n.d. qrssi=-90 qrssimin=-95 qrx=9 qmiss=0 qcrc=0 qsf=7';
+  await q.evaluate(() => nodeStat());
+  check('stato del nodo: SNR non disponibile', /SNR n\.d\./.test(await q.textContent('#statq')) && /buona/.test(await q.textContent('#statq')));
+  // un firmware che non conosce il comando (o il Wi-Fi della scheda durante la finestra di configurazione): il riquadro sparisce
+  st.nodeStat = null;
+  await q.evaluate(() => nodeStat());
+  check('stato del nodo: firmware senza il comando, riquadro nascosto', await q.isHidden('#statbox'));
+  // un ruolo diverso dal nodo non lo mostra, anche se il firmware risponde
+  st.nodeStat = 'CFG NODESTAT link=up transits=1 sent=1 qrep=0 last=- age=0 rssi=0 snr=n.d.';
+  await q.selectOption('#role', 'off');
+  await q.evaluate(() => nodeStat());
+  check('stato del nodo: non compare per una stazione normale', await q.isHidden('#statbox'));
+  await q.close();
 
   const n = st.cmds.length;
   await p.click('#reboot');

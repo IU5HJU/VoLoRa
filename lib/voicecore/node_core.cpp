@@ -267,6 +267,7 @@ void NodeCore::tick(uint32_t nowMs, bool mayTransmit0) {
       stats_.qualityReports++;
       lastReport_ = rep;
       haveLastReport_ = true;
+      lastReportMs_ = nowMs;
     }
   }
 

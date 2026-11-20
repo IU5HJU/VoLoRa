@@ -732,6 +732,36 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
   }
 }
 
+// Lo stato del nodo per la pagina dalla rete di casa (CFG GET NODESTAT): ultima stazione transitata e ultimo rapporto di ricezione. Il ciclo principale lo
+// scrive una volta al secondo in un buffer che non sta usando nessuno e poi cambia buffer; il server web (un altro task) legge quello pronto.
+static char g_nodeStat[2][260] = {{0}, {0}};
+static volatile int g_nodeStatIdx = 0;
+
+static void formatNodeStat(char* out, size_t cap, const lcr::NodeCore& core, uint32_t now) {
+  const lcr::NodeCore::Heard& h = core.heard();
+  char snr[12];
+  if (h.valid && h.snrValid) snprintf(snr, sizeof(snr), "%.1f", static_cast<double>(h.snrDb));
+  else snprintf(snr, sizeof(snr), "n.d.");
+  size_t n = static_cast<size_t>(snprintf(out, cap, "CFG NODESTAT link=%s transits=%lu sent=%lu qrep=%lu last=%s age=%lu rssi=%d snr=%s", core.linkUp(now) ? "up" : "down",
+                                          static_cast<unsigned long>(h.valid ? h.transits : 0), static_cast<unsigned long>(core.stats().toNet),
+                                          static_cast<unsigned long>(core.stats().qualityReports), h.valid && h.callsign[0] ? h.callsign : "-",
+                                          static_cast<unsigned long>(h.valid ? (now - h.atMs) / 1000u : 0), h.valid ? h.rssiDbm : 0, snr));
+  const lcr::QualityReport* q = core.lastReport();
+  if (q && n < cap) {
+    char sa[12], sm[12];
+    if (q->snrValid) {
+      snprintf(sa, sizeof(sa), "%.1f", static_cast<double>(q->snrAvgDb));
+      snprintf(sm, sizeof(sm), "%.1f", static_cast<double>(q->snrMinDb));
+    } else {
+      snprintf(sa, sizeof(sa), "n.d.");
+      snprintf(sm, sizeof(sm), "n.d.");
+    }
+    snprintf(out + n, cap - n, " qage=%lu qsession=%04X qsnr=%s qsnrmin=%s qrssi=%d qrssimin=%d qrx=%u qmiss=%u qcrc=%u qsf=%u", static_cast<unsigned long>((now - core.lastReportAtMs()) / 1000u),
+             static_cast<unsigned>(q->session), sa, sm, static_cast<int>(q->rssiAvgDbm), static_cast<int>(q->rssiMinDbm), static_cast<unsigned>(q->rxPackets),
+             static_cast<unsigned>(q->missing), static_cast<unsigned>(q->crcErrors), static_cast<unsigned>(q->sf));
+  }
+}
+
 [[noreturn]] void runNode(const lcr::Settings& settings, UiNotifier& ui, CfgHandler handler) {
   if (settings.profile != lcr::kProfileStandard) nodeNotReady(ui, handler, "solo profilo STD");
   if (settings.wifiSsid[0] == 0) nodeNotReady(ui, handler, "manca WIFISSID");
@@ -839,7 +869,15 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
     if (wifi && !lanStarted) {  // la scheda e' sulla rete di casa: stessa pagina di configurazione, con utente e password (dal Wi-Fi della scheda)
       lanStarted = true;
       char pw[16];
-      if (lan.beginLan(handler, pw, sizeof(pw))) {
+      // la pagina dalla rete di casa ha in piu' CFG GET NODESTAT (stato del nodo e qualita'); tutto il resto va al gestore di sempre
+      const WifiConfig::Handler lanHandler = [handler](const char* line, char* reply, size_t cap) -> bool {
+        if (strcmp(line, "CFG GET NODESTAT") == 0) {
+          snprintf(reply, cap, "%s", g_nodeStat[g_nodeStatIdx]);
+          return false;
+        }
+        return handler(line, reply, cap);
+      };
+      if (lan.beginLan(lanHandler, pw, sizeof(pw))) {
         snprintf(lanPw, sizeof(lanPw), "%s", pw);
         lanInfoUntilMs = now + 25000;  // per 25 s il display dice dove raggiungere la pagina e con quale password
         uint8_t mac[6] = {0};
@@ -851,6 +889,15 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
       }
     }
     if (lan.loop()) restartNow(ui);
+    {  // lo stato per la pagina dalla rete di casa: una volta al secondo, nel buffer che non si sta leggendo
+      static uint32_t lastStatMs = 0;
+      if (now - lastStatMs >= 1000) {
+        lastStatMs = now;
+        const int w = 1 - g_nodeStatIdx;
+        formatNodeStat(g_nodeStat[w], sizeof(g_nodeStat[w]), core, now);
+        g_nodeStatIdx = w;
+      }
+    }
     {  // il rapporto di ricezione mandato al reflector a fine trasmissione (una riga sulla seriale)
       static uint32_t lastQ = 0;
       const lcr::QualityReport* r = core.lastReport();
