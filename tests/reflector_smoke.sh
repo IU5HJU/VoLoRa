@@ -129,6 +129,11 @@ build/vlnode --id 2 --peer-id 1000 --key $KEYA --listen 0 --peer 127.0.0.1:$PORT
 QP=$!
 poll '"verdict":"radio","verdictText":"radio"' 25 && echo "$SQ" | grep -q '"missing":3,"crc":1' && ok "qualita': segnale debole e pacchetti persi in radio danno il giudizio \"radio\"" || ko "qualita': giudizio radio ($SQ) | nodo: $(cat "$D/q2.out")"
 echo "$SQ" | grep -q '"lostDg":[1-9]' && ok "qualita': i datagrammi persi si contano anche per il nodo collegato" || ko "qualita': datagrammi persi del client ($SQ)"
+# La stessa trasmissione sulla pagina pubblica: segnale e giudizio sì, contatori, indirizzi e id no
+PS=$(curl -s -m 5 $P/status.json)
+echo "$PS" | grep -q '"mode":"Range","via":"nodoA","quality":{"snr":-9.0,"snrMin":-11.0,"rssi":-120,"marginDb":[-0-9.]*,"radioLost":3,"radioTotal":[0-9]*},"netLost":[0-9]*,"verdict":"radio","verdictText":"radio"' && ok "pubblica: segnale e giudizio della trasmissione (SNR -9, radio)" || ko "pubblica: qualita' ($PS)"
+echo "$PS" | grep -qE 'endpoint|key|127\.0\.0\.1|203\.0\.113|public|"id"|"in"|"out"|stats|badSignature|unknown|session|packets' && ko "pubblica: con la qualita' compare qualcosa di riservato ($PS)" || ok "pubblica: la qualita' non porta indirizzi, id o contatori"
+curl -s -m 5 $P/ | grep -q "Collegamento" && ok "pubblica: la pagina ha la colonna del collegamento" || ko "pubblica: colonna collegamento"
 wait $QP
 # Una trasmissione di un nodo che non manda il rapporto (firmware vecchio): "n.d." e nessun errore. Si guarda la trasmissione piu' recente (la prima della lista)
 build/vlnode --id 2 --peer-id 1000 --key $KEYA --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 20 --duration 20 > "$D/q3.out" 2>&1 &

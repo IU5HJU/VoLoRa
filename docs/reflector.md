@@ -127,7 +127,8 @@ Limiti:
 - Gli errori CRC si contano fra il primo e l'ultimo pacchetto ricevuti: quelli prima o dopo non si vedono.
 - Se manca il primo pacchetto, i mancanti includono quelli prima del primo ricevuto (la sequenza parte da 0).
 - Per una trasmissione senza il rapporto (nodo vecchio, collegamento caduto) i buchi di rete si vedono lo stesso, ma non la radio.
-- **Non provato con schede vere**: sul PC è provato con le prove del reflector, del nodo e della RX (`make test`, `make reflector-smoke` con `vlnode --quality ... --drop N`). La pagina pubblica non mostra ancora la qualità.
+- **Non provato con schede vere**: sul PC è provato con le prove del reflector, del nodo e della RX (`make test`, `make reflector-smoke` con `vlnode --quality ... --drop N`).
+- **Pagina pubblica**: nella tabella "Ultime trasmissioni" compaiono anche il segnale (SNR medio con il nodo, fra parentesi il margine sul limite del modo; l'RSSI se manca l'SNR) e il giudizio del collegamento (buona / radio / rete / radio e rete / n.d.), con i pacchetti persi nel suggerimento al passaggio del mouse. Niente contatori, indirizzi o id: sono solo numeri di radio, già impliciti nel modo e nel nodo da cui passa la trasmissione.
 
 ## La pagina pubblica (per i colleghi)
 

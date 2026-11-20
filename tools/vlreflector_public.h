@@ -26,6 +26,10 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
   #now { min-height:3em; display:flex; align-items:center; }
   #now .big { font-size:1.6rem; font-weight:700; }
   #now.live .big { color:var(--live); }
+  .v-ok { color:var(--ok); font-weight:600; }
+  .v-radio, .v-net, .v-both { color:var(--bad); font-weight:600; }
+  .v-nd { color:var(--muted); }
+  @media (max-width: 520px) { .hm { display:none; } }
 </style>
 </head>
 <body>
@@ -43,6 +47,7 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
   <section>
     <h2>Ultime trasmissioni</h2>
     <div id="recent"></div>
+    <p class="muted" id="legend"></p>
   </section>
   <p class="muted" id="err"></p>
 </main>
@@ -76,7 +81,20 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
     })));
     var rc = $("recent"); rc.textContent = "";
     if (!d.recent.length) rc.appendChild(el("p", "Ancora nessuna trasmissione.", "muted"));
-    else rc.appendChild(table(["Stazione", "Quando", "Durata"], d.recent.map(function (x) { return [x.callsign, ago(x.agoS), dur(x.durationS)]; })));
+    else {
+      rc.appendChild(table(["Stazione", "Quando", "Durata", "Segnale", "Collegamento"], d.recent.map(function (x) {
+        var q = x.quality, sig = "-";
+        if (q && q.snr !== null) sig = q.snr.toFixed(1) + " dB (" + (q.marginDb >= 0 ? "+" : "") + q.marginDb.toFixed(1) + ")";
+        else if (q) sig = q.rssi + " dBm";
+        var lost = [];
+        if (q && q.radioLost) lost.push(q.radioLost + "/" + q.radioTotal + " persi in radio");
+        if (x.netLost) lost.push(x.netLost + " persi in rete");
+        var v = el("span", x.verdictText, "v-" + x.verdict);
+        if (lost.length) v.title = lost.join(", ");
+        return [x.callsign, ago(x.agoS), dur(x.durationS), sig, v];
+      })));
+      $("legend").textContent = "Segnale: SNR medio con il nodo e, fra parentesi, il margine sopra il limite del modo. Collegamento: buona, oppure il problema (radio = segnale debole o pacchetti persi in aria, rete = pacchetti persi fra nodo e reflector). n.d. se il nodo non manda il rapporto.";
+    }
     $("err").textContent = "";
   }
   function poll() {

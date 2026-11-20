@@ -405,10 +405,33 @@ struct Admin {
     int n = 0;
     for (const auto& r : core->recentTalks()) {
       if (n++ >= 10) break;
-      o << (first ? "" : ",") << "{\"callsign\":\"" << jsonEscape(r.callsign) << "\",\"agoS\":" << (now - r.lastMs) / 1000 << ",\"durationS\":" << (r.lastMs - r.startMs) / 1000 << "}";
+      o << (first ? "" : ",") << "{\"callsign\":\"" << jsonEscape(r.callsign) << "\",\"agoS\":" << (now - r.lastMs) / 1000 << ",\"durationS\":" << (r.lastMs - r.startMs) / 1000
+        << publicQualityJson(r) << "}";
       first = false;
     }
     o << "]}";
+    return o.str();
+  }
+  // La qualita' di una trasmissione per la pagina pubblica: solo numeri di radio e un giudizio (niente contatori, indirizzi o id): modo, nodo da cui e' passata (gia'
+  // visibile fra le stazioni collegate), segnale con cui il nodo l'ha ricevuta se ha mandato il rapporto, pacchetti persi in radio e in rete.
+  std::string publicQualityJson(const ReflectorCore::Talk& r) const {
+    const Judgement j = ReflectorCore::judge(r);
+    const uint8_t mode = r.haveReport && r.report.mode ? r.report.mode : static_cast<uint8_t>(voiceMode);
+    std::ostringstream o;
+    o << ",\"mode\":\"" << (mode == 4 ? "Standard" : "Range") << "\",\"via\":\"" << jsonEscape(r.client) << "\",\"quality\":";
+    if (r.haveReport) {
+      char b[200];
+      if (r.report.snrValid)
+        snprintf(b, sizeof(b), "{\"snr\":%.1f,\"snrMin\":%.1f,\"rssi\":%d,\"marginDb\":%.1f,\"radioLost\":%u,\"radioTotal\":%u}", static_cast<double>(r.report.snrAvgDb),
+                 static_cast<double>(r.report.snrMinDb), r.report.rssiAvgDbm, static_cast<double>(j.marginAvgDb), r.report.missing, r.report.rxPackets + r.report.missing);
+      else
+        snprintf(b, sizeof(b), "{\"snr\":null,\"snrMin\":null,\"rssi\":%d,\"marginDb\":null,\"radioLost\":%u,\"radioTotal\":%u}", r.report.rssiAvgDbm, r.report.missing,
+                 r.report.rxPackets + r.report.missing);
+      o << b;
+    } else {
+      o << "null";
+    }
+    o << ",\"netLost\":" << (j.haveRadio ? j.netLost : j.netGaps) << ",\"verdict\":\"" << verdictCode(j.verdict) << "\",\"verdictText\":\"" << verdictText(j.verdict) << "\"";
     return o.str();
   }
   // La porta pubblica risponde solo a GET della pagina e di /status.json: nessun altro indirizzo, nessun comando.
