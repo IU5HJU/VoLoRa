@@ -12,7 +12,7 @@ git clone https://github.com/IU5HJU/VoLoRa.git ~/VoLoRa
 ~/VoLoRa/tools/installa-strumenti.sh
 ```
 
-Installa i pacchetti di sistema, esclude il modulo televisivo della chiavetta, mette Miniconda con l'ambiente `lora` (GNU Radio e gr-lora_sdr, circa 3 GB), compila gli strumenti e mette le icone sul desktop. Si può rilanciare: rifà solo quello che manca. Opzioni: `--senza-sdr` (solo Codec2, senza conda), `--senza-icone`, `--prova` (scrive cosa farebbe senza farlo). Per aggiornare dopo: l'icona **Aggiorna progetto VoLoRa**.
+Installa i pacchetti di sistema, esclude il modulo televisivo della chiavetta, mette Miniconda con l'ambiente `lora` (GNU Radio e gr-lora_sdr, circa 3 GB), compila gli strumenti e mette le icone sul desktop. Si può rilanciare: rifà solo quello che manca. Opzioni: `--senza-sdr` (solo Codec2, senza conda), `--senza-icone`, `--prova` (scrive cosa farebbe senza farlo). Per aggiornare dopo: l'icona **Aggiorna progetto VoLoRa**, che **lancia da sola** lo stesso script in versione `--aggiornamento` (senza `sudo` e senza installare pacchetti): ricompila quello che è cambiato, mette sul desktop le icone degli strumenti nuovi e dice cosa manca per l'SDR. Le icone si cercano in `Desktop` o in `Scrivania` (o dove dice `xdg-user-dir`), e un'icona che avvia già lo stesso script, con qualunque nome, non si duplica né si tocca.
 
 **Cosa è al sicuro se il PC si rompe:** tutto ciò che sta nel repository su GitHub: gli strumenti, i modelli delle icone, la ricetta dell'ambiente conda (dentro lo script) e la documentazione. **Non** ci sono: le catture e le registrazioni (`~/catture-sdr`, `~/confronto-codec`: sono dati e pesano), l'ambiente conda già installato (si rifà con lo script) e gli altri progetti (per esempio uno studio privato sul MeshCom: ha il suo repository). Prima di spegnere un PC su cui hai lavorato controlla che non resti niente da caricare: `git status` e `git log origin/main..HEAD` devono essere vuoti (a parte i file di prova).
 
@@ -49,8 +49,8 @@ Il ricevitore **non in tempo reale** (un'icona a parte che registrava e decodifi
 
 | Strumento | A cosa serve |
 |---|---|
-| `installa-strumenti.sh` | Su un **PC nuovo**: installa pacchetti, conda con l'ambiente `lora`, compila e mette le icone (vedi sopra) |
-| `aggiorna-progetto.sh` | Sul PC di sviluppo: scarica l'ultima versione, dice da quale a quale si passa e ricompila solo quello che è cambiato. Si collega a un'icona |
+| `installa-strumenti.sh` | Su un **PC nuovo**: installa pacchetti, conda con l'ambiente `lora`, compila e mette le icone (vedi sopra). Con `--aggiornamento` fa solo la parte senza password |
+| `aggiorna-progetto.sh` | Sul PC di sviluppo: scarica l'ultima versione, dice da quale a quale si passa e poi lancia `installa-strumenti.sh --aggiornamento` (ricompila, icone nuove, avvisi). Si collega a un'icona |
 
 ## Pubblicazione e compilazione del firmware (li usano il Build e PlatformIO)
 
