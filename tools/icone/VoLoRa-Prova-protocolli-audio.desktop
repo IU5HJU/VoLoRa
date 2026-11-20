@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Prova protocolli audio (Codec2)
+Comment=VoLoRa: registra la tua voce e la fa ascoltare con tutti i modi del Codec2
+Exec=/home/UTENTE/VoLoRa/tools/confronta-codec.sh
+Icon=audio-input-microphone
+Terminal=true
+Categories=HamRadio;

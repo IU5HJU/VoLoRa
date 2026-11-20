@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Aggiorna progetto VoLoRa
+Comment=Scarica l'ultima versione di VoLoRa e ricompila gli strumenti del PC
+Exec=bash /home/UTENTE/VoLoRa/tools/aggiorna-progetto.sh
+Icon=view-refresh
+Terminal=true
+Categories=HamRadio;

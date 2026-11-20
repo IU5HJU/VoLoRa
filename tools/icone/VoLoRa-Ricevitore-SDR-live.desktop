@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Ricevitore SDR in tempo reale
+Comment=VoLoRa: riceve con la chiavetta SDR e fa sentire la voce mentre la scheda trasmette
+Exec=/home/UTENTE/VoLoRa/tools/sdr/ricevitore-live.sh
+Icon=audio-input-microphone
+Terminal=true
+Categories=HamRadio;

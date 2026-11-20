@@ -28,6 +28,7 @@
 | [ripetitore.md](ripetitore.md) | **Riepilogo del ripetitore**: com'è fatto, collegamento a quattro fili, configurazione, funzioni, cosa è provato e cosa no |
 | [banco-ripetitore.md](banco-ripetitore.md) | Prova a banco del ripetitore con due T3: cablaggio, seriale, display, altoparlante |
 | [reflector.md](reflector.md) | **Il reflector VoLoRa**: server a cui si collegano nodi e ripetitori **senza aprire porte sul router**; file dei client, pagina di amministrazione (password), pagina pubblica, IP del nodo, impostazioni dei nodi e della scheda RX del ripetitore, prova sul PC |
+| [../tools/README.md](../tools/README.md) | **Gli strumenti del progetto** (`tools/`): ricevitore SDR in tempo reale, confronto del Codec2, reflector, pubblicazione, documentazione generata e le icone del desktop |
 | [studio-reflector.md](studio-reflector.md) | Studio: come funziona il reflector YSF (letto dal sorgente) e cosa abbiamo preso e cambiato |
 | [banco-nodo.md](banco-nodo.md) | Prova a banco del nodo Internet: due T3 in ruolo NODE su Wi-Fi, impostazioni, cosa deve succedere, nodo finto sul PC |
 | [studio-nodo-internet.md](studio-nodo-internet.md) | Studio del primo passo: due T3 collegate in Wi-Fi (UDP/TCP) che si portano la voce LoRa a vicenda; protocollo, risorse, prove, verso il reflector |
