@@ -198,7 +198,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     el.hidden = false;
     el.className = 'msg ' + (a.state === 'verified' ? 'ok' : a.state === 'unverified' ? 'err' : a.state === 'down' ? 'warn' : '');
     el.textContent = 'Stato: ' + a.stateText + (a.detail && a.state !== 'verified' && a.state !== 'off' ? ' — ' + a.detail : '');
-    $('aprsStats').textContent = a.enabled ? 'Posizioni viste ' + a.seen + ', inviate ' + a.sent + ', in coda ' + a.queued + ', troppo ravvicinate ' + a.tooSoon + ', scartate (nominativo o posizione non validi) ' + a.invalid + '.' : '';
+    $('aprsStats').textContent = a.enabled ? 'Posizioni viste ' + a.seen + ', senza posizione (pos spenta sulla scheda) ' + a.noPosition + ', inviate ' + a.sent + ', in coda ' + a.queued + ', troppo ravvicinate ' + a.tooSoon + ', scartate (nominativo o posizione non validi) ' + a.invalid + '.' : '';
   }
   async function refreshAprs() {
     let a;

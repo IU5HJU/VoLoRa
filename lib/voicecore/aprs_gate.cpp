@@ -228,27 +228,51 @@ uint32_t AprsGate::generation() const {
   return gen_;
 }
 
-void AprsGate::onPosition(const std::string& callsign, const Position& pos, uint32_t nowMs) {
+void AprsGate::setLog(std::function<void(const std::string&)> f) {
   std::lock_guard<std::mutex> l(m_);
-  if (!cfg_.enabled || !cfg_.complete()) return;
+  log_ = f;
+}
+
+void AprsGate::onPosition(const std::string& callsign, const Position& pos, uint32_t nowMs) {
+  std::string why;  // il motivo per cui non si manda, da scrivere nel registro (fuori dal blocco)
+  std::function<void(const std::string&)> log;
+  {
+    std::lock_guard<std::mutex> l(m_);
+    log = log_;
+    why = decide(callsign, pos, nowMs);
+  }
+  if (!why.empty() && log) log("[aprs] " + callsign + ": " + why);
+}
+
+// Dentro il blocco. Ritorna il motivo se non si manda, vuota se la riga e' stata accodata (o se l'invio e' spento).
+std::string AprsGate::decide(const std::string& callsign, const Position& pos, uint32_t nowMs) {
+  if (!cfg_.enabled || !cfg_.complete()) return std::string();
+  if (!pos.valid) {
+    stats_.noPosition++;
+    return "nessuna posizione nel pacchetto (sulla scheda servono pos acceso e una posizione, QTH o GPS): non la mando";
+  }
   stats_.seen++;
   if (isPlaceholderCallsign(callsign.c_str())) {
     stats_.invalid++;
-    return;
+    return "nominativo segnaposto, non lo mando";
+  }
+  if (!isValidAprsSource(callsign)) {
+    stats_.invalid++;
+    return "nominativo non valido per APRS (AX.25 non ammette la barra ne' piu' di 6 caratteri): non lo mando";
   }
   const std::string line = aprsPositionLine(callsign, pos, cfg_.login, cfg_.symbol);
   if (line.empty()) {
     stats_.invalid++;
-    return;
+    return "posizione non valida: non la mando";
   }
   if (state_ == State::Unverified) {  // il server non accetta la password: inutile accodare
     stats_.dropped++;
-    return;
+    return "il server APRS non accetta la password: non la mando";
   }
   auto it = lastSent_.find(callsign);
   if (it != lastSent_.end() && static_cast<uint32_t>(nowMs - it->second) < cfg_.minIntervalS * 1000u) {
     stats_.tooSoon++;
-    return;
+    return "posizione gia' mandata " + std::to_string(static_cast<uint32_t>(nowMs - it->second) / 1000u) + " s fa (intervallo " + std::to_string(cfg_.minIntervalS) + " s): non la rimando";
   }
   if (lastSent_.size() > 2000) lastSent_.clear();  // un elenco che cresce senza fine non serve: si riparte
   lastSent_[callsign] = nowMs;
@@ -257,6 +281,8 @@ void AprsGate::onPosition(const std::string& callsign, const Position& pos, uint
     stats_.dropped++;
   }
   queue_.push_back(line);
+  if (state_ != State::Verified) return "in coda: il collegamento con il server APRS non e' ancora attivo (" + std::string(aprsStateText(state_)) + ")";
+  return std::string();
 }
 
 void AprsGate::setState(State s, const std::string& detail) {

@@ -101,6 +101,12 @@ sleep 0.5
 check "$D/aprs.rows" "^IZ5IOF>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E_VoLoRa$" "APRS: la posizione della stazione che trasmette e' arrivata al server"
 [ "$(grep -c '^IZ5IOF>' "$D/aprs.rows")" = "1" ] && ok "APRS: una sola posizione per quella trasmissione" || ko "APRS: posizioni ripetute"
 check "$D/ref.out" "\[aprs\] inviato: IZ5IOF>APZVLR" "APRS: il registro scrive la posizione inviata"
+# una trasmissione senza posizione: il registro dice perche' non si manda (e la pagina la conta)
+build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 20 --duration 9 > "$D/a3.out" 2>&1
+sleep 0.5
+check "$D/ref.out" "\\[aprs\\] IZ5IOF: nessuna posizione nel pacchetto" "APRS: il registro dice perche' una stazione senza posizione non e' stata mandata"
+A5=$(api "http://127.0.0.1:$WEB/api/aprs")
+echo "$A5" | grep -q '"noPosition":1' && ok "APRS: la pagina conta le trasmissioni senza posizione" || ko "APRS: contatore senza posizione ($A5)"
 # spento: il collegamento si chiude
 A4=$(api -X POST -d "enabled=0&host=127.0.0.1&port=$APRS&login=N0CALL-10&pass=&interval=60" "http://127.0.0.1:$WEB/api/aprs")
 echo "$A4" | grep -q '"enabled":false' && echo "$A4" | grep -q '"passSet":true' && ok "APRS: spento, la password resta salvata" || ko "APRS: spegnimento ($A4)"

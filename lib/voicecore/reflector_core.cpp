@@ -178,9 +178,9 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
     }
     // La parita' puo' arrivare dopo il pacchetto di fine: non inizia una trasmissione e non tiene il canale (passa solo se e' libero o e' di chi parla)
     if (!p.isParity()) {
-      if (onPosition_ && p.hasCallsign() && p.hasPosition()) onPosition_(p.callsign, p.position, nowMs);
       if (!hanging || talkerId_ != c->id || talkSession_ != p.session) {
         endTalk();  // quella di prima (dello stesso client con un'altra sessione) e' finita
+        posReported_ = false;
         stats_.talks++;
         cur_ = Talk();
         cur_.active = true;
@@ -200,6 +200,11 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
       talkLastMs_ = nowMs;
       cur_.lastMs = nowMs;
       cur_.packets++;
+      // Una volta per trasmissione, al primo pacchetto che porta il nominativo (la posizione, se c'e', viaggia insieme a lui)
+      if (onPosition_ && !posReported_ && p.hasCallsign()) {
+        posReported_ = true;
+        onPosition_(p.callsign, p.position, nowMs);
+      }
     } else if (hanging) {
       talkLastMs_ = nowMs;
       cur_.lastMs = nowMs;

@@ -302,7 +302,7 @@ struct Admin {
     std::ostringstream o;
     o << "{\"enabled\":" << (c.enabled ? "true" : "false") << ",\"host\":\"" << jsonEscape(c.host) << "\",\"port\":" << c.port << ",\"login\":\"" << jsonEscape(c.login)
       << "\",\"passSet\":" << (c.pass.empty() ? "false" : "true") << ",\"intervalS\":" << c.minIntervalS << ",\"symbol\":\"" << jsonEscape(c.symbol) << "\",\"state\":\"" << code << "\",\"stateText\":\"" << aprsStateText(st)
-      << "\",\"detail\":\"" << jsonEscape(aprs->detail()) << "\",\"queued\":" << aprs->pending() << ",\"seen\":" << s.seen << ",\"sent\":" << s.sent
+      << "\",\"detail\":\"" << jsonEscape(aprs->detail()) << "\",\"queued\":" << aprs->pending() << ",\"seen\":" << s.seen << ",\"noPosition\":" << s.noPosition << ",\"sent\":" << s.sent
       << ",\"tooSoon\":" << s.tooSoon << ",\"invalid\":" << s.invalid << ",\"dropped\":" << s.dropped << "}";
     return o.str();
   }
@@ -633,6 +633,7 @@ int main(int argc, char** argv) {
   adm.startMs = nowMs();
   // Server APRS: configurazione dal file (se c'e'), posizione delle stazioni dal reflector, collegamento in un thread a parte
   AprsGate aprsGate;
+  aprsGate.setLog(logLine);
   adm.aprs = &aprsGate;
   if (adm.aprsPath.empty()) adm.aprsPath = dirOf(adm.configPath) + "/aprs.conf";
   {

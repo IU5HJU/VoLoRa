@@ -491,17 +491,22 @@ static void testPositionHandler() {
   // I pacchetti dopo lo START non hanno ne' nominativo ne' posizione: niente
   r.sendPacket(a, voicePacket(4, 0x0100, 1, 0));
   CHECK(calls.size() == 1u);
-  // Voce senza posizione: niente
+  // Voce con nominativo ma senza posizione: il gestore e' chiamato lo stesso (con pos.valid = false) per poter dire perche' non si manda
   r.run(4000);
   r.sendPacket(a, voicePacket(4, 0x0101, 0, kFlagStart | kFlagEnd, "IU5HJU"));
-  CHECK(calls.size() == 1u);
-  // Voce scartata perche' un altro sta parlando: la sua posizione non conta
+  CHECK(calls.size() == 2u);
+  CHECK(calls[1] == "IU5HJU" && !positions[1].valid);
+  // Una volta sola per trasmissione, anche con piu' pacchetti
   r.run(4000);
   r.sendPacket(a, voicePacket(4, 0x0102, 0, kFlagStart, "IU5HJU"));
+  r.sendPacket(a, voicePacket(4, 0x0102, 1, 0));
+  r.sendPacket(a, voicePacket(4, 0x0102, 2, 0));
+  CHECK(calls.size() == 3u);
+  // Voce scartata perche' un altro sta parlando: non conta
   Packet blocked = voicePacket(4, 0x0200, 0, kFlagStart, "IK5XXX");
   blocked.position = here;
   r.sendPacket(b, blocked);
-  CHECK(calls.size() == 1u);
+  CHECK(calls.size() == 3u);
   // Senza gestore non succede niente di male
   r.core.setPositionHandler(nullptr);
   r.run(4000);

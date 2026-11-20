@@ -108,8 +108,9 @@ class ReflectorCore {
   const std::vector<Talk>& recentTalks() const { return recent_; }
   // Registro (facoltativo): una riga per evento (client collegato, trasmissione iniziata e finita, ...).
   void setLog(std::function<void(const std::string&)> f) { log_ = f; }
-  // Facoltativo: chiamato quando una trasmissione di voce porta nominativo e posizione (pacchetto START di un client collegato). Serve a mandare
-  // la posizione al server APRS (aprs_gate.h). Non si chiama per la voce scartata perche' un altro sta parlando.
+  // Facoltativo: chiamato una volta per ogni trasmissione di voce che porta un nominativo (con la posizione, o con pos.valid = false se la stazione
+  // non la manda). Serve a mandare la posizione al server APRS e a dire perche' non si manda (aprs_gate.h). Non si chiama per la voce scartata
+  // perche' un altro sta parlando.
   void setPositionHandler(std::function<void(const std::string& callsign, const Position& pos, uint32_t nowMs)> f) { onPosition_ = f; }
 
  private:
@@ -144,6 +145,7 @@ class ReflectorCore {
   std::vector<Talk> recent_;
   std::function<void(const std::string&)> log_;
   std::function<void(const std::string&, const Position&, uint32_t)> onPosition_;
+  bool posReported_ = false;  // il gestore e' gia' stato chiamato per la trasmissione in corso
 };
 
 }  // namespace lcr

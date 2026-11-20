@@ -1,6 +1,7 @@
 // Invio delle posizioni al server APRS-IS (lib/voicecore/aprs_gate.h): formato dei pacchetti, valori della configurazione e regole di invio.
 #include <cstdio>
 #include <string>
+#include <vector>
 
 #include "aprs_gate.h"
 #include "testing.h"
@@ -165,8 +166,8 @@ static void testGateRules() {
   // Segnaposto, nominativo non APRS, posizione non valida
   g.onPosition("N0CALL", p, 5000);
   g.onPosition("IU5HJU/P", p, 5000);
-  g.onPosition("IW5AAA", Position(), 5000);
-  CHECK(g.pending() == 3 && g.stats().invalid == 3);
+  g.onPosition("IW5AAA", Position(), 5000);  // nessuna posizione: non e' un nominativo o una posizione sbagliati, ha un suo conteggio
+  CHECK(g.pending() == 3 && g.stats().invalid == 2 && g.stats().noPosition == 1);
   // Le righe escono nell'ordine e solo con il collegamento verificato
   CHECK(g.pop(line) && line.rfind("IU5HJU>APZVLR,qAR,N0CALL-10:!", 0) == 0);
   CHECK(g.pop(line) && line.rfind("IK5XXX>", 0) == 0);
@@ -174,6 +175,50 @@ static void testGateRules() {
   CHECK(!g.pop(line));
   CHECK(g.pending() == 1 && g.stats().sent == 2);
   CHECK(g.detail() == "rete caduta");
+}
+
+// Una riga di registro per ogni trasmissione che non genera un invio, con il motivo (e niente per chi viene accodato con il collegamento attivo)
+static void testLogReasons() {
+  AprsGate g;
+  std::vector<std::string> log;
+  g.setLog([&](const std::string& s) { log.push_back(s); });
+  const Position p = pos(437696000, 108807000);
+  // Spento: niente da dire
+  g.onPosition("IK5PWR", p, 1000);
+  g.onPosition("IK5PWR", Position(), 1000);
+  CHECK(log.empty());
+  AprsConfig cfg = goodConfig();
+  cfg.pass = "segreta99";
+  g.setConfig(cfg);
+  g.setState(AprsGate::State::Verified);
+  // Accodata con il collegamento attivo: l'invio lo scrive il collegamento ("inviato"), non qui
+  g.onPosition("IK5PWR", p, 1000);
+  CHECK(log.empty() && g.pending() == 1);
+  // Senza posizione: dice cosa controllare sulla scheda
+  g.onPosition("IW5AAA", Position(), 2000);
+  CHECK(log.size() == 1 && log[0].rfind("[aprs] IW5AAA: nessuna posizione nel pacchetto", 0) == 0 && log[0].find("pos acceso") != std::string::npos);
+  CHECK(g.stats().noPosition == 1 && g.stats().seen == 1);
+  // Troppo presto: dice da quanto e l'intervallo
+  g.onPosition("IK5PWR", p, 1000 + 125 * 1000u);
+  CHECK(log.size() == 2 && log[1] == "[aprs] IK5PWR: posizione gia' mandata 125 s fa (intervallo 600 s): non la rimando");
+  // Nominativi non ammessi
+  g.onPosition("N0CALL", p, 5000);
+  g.onPosition("IK5PWR/P", p, 5000);
+  CHECK(log.size() == 4 && log[2] == "[aprs] N0CALL: nominativo segnaposto, non lo mando");
+  CHECK(log[3].find("IK5PWR/P: nominativo non valido per APRS") != std::string::npos);
+  // Posizione fuori dai limiti
+  g.onPosition("IW5BBB", pos(900000001, 0), 6000);
+  CHECK(log.size() == 5 && log[4] == "[aprs] IW5BBB: posizione non valida: non la mando");
+  // Collegamento non ancora attivo: accodata, e lo dice
+  g.setState(AprsGate::State::Connecting);
+  g.onPosition("IW5CCC", p, 7000);
+  CHECK(log.size() == 6 && log[5].find("IW5CCC: in coda: il collegamento con il server APRS non e' ancora attivo") != std::string::npos);
+  // Password non accettata
+  g.setState(AprsGate::State::Unverified);
+  g.onPosition("IW5DDD", p, 8000);
+  CHECK(log.size() == 7 && log[6] == "[aprs] IW5DDD: il server APRS non accetta la password: non la mando");
+  // Il registro non contiene mai la password
+  for (const auto& s : log) CHECK(s.find("segreta99") == std::string::npos);
 }
 
 static void testServerReplies() {
@@ -238,6 +283,7 @@ int main() {
   testFileRoundTrip();
   testLoginLine();
   testGateRules();
+  testLogReasons();
   testServerReplies();
   testQueueLimitAndConfigChange();
   TEST_MAIN_END();

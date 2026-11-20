@@ -13,6 +13,7 @@
 
 #include <cstdint>
 #include <deque>
+#include <functional>
 #include <map>
 #include <mutex>
 #include <string>
@@ -72,17 +73,20 @@ class AprsGate {
   enum class State { Off, Connecting, Verified, Unverified, Down };
   struct Stats {
     uint32_t seen = 0;          // posizioni arrivate dal reflector
+    uint32_t noPosition = 0;    // trasmissioni con il nominativo ma senza posizione (sulla scheda "pos" spenta o nessuna posizione impostata)
     uint32_t sent = 0;          // righe consegnate al collegamento
     uint32_t tooSoon = 0;       // una stazione che si ripeteva prima del tempo
     uint32_t invalid = 0;       // nominativo segnaposto o non APRS, posizione non valida
     uint32_t dropped = 0;       // righe perse perche' il collegamento non c'era (coda piena o senza verifica)
   };
 
+  // Facoltativo: una riga di registro per ogni trasmissione che NON genera un invio, con il motivo (nessuna posizione, nominativo non valido, troppo presto...).
+  void setLog(std::function<void(const std::string&)> f);
   void setConfig(const AprsConfig& c);
   AprsConfig config() const;
   uint32_t generation() const;  // cresce a ogni cambio di configurazione: chi tiene il socket si ricollega
 
-  // Una stazione ha trasmesso con questa posizione. Accoda la riga se e' il caso.
+  // Una stazione ha trasmesso (pos.valid = false se non manda la posizione). Accoda la riga se e' il caso, altrimenti scrive nel registro perche' no.
   void onPosition(const std::string& callsign, const Position& pos, uint32_t nowMs);
 
   // Per chi tiene il collegamento.
@@ -98,6 +102,7 @@ class AprsGate {
   Stats stats() const;
 
  private:
+  std::string decide(const std::string& callsign, const Position& pos, uint32_t nowMs);
   mutable std::mutex m_;
   AprsConfig cfg_;
   uint32_t gen_ = 1;
@@ -105,6 +110,7 @@ class AprsGate {
   std::string detail_;
   std::deque<std::string> queue_;
   std::map<std::string, uint32_t> lastSent_;  // nominativo -> millisecondi dell'ultimo invio
+  std::function<void(const std::string&)> log_;
   Stats stats_;
 };
 
