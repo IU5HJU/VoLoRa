@@ -18,7 +18,7 @@ ok() { echo "ok    $1"; }
 ko() { echo "FALLITO $1"; fail=1; }
 check() { if grep -q -- "$2" "$1"; then ok "$3"; else ko "$3"; fi; }
 
-build/vlreflector --config "$D/ref.conf" --port $PORT --id 1000 --voice-mode 1 --web $WEB --public-web $PUB --public-bind 127.0.0.1 --public-name prova.example:$PORT --duration 220 > "$D/ref.out" 2>&1 &
+build/vlreflector --config "$D/ref.conf" --port $PORT --id 1000 --voice-mode 1 --web $WEB --public-web $PUB --public-bind 127.0.0.1 --public-name prova.example:$PORT --duration 330 > "$D/ref.out" 2>&1 &
 REF=$!
 sleep 0.7
 TOKEN=$(tr -d '\n' < "$D/admin.token")
@@ -112,26 +112,29 @@ A4=$(api -X POST -d "enabled=0&host=127.0.0.1&port=$APRS&login=N0CALL-10&pass=&i
 echo "$A4" | grep -q '"enabled":false' && echo "$A4" | grep -q '"passSet":true' && ok "APRS: spento, la password resta salvata" || ko "APRS: spegnimento ($A4)"
 
 # Qualita' dei collegamenti: il nodo manda il rapporto di ricezione (RSSI, SNR, pacchetti mancanti in radio) e il reflector lo attacca alla trasmissione.
+# Si guarda la pagina finche' il risultato compare (fino a 25 s): su una macchina lenta il nodo finto puo' metterci di piu' a collegarsi.
+poll() { local i; SQ=; for i in $(seq 1 $2); do SQ=$(api "http://127.0.0.1:$WEB/api/status"); echo "$SQ" | grep -q "$1" && return 0; sleep 1; done; return 1; }
+KEYA=000102030405060708090a0b0c0d0e0f
 # Prima una trasmissione con un segnale buono ma con la rete che perde un pacchetto ogni cinque: il giudizio dice "rete"
-build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 60 --quality -92 4.5 0 0 --drop 5 --duration 16 > "$D/q1.out" 2>&1
-sleep 0.5
-check "$D/q1.out" "mandato il rapporto di ricezione: RSSI -92 dBm, SNR 4.5 dB" "qualita': il nodo manda il rapporto di ricezione"
-SQ=$(api "http://127.0.0.1:$WEB/api/status")
-echo "$SQ" | grep -q '"radio":{"rssi":-92,"rssiMin":-97,"snrValid":true,"snr":4.50' && ok "qualita': la trasmissione ha il segnale del nodo (RSSI -92, SNR 4,5 dB)" || ko "qualita': segnale nel JSON ($SQ)"
+build/vlnode --id 2 --peer-id 1000 --key $KEYA --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 60 --quality -92 4.5 0 0 --drop 5 --duration 25 > "$D/q1.out" 2>&1 &
+QP=$!
+poll '"radio":{"rssi":-92,"rssiMin":-97,"snrValid":true,"snr":4.50' 25 && ok "qualita': la trasmissione ha il segnale del nodo (RSSI -92, SNR 4,5 dB)" || ko "qualita': segnale nel JSON ($SQ) | nodo: $(cat "$D/q1.out")"
 echo "$SQ" | grep -q '"verdict":"net","verdictText":"rete"' && ok "qualita': i pacchetti persi fra nodo e reflector danno il giudizio \"rete\"" || ko "qualita': giudizio rete ($SQ)"
 echo "$SQ" | grep -qE '"net":\{"packets":[0-9]+,"seqMissing":[1-9][0-9]*,"gaps":[1-9]' && ok "qualita': buchi di rete e di sequenza visti dal reflector" || ko "qualita': buchi ($SQ)"
+wait $QP
+check "$D/q1.out" "mandato il rapporto di ricezione: RSSI -92 dBm, SNR 4.5 dB" "qualita': il nodo manda il rapporto di ricezione"
 check "$D/ref.out" "qualita' IZ5IOF via .*: rete; radio SNR 4.5 dB" "qualita': una riga di registro con il giudizio"
 # Poi una trasmissione con la rete in ordine ma il segnale debole e pacchetti persi in radio: il giudizio dice "radio"
-build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 40 --quality -120 -9 3 1 --duration 14 > "$D/q2.out" 2>&1
-sleep 0.5
-SQ=$(api "http://127.0.0.1:$WEB/api/status")
-echo "$SQ" | grep -q '"verdict":"radio","verdictText":"radio"' && echo "$SQ" | grep -q '"missing":3,"crc":1' && ok "qualita': segnale debole e pacchetti persi in radio danno il giudizio \"radio\"" || ko "qualita': giudizio radio ($SQ)"
+build/vlnode --id 2 --peer-id 1000 --key $KEYA --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 40 --quality -120 -9 3 1 --duration 25 > "$D/q2.out" 2>&1 &
+QP=$!
+poll '"verdict":"radio","verdictText":"radio"' 25 && echo "$SQ" | grep -q '"missing":3,"crc":1' && ok "qualita': segnale debole e pacchetti persi in radio danno il giudizio \"radio\"" || ko "qualita': giudizio radio ($SQ) | nodo: $(cat "$D/q2.out")"
 echo "$SQ" | grep -q '"lostDg":[1-9]' && ok "qualita': i datagrammi persi si contano anche per il nodo collegato" || ko "qualita': datagrammi persi del client ($SQ)"
-# Una trasmissione di un nodo che non manda il rapporto (firmware vecchio): "n.d." e nessun errore
-build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 20 --duration 9 > "$D/q3.out" 2>&1
-sleep 0.5
-SQ=$(api "http://127.0.0.1:$WEB/api/status")
-echo "$SQ" | grep -q '"radio":null,"verdict":"nd","verdictText":"n.d."' && ok "qualita': senza rapporto del nodo il giudizio e' n.d." || ko "qualita': senza rapporto ($SQ)"
+wait $QP
+# Una trasmissione di un nodo che non manda il rapporto (firmware vecchio): "n.d." e nessun errore. Si guarda la trasmissione piu' recente (la prima della lista)
+build/vlnode --id 2 --peer-id 1000 --key $KEYA --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 20 --duration 20 > "$D/q3.out" 2>&1 &
+QP=$!
+poll '"recent":\[{"client":"nodoA","callsign":"IZ5IOF","agoMs":[0-9]*,"durationMs":[0-9]*,"packets":[0-9]*,"session":[0-9]*,"mode":"Range 1200","net":{[^}]*},"radio":null,"verdict":"nd","verdictText":"n.d."' 20 && ok "qualita': senza rapporto del nodo il giudizio e' n.d." || ko "qualita': senza rapporto ($SQ) | nodo: $(cat "$D/q3.out")"
+wait $QP
 
 # password al posto del token: si sceglie con --set-password e si applica con un reload (SIGHUP)
 OLDTOKEN=$TOKEN
