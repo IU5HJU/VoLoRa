@@ -78,7 +78,7 @@ Sicurezza:
 
 ## Server APRS (posizione delle stazioni)
 
-19/11/2026, **da provare su un vero server APRS-IS**. Il reflector può mandare sul server APRS-IS la **posizione delle stazioni che trasmettono**, così compaiono su aprs.fi e simili. È **spento di base**: lo accende il sysop dalla pagina di amministrazione, nel riquadro **Server APRS**.
+19/11/2026, **provato il 20/11/2026 su un vero server APRS-IS** (la stazione compare su aprs.fi con il simbolo scelto: vedi [prove.md](prove.md)). Il reflector può mandare sul server APRS-IS la **posizione delle stazioni che trasmettono**, così compaiono su aprs.fi e simili. È **spento di base**: lo accende il sysop dalla pagina di amministrazione, nel riquadro **Server APRS**.
 
 Cosa scrive il sysop:
 - **Indirizzo del server APRS-IS** (per esempio `rotate.aprs2.net`) e **porta** (14580 di base, quella dei server con filtro: accetta anche chi solo manda);
@@ -99,7 +99,7 @@ Dove sta la password: nel file **`aprs.conf`**, accanto al file dei client (o do
 Attenzione:
 - **Pubblicare su APRS è pubblico**: chiunque nel mondo vede la posizione. Il reflector manda solo posizioni che la stazione ha scelto di trasmettere via radio, ma chi gestisce un reflector sta pubblicando a nome di altri: vale la pena dirlo ai collegati.
 - Chi gestisce un reflector **si fida dei nodi registrati**: un nodo registrato può scrivere un nominativo qualsiasi nel pacchetto (la firma dice chi ha mandato il pacchetto al reflector, non chi era davanti alla radio), quindi può far comparire su APRS una posizione con un nominativo non suo. È lo stesso limite di tutta la rete (vedi "Limiti noti").
-- Il formato della riga non è stato provato su un vero server APRS-IS (la prova sul PC usa un server finto: `make reflector-smoke`, `tests/fake_aprs_server.py`). Per controllare soltanto che il server si raggiunga, senza pubblicare niente, usa la password `-1`.
+- Il formato della riga e l'accesso con una password APRS-IS vera sono stati provati il 20/11/2026 su un vero server APRS-IS ([prove.md](prove.md)); resta da provare solo **più di una stazione** e un'altra scheda oltre alla T-Beam/T3 del sysop. Sul PC la prova usa un server finto: `make reflector-smoke`, `tests/fake_aprs_server.py`. Per controllare soltanto che il server si raggiunga, senza pubblicare niente, usa la password `-1`.
 
 ## La pagina pubblica (per i colleghi)
 
