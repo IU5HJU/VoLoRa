@@ -113,15 +113,29 @@ tail -n0 -F cattura.txt | build/lcr_live --standard | c2dec 3200 - - | aplay -q 
 
 Il ricevitore usa il blocco `frame_sync` ... `crc_verif` di `gr-lora_sdr` come nell'esempio `examples/lora_RX.py` del progetto; se una versione futura cambia la firma dei blocchi, confronta `tools/sdr/lora_rx.py` con quell'esempio.
 
-## 5. Morse a tono in FM (ripetitore e nodo, 18/11/2026)
+## 5. Morse a tono in FM (ripetitore e nodo): testo, tono, deviazione e frequenza (aggiornato il 20/11/2026)
 
-L'identificativo in Morse non è LoRa: è FM stretta con un tono di 700 Hz (15 parole al minuto, ±2,5 kHz). La chiavetta lo ascolta con `rtl_fm` e `tools/sdr/analizza_morse.py` misura **tono, lunghezza del punto e della linea, parole al minuto** e **decodifica il nominativo**.
+L'identificativo in Morse non è LoRa: è **FSK a due livelli** (la frequenza salta fra portante +2,5 kHz e portante −2,5 kHz, 700 volte al secondo: per un ricevitore FM è un fischio a 700 Hz, 15 parole al minuto; le pause sono silenzio, vedi [studio-identificativo-fm.md](studio-identificativo-fm.md)).
 
-Il modo più semplice è lo script **`tools/sdr/morse-fm.sh`** (si collega a un'icona come `ricevitore-live.sh`; aggiorna da solo il clone): chiede frequenza (di base 430.000 MHz, l'uscita del ripetitore), guadagno e secondi di registrazione; quando compare «REGISTRO» si manda **IDENTIFICA** dalla stazione del sysop. A mano:
+Lo script **`tools/sdr/morse-fm.sh`** (si collega a un'icona, modello in `tools/icone/`; aggiorna da solo il clone) chiede frequenza (di base 430.000 MHz, l'uscita del ripetitore), guadagno e secondi di registrazione; quando compare «REGISTRO» si manda **IDENTIFICA** dalla stazione del sysop. Registra il segnale **grezzo I/Q** con `rtl_sdr` (sintonizzandosi 25 kHz sotto, per non cadere sul disturbo al centro delle chiavette) e `tools/sdr/deviazione_fm.py` lo demodula con il calcolo, così la frequenza istantanea esce **in Hz** e si misurano:
+- la **deviazione**: metà della distanza fra i due livelli;
+- la **frequenza della portante** (a metà fra i due livelli), come scostamento dalla frequenza nominale: comprende l'errore di frequenza della chiavetta, che va conosciuto a parte;
+- il **tono**, la **velocità** (parole al minuto) e il **testo** del Morse;
+- il rapporto segnale/fondo.
+
+A mano:
 
 ```bash
-timeout 60 /usr/bin/rtl_fm -f 430.0M -M fm -s 24000 -g 20 > morse.raw    # con il programma di sistema, non quello di conda
-conda activate lora && python3 tools/sdr/analizza_morse.py morse.raw
+/usr/bin/rtl_sdr -f 429.975M -s 240000 -g 20 -n 14400000 cattura.iq        # 60 s, con il programma di sistema, non quello di conda
+conda activate lora && python3 tools/sdr/deviazione_fm.py cattura.iq --sintonia 429.975e6 --freq 430.0e6 --wav morse.wav
 ```
 
-Si legge, per esempio: `Morse a tono: N0CALL`, `tono 700 Hz, punto 80 ms, linea 240 ms, 15.0 parole al minuto`. La **deviazione** (±2,5 kHz) non si misura da qui, perché l'audio di `rtl_fm` non è tarato in kHz. La prova sul PC è `tests/sdr/test_morse.py` (Morse sintetico con rumore: testo, tono e velocità a 12, 15 e 20 parole al minuto).
+Si legge, per esempio: `Morse a tono: N0CALL`, `punto 80 ms ... 15.0 parole al minuto`, `Deviazione: +-2.50 kHz`, `Tono: 700 Hz`, `Portante: 430.0003 MHz`. Lo stesso comando misura anche `CFG RADIOTEST TONE` (tono continuo) e `CFG RADIOTEST CARRIER` (portante senza modulazione).
+
+Cose da sapere:
+- Misura la modulazione **a due livelli** della scheda. Con un tono sinusoidale leggerebbe circa 0,7 volte la deviazione vera.
+- Con la scheda **troppo vicina** la chiavetta si satura e la misura sbaglia: abbassa il guadagno o allontanala (almeno un metro).
+- La registrazione pesa circa 0,5 MB al secondo (60 s: 29 MB); lo script la cancella dopo la misura se non gli dici di tenerla. In memoria servono circa 400 MB.
+- **Non ancora provato con una chiavetta vera**: sul PC è provato con segnali sintetici (`tests/sdr/test_deviazione.py`: deviazione 1,5 e 2,5 kHz, portante da −18 a +25 kHz, rumore fino a 5 dB nella banda di 240 kHz, tono continuo, solo rumore). Nei sintetici la deviazione si legge con un errore di circa −1,5% (filtro di canale), la portante entro 60 Hz.
+
+**Solo l'audio** (senza deviazione): `tools/sdr/analizza_morse.py` legge anche l'audio di `rtl_fm` (`timeout 60 /usr/bin/rtl_fm -f 430.0M -M fm -s 24000 -g 20 > morse.raw`, poi `python3 tools/sdr/analizza_morse.py morse.raw`) e misura tono, punto, parole al minuto e testo; l'audio di `rtl_fm` non è tarato in kHz, quindi la deviazione non si legge da lì. La prova sul PC è `tests/sdr/test_morse.py` (Morse sintetico con rumore: testo, tono e velocità a 12, 15 e 20 parole al minuto).

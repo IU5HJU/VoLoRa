@@ -25,7 +25,8 @@ Installa i pacchetti di sistema, esclude il modulo televisivo della chiavetta, m
 | `sdr/frame_assembler.py` | Ricostruisce i pacchetti dai byte e dai tag di GNU Radio (senza dipendere da GNU Radio) | `make test-py` |
 | `lcr_live.cpp` (`make lcr_live`) | Ricostruisce i pacchetti **man mano che arrivano**, con la stessa logica del firmware; scrive i frame Codec2 a ritmo reale | `tests/test_live.cpp` |
 | `lcr_decode.cpp` (`make lcr_decode`) | La stessa ricostruzione **dopo**, da una cattura intera: sessioni vocali e prove di collegamento. Serve a **riascoltare le catture**; lo usa anche il riepilogo finale di `ricevitore-live.sh` | `tests/test_decode.cpp` |
-| `sdr/morse-fm.sh`, `sdr/analizza_morse.py` | Ascolto e misura dell'identificativo in Morse a tono in FM del ripetitore e del nodo (tono, velocità, testo) con `rtl_fm` | `make test-py` (`test_morse.py`) |
+| `sdr/morse-fm.sh`, `sdr/deviazione_fm.py` | Ascolto e **misura** dell'identificativo in Morse in FM del ripetitore e del nodo: **deviazione**, **frequenza della portante**, tono, velocità e testo. Registra il segnale grezzo con `rtl_sdr` e lo demodula il programma (icona in `icone/`). Misura anche `RADIOTEST TONE` e `CARRIER` | `make test-py` (`test_deviazione.py`, con segnali sintetici; non ancora con una chiavetta vera) |
+| `sdr/analizza_morse.py` | Solo l'audio di `rtl_fm` (tono, velocità, testo; senza deviazione) | `make test-py` (`test_morse.py`) |
 
 Il ricevitore **non in tempo reale** (un'icona a parte che registrava e decodificava alla fine) è stato dismesso il 20/11/2026: `ricevitore-live.sh` fa le stesse cose e in più la voce subito. Il percorso su file (`lora_rx.py` poi `lcr_decode`) resta per riascoltare una cattura.
 

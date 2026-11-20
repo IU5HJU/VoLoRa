@@ -83,7 +83,8 @@ build/lcr_decode: tools/lcr_decode.cpp tools/lcr_decode_core.h $(CORE) $(HDRS)
 test-py:
 	python3 tests/sdr/test_assembler.py
 	python3 tests/sdr/test_morse.py
+	python3 tests/sdr/test_deviazione.py
 	python3 tests/site/test_versions.py
 	$(MAKE) --no-print-directory codec_compare
 	python3 tests/codec/test_compare.py
-	python3 -m py_compile tools/sdr/lora_rx.py tools/sdr/analizza_morse.py
+	python3 -m py_compile tools/sdr/lora_rx.py tools/sdr/analizza_morse.py tools/sdr/deviazione_fm.py

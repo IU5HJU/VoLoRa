@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Morse FM: deviazione e frequenza
+Comment=VoLoRa: registra l'identificativo in Morse in FM del ripetitore o del nodo e misura deviazione, frequenza, tono e testo
+Exec=/home/UTENTE/VoLoRa/tools/sdr/morse-fm.sh
+Icon=audio-input-microphone
+Terminal=true
+Categories=HamRadio;

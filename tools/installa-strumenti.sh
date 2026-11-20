@@ -157,7 +157,7 @@ if [ "$ICONE" = 1 ]; then
   if [ -d "$DESK" ]; then
     for f in "$REPO"/tools/icone/*.desktop; do
       n=$(basename "$f")
-      [ "$SDR" = 0 ] && [ "$n" = "VoLoRa-Ricevitore-SDR-live.desktop" ] && continue
+      if [ "$SDR" = 0 ]; then case "$n" in *Ricevitore-SDR*|*Morse-FM*) continue ;; esac; fi
       if [ "$PROVA" = 1 ]; then echo "  (prova) $n -> $DESK"; continue; fi
       sed "s|/home/UTENTE/VoLoRa|$REPO|g" "$f" > "$DESK/$n" && chmod +x "$DESK/$n" && echo "  $n"
     done
