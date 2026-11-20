@@ -13,6 +13,8 @@ NESDR -> GNU Radio + gr-lora_sdr -> pacchetti in esadecimale -> lcr_decode -> fr
 
 ## 1. Installazione (Ubuntu, anche la 20.04)
 
+**Su un PC nuovo basta uno script** (20/11/2026): `git clone https://github.com/IU5HJU/VoLoRa.git ~/VoLoRa` e poi `~/VoLoRa/tools/installa-strumenti.sh` fanno tutti i passi qui sotto (pacchetti, blacklist, conda con l'ambiente `lora`, compilazione, icone) e si possono rilanciare. I comandi che seguono sono la stessa cosa a mano, utile per capire cosa succede o se qualcosa va storto.
+
 GNU Radio 3.10 e `gr-lora_sdr` si installano con **conda**, che funziona su qualunque versione di Ubuntu (su Ubuntu 20.04 `apt` ha solo GNU Radio 3.8, che non basta). Servono circa 3 GB liberi.
 
 ```bash
