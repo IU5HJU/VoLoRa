@@ -25,6 +25,7 @@ struct Rig {
   RepeaterUplink up;
   NodeLink refl;  // il reflector (un solo client)
   std::vector<Packet> atReflector;
+  std::vector<QualityReport> reports;  // i rapporti di ricezione arrivati al reflector finto
   uint32_t t = 1000;
   static NodeLink::Config cfg(uint32_t id, uint32_t peer) {
     NodeLink::Config c;
@@ -47,6 +48,10 @@ struct Rig {
         if (rx.kind == NodeLink::Kind::Packet) {
           Packet p;
           if (decodePacket(rx.packet, rx.packetLen, p)) atReflector.push_back(p);
+        }
+        if (rx.kind == NodeLink::Kind::Control && rx.type == kNodeQuality) {
+          QualityReport q;
+          if (decodeQualityReport(rx.payload, rx.payloadLen, q)) reports.push_back(q);
         }
       }
       while (!toUplink.empty()) {
@@ -203,10 +208,60 @@ static void testLinkDownDrops() {
   CHECK(r.atReflector.size() == n && r.up.stats().droppedLinkDown >= 1);
 }
 
+// Il rapporto di ricezione della RX: a fine trasmissione arriva al reflector con RSSI, SNR, pacchetti e buchi
+static void testQualityReport() {
+  Rig r(kModeCodec2_3200);
+  r.up.setRadioInfo(7);
+  r.run(3000);
+  CHECK(r.up.linkUp(r.t));
+  Packet p;
+  p.mode = kModeCodec2_3200;
+  p.session = 0x0A0B;
+  // sequenza 0,1,2,4,5 (manca il 3), SNR che scende, un errore CRC in mezzo, poi il pacchetto di fine
+  const uint8_t seqs[] = {0, 1, 2, 4, 5};
+  uint32_t crc = 7;
+  for (size_t i = 0; i < sizeof(seqs); i++) {
+    p.seq = seqs[i];
+    p.flags = (seqs[i] == 0 ? kFlagStart : 0) | (i == 4 ? kFlagEnd : 0);
+    if (i == 3) crc += 1;
+    CHECK(r.up.fromRadio(p, r.t, -100 + static_cast<int>(i), true, 2.0f - static_cast<float>(i), crc));
+    r.run(400);
+  }
+  CHECK(r.reports.empty());  // ancora la parita'
+  r.run(2000);
+  CHECK(r.reports.size() == 1 && r.up.stats().qualityReports == 1 && r.up.lastReport() != nullptr);
+  if (!r.reports.empty()) {
+    const QualityReport& q = r.reports[0];
+    CHECK(q.session == 0x0A0B && q.sf == 7 && q.mode == kModeCodec2_3200 && q.rxPackets == 5 && q.missing == 1 && q.crcErrors == 1 && q.ended && q.snrValid);
+    CHECK(q.rssiMinDbm == -100 && q.rssiAvgDbm == -98 && q.snrMinDb < -1.9f && q.snrMinDb > -2.1f);
+  }
+  CHECK(r.atReflector.size() == 5);  // i pacchetti sono passati come sempre
+  // La voce scartata perche' parlava la rete non genera rapporto: nessun pacchetto e' andato al reflector
+  const size_t before = r.reports.size();
+  Packet blocked;
+  blocked.mode = kModeCodec2_3200;
+  blocked.session = 0x0C0D;
+  blocked.seq = 0;
+  blocked.flags = kFlagStart | kFlagEnd;
+  uint8_t wire[kMaxWireBytes];
+  Packet net = blocked;
+  net.session = 0x0E0F;
+  net.flags = kFlagStart | kFlagRelayed;
+  const size_t nw = encodePacket(net, wire, sizeof(wire));
+  uint8_t dg[kNodeMaxDatagram];
+  const size_t k = r.refl.makePacket(wire, nw, dg, sizeof(dg));
+  r.toUplink.push_back(Bytes(dg, dg + k));
+  r.pump();
+  CHECK(!r.up.fromRadio(blocked, r.t, -90, true, 3.0f, crc));
+  r.run(6000);
+  CHECK(r.reports.size() == before);
+}
+
 int main() {
   testLinkAndRadioToNet();
   testNetToRadio();
   testFirstComeFirstServed();
   testLinkDownDrops();
+  testQualityReport();
   TEST_MAIN_END();
 }

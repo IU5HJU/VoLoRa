@@ -288,6 +288,38 @@ static void testPublicAddress() {
   CHECK(rx.kind == K::BadSignature && r.b.peerPublicAddress() == 0);
 }
 
+// Il rapporto di ricezione (tipo QUALITY) arriva come un controllo valido con il suo contenuto, e i buchi nel contatore si contano come datagrammi persi.
+static void testQualityAndLoss() {
+  Pair p;
+  handshake(p);
+  CHECK(p.b.stats().lost == 0);
+  uint8_t buf[kNodeMaxDatagram];
+  // un rapporto da a verso b: tipo, contenuto e collegamento che resta vivo
+  const uint8_t report[5] = {1, 2, 3, 4, 5};
+  size_t n = p.a.makeQuality(report, sizeof(report), buf, sizeof(buf));
+  CHECK(n > 0);
+  NodeLink::Rx& rx = p.b.onDatagram(buf, n, p.t + 10);
+  CHECK(rx.kind == K::Control && rx.type == kNodeQuality && rx.payloadLen == 5 && memcmp(rx.payload, report, 5) == 0);
+  CHECK(p.b.linkUp(p.t + 10) && p.b.stats().lost == 0);
+  // un pacchetto: stesso accesso al contenuto, tipo PACKET
+  const uint8_t wire[3] = {9, 8, 7};
+  n = p.a.makePacket(wire, sizeof(wire), buf, sizeof(buf));
+  NodeLink::Rx& rp = p.b.onDatagram(buf, n, p.t + 20);
+  CHECK(rp.kind == K::Packet && rp.type == kNodePacket && rp.packetLen == 3 && p.b.stats().lost == 0);
+  // tre datagrammi spediti e persi per strada: il quarto arriva e il buco si conta
+  for (int i = 0; i < 3; i++) p.a.makePacket(wire, sizeof(wire), buf, sizeof(buf));
+  n = p.a.makePacket(wire, sizeof(wire), buf, sizeof(buf));
+  NodeLink::Rx& rl = p.b.onDatagram(buf, n, p.t + 30);
+  CHECK(rl.kind == K::Packet && p.b.stats().lost == 3);
+  // senza buchi non cambia niente, e un datagramma ripetuto non si conta due volte
+  n = p.a.makePacket(wire, sizeof(wire), buf, sizeof(buf));
+  p.b.onDatagram(buf, n, p.t + 40);
+  CHECK(p.b.stats().lost == 3);
+  CHECK(p.b.onDatagram(buf, n, p.t + 50).kind == K::Replay && p.b.stats().lost == 3);
+  // dall'altra parte (b verso a) non c'e' stato nessun buco
+  CHECK(p.a.stats().lost == 0);
+}
+
 int main() {
   testHandshake();
   testPacketFlow();
@@ -297,5 +329,6 @@ int main() {
   testChallengeRateLimit();
   testMaintenance();
   testPublicAddress();
+  testQualityAndLoss();
   TEST_MAIN_END();
 }

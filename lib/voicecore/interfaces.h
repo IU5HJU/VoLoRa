@@ -60,6 +60,8 @@ class IRadio {
   // SNR (dB) dell'ultimo pacchetto ricevuto, se la radio lo fornisce.
   virtual bool hasSnr() const { return false; }
   virtual float lastSnr() const { return 0.0f; }
+  // Errori CRC visti dalla radio in tutto (per il rapporto di ricezione del nodo: quanti pacchetti si sono persi per un CRC sbagliato). 0 se non li conta.
+  virtual uint32_t rxCrcErrors() const { return 0; }
 };
 
 class ICodec {

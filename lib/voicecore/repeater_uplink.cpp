@@ -22,7 +22,7 @@ bool RepeaterUplink::takeVoice(int who, const Packet& p, uint32_t nowMs) {
   return true;
 }
 
-bool RepeaterUplink::fromRadio(const Packet& p, uint32_t nowMs) {
+bool RepeaterUplink::fromRadio(const Packet& p, uint32_t nowMs, int rssiDbm, bool snrValid, float snrDb, uint32_t crcTotal) {
   const bool voice = p.mode == voiceMode_;
   if (voice && !takeVoice(1, p, nowMs)) {
     stats_.localBlocked++;
@@ -38,6 +38,7 @@ bool RepeaterUplink::fromRadio(const Packet& p, uint32_t nowMs) {
   if (k) {
     net_.sendDatagram(dg, k);
     stats_.toNet++;
+    if (voice) quality_.onPacket(p, rssiDbm, snrValid, snrDb, crcTotal, nowMs);
   }
   return true;
 }
@@ -72,6 +73,18 @@ void RepeaterUplink::tick(uint32_t nowMs) {
   const size_t m = link_.maintenance(nowMs, dg, sizeof(dg));
   if (m) net_.sendDatagram(dg, m);
   if (owner_ != 0 && nowMs - ownerMs_ > kHangMs) owner_ = 0;
+  QualityReport rep;
+  if (quality_.poll(nowMs, rep) && link_.linkUp(nowMs)) {
+    uint8_t qb[kQualityBytes];
+    const size_t qn = encodeQualityReport(rep, qb, sizeof(qb));
+    const size_t qk = qn ? link_.makeQuality(qb, qn, dg, sizeof(dg)) : 0;
+    if (qk) {
+      net_.sendDatagram(dg, qk);
+      stats_.qualityReports++;
+      lastReport_ = rep;
+      haveLastReport_ = true;
+    }
+  }
 }
 
 }  // namespace lcr

@@ -13,6 +13,7 @@
 #include "interfaces.h"
 #include "radio_test.h"
 #include "node_link.h"
+#include "quality_report.h"
 #include "repeater.h"
 #include "repeater_link.h"
 #include "settings.h"
@@ -46,6 +47,7 @@ class NodeCore {
     uint32_t sysopRejected = 0;   // comandi del sysop rifiutati (nominativo o firma sbagliati, nessuna chiave)
     uint32_t sysopReplies = 0;    // risposte firmate trasmesse
     uint32_t droppedOff = 0;      // pacchetti ricevuti in radio e non mandati in rete perche' il nodo e' spento dal sysop
+    uint32_t qualityReports = 0;  // rapporti di ricezione mandati al reflector (una trasmissione ciascuno)
   };
 
   // L'ultima stazione che e' transitata dal nodo (ricevuta in radio e mandata all'altro nodo): nominativo (nei pacchetti START e END), RSSI e SNR
@@ -100,6 +102,11 @@ class NodeCore {
   bool sysopOn() const { return sysopOn_; }
   bool txOff(uint32_t nowMs) { return sysopOn_ && !control_.txAllowed(nowMs); }  // spento dal sysop (o dalla sicurezza)
 
+  // L'SF della radio del nodo (per il margine del segnale nel rapporto di ricezione che il nodo manda al reflector a fine trasmissione, quality_report.h).
+  void setRadioInfo(uint8_t sf) { quality_.setInfo(sf); }
+  // L'ultimo rapporto mandato (nullptr se nessuno).
+  const QualityReport* lastReport() const { return haveLastReport_ ? &lastReport_ : nullptr; }
+
   bool linkUp(uint32_t nowMs) const { return link_.linkUp(nowMs); }
   // L'indirizzo pubblico della scheda (vedi NodeLink::setPublicAddress), da aggiornare quando cambia.
   void setPublicAddress(uint32_t ipv4) { link_.setPublicAddress(ipv4); }
@@ -127,6 +134,9 @@ class NodeCore {
   uint8_t voiceMode_;
   Stats stats_;
   Heard heard_;
+  QualityTracker quality_;
+  QualityReport lastReport_;
+  bool haveLastReport_ = false;
   char callsign_[kMaxCallsign + 1] = {0};
   uint32_t beaconIntervalMs_ = 0;
   uint32_t freqKhz_ = 0;

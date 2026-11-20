@@ -57,7 +57,7 @@ class RadioLora : public lcr::IRadio {
   // tra i pacchetti del trasmettitore, il pacchetto successivo puo' sovrascrivere quello non ancora letto.
   uint32_t txCount() const { return txCount_; }  // trasmissioni fatte da questa radio (la scheda RX del ripetitore deve restare a 0)
   uint32_t rxPackets() const { return rxPackets_; }
-  uint32_t rxCrcErrors() const { return rxCrcErrors_; }
+  uint32_t rxCrcErrors() const override { return rxCrcErrors_; }
   uint32_t rxMaxDelayMs() const { return rxMaxDelayUs_ / 1000; }
   uint32_t rxOverwritten() const { return rxOverwritten_; }  // interrupt arrivati prima di aver letto il precedente
   void resetRxStats() {

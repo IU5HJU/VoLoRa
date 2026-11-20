@@ -328,6 +328,27 @@ struct Admin {
     return true;
   }
 
+  // La qualita' di una trasmissione, come pezzo di JSON da aggiungere all'oggetto: modo, quello che il reflector ha visto passare (rete), il rapporto del nodo (radio)
+  // se e' arrivato e il giudizio (docs/reflector.md, "Qualita' dei collegamenti").
+  std::string talkQualityJson(const ReflectorCore::Talk& r) const {
+    const Judgement j = ReflectorCore::judge(r);
+    const uint8_t mode = r.haveReport && r.report.mode ? r.report.mode : static_cast<uint8_t>(voiceMode);
+    std::ostringstream o;
+    o << ",\"session\":" << r.session << ",\"mode\":\"" << (mode == 4 ? "Standard 3200" : "Range 1200") << "\",\"net\":{\"packets\":" << r.netPackets << ",\"seqMissing\":" << r.seqMissing
+      << ",\"gaps\":" << j.netGaps << ",\"lost\":" << j.netLost << ",\"gapMaxMs\":" << r.gapMaxMs << "},\"radio\":";
+    if (r.haveReport) {
+      char b[260];
+      snprintf(b, sizeof(b), "{\"rssi\":%d,\"rssiMin\":%d,\"snrValid\":%s,\"snr\":%.2f,\"snrMin\":%.2f,\"marginAvg\":%.2f,\"marginMin\":%.2f,\"rx\":%u,\"missing\":%u,\"crc\":%u,\"sf\":%u,\"total\":%u}",
+               r.report.rssiAvgDbm, r.report.rssiMinDbm, r.report.snrValid ? "true" : "false", static_cast<double>(r.report.snrAvgDb), static_cast<double>(r.report.snrMinDb),
+               static_cast<double>(j.marginAvgDb), static_cast<double>(j.marginMinDb), r.report.rxPackets, r.report.missing, r.report.crcErrors, r.report.sf, r.report.totalDeclared);
+      o << b;
+    } else {
+      o << "null";
+    }
+    o << ",\"verdict\":\"" << verdictCode(j.verdict) << "\",\"verdictText\":\"" << verdictText(j.verdict) << "\"";
+    return o.str();
+  }
+
   std::string statusJson(uint32_t now) const {
     std::ostringstream o;
     o << "{\"reflector\":{\"id\":" << reflectorId << ",\"voiceMode\":" << voiceMode << ",\"port\":" << port << ",\"uptimeS\":" << (now - startMs) / 1000
@@ -346,14 +367,14 @@ struct Admin {
       const int ei = findEntryById(entries, c.id);
       o << (first ? "" : ",") << "{\"id\":" << c.id << ",\"name\":\"" << jsonEscape(c.name) << "\",\"call\":\"" << jsonEscape(ei >= 0 ? entries[static_cast<size_t>(ei)].name : c.name)
         << "\",\"label\":\"" << jsonEscape(ei >= 0 ? entries[static_cast<size_t>(ei)].label : "") << "\",\"up\":" << (c.up ? "true" : "false") << ",\"seenMs\":" << seen
-        << ",\"in\":" << c.packetsIn << ",\"out\":" << c.packetsOut << ",\"endpoint\":\"" << (c.haveEndpoint ? jsonEscape(epText(c.endpoint)) : "") << "\",\"public\":\"" << (c.declaredAddr ? ipText(c.declaredAddr) : "") << "\",\"nodeIp\":\"" << jsonEscape(nodeIpText(c)) << "\"}";
+        << ",\"in\":" << c.packetsIn << ",\"out\":" << c.packetsOut << ",\"lostDg\":" << c.lostDatagrams << ",\"rxDg\":" << c.rxDatagrams << ",\"endpoint\":\"" << (c.haveEndpoint ? jsonEscape(epText(c.endpoint)) : "") << "\",\"public\":\"" << (c.declaredAddr ? ipText(c.declaredAddr) : "") << "\",\"nodeIp\":\"" << jsonEscape(nodeIpText(c)) << "\"}";
       first = false;
     }
     o << "],\"recent\":[";
     first = true;
     for (const auto& r : core->recentTalks()) {
       o << (first ? "" : ",") << "{\"client\":\"" << jsonEscape(r.client) << "\",\"callsign\":\"" << jsonEscape(r.callsign) << "\",\"agoMs\":" << (now - r.lastMs)
-        << ",\"durationMs\":" << (r.lastMs - r.startMs) << ",\"packets\":" << r.packets << "}";
+        << ",\"durationMs\":" << (r.lastMs - r.startMs) << ",\"packets\":" << r.packets << talkQualityJson(r) << "}";
       first = false;
     }
     const ReflectorCore::Stats& s = core->stats();

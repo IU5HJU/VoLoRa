@@ -15,7 +15,8 @@
 //
 // Tipi: HELLO e KEEPALIVE (contenuto = 5 byte: bit 0 del primo = "ho autenticato il tuo id di avvio", bit 1 = "il collegamento per me e' attivo", poi quell'id di avvio;
 // se il nodo conosce il proprio indirizzo pubblico ne porta 9, con in coda l'indirizzo IPv4 (4 byte): chi non lo conosce legge solo i primi 5), CHALLENGE (sfida: contenuto =
-// 8 byte casuali), RESPONSE (risposta: contenuto = gli stessi 8 byte), PACKET (contenuto = un pacchetto radio cosi' com'e').
+// 8 byte casuali), RESPONSE (risposta: contenuto = gli stessi 8 byte), PACKET (contenuto = un pacchetto radio cosi' com'e'), QUALITY (contenuto = il rapporto di
+// ricezione di una trasmissione, quality_report.h).
 // Il collegamento e' "attivo" per spedire solo quando i due nodi si sono autenticati a vicenda: ognuno dice all'altro, nei suoi HELLO e KEEPALIVE, che ha gia'
 // accettato il suo id di avvio, cosi' i pacchetti non partono prima che l'altro li accetti.
 //
@@ -44,7 +45,9 @@ constexpr uint32_t kNodeDeadMs = 60000;           // senza datagrammi validi il 
 constexpr uint32_t kNodeChallengeGapMs = 1000;    // una sfida al secondo al massimo
 constexpr uint32_t kNodeChallengeLifeMs = 10000;  // la risposta alla nostra sfida deve arrivare entro questo tempo
 
-enum NodeMsg : uint8_t { kNodeHello = 1, kNodeChallenge = 2, kNodeResponse = 3, kNodePacket = 4, kNodeKeepalive = 5 };
+// kNodeQuality (6, 20/11/2026): il rapporto di ricezione del nodo per il reflector (quality_report.h). Un'implementazione che non lo conosce lo tratta come un
+// controllo valido e lo ignora: un reflector vecchio non si rompe con un nodo nuovo.
+enum NodeMsg : uint8_t { kNodeHello = 1, kNodeChallenge = 2, kNodeResponse = 3, kNodePacket = 4, kNodeKeepalive = 5, kNodeQuality = 6 };
 
 class NodeLink {
  public:
@@ -73,12 +76,16 @@ class NodeLink {
     Kind kind = Kind::Ignored;
     const uint8_t* packet = nullptr;  // dentro il datagramma ricevuto: valido finche' il buffer resta
     size_t packetLen = 0;
+    uint8_t type = 0;                    // il tipo del datagramma accettato (NodeMsg), 0 se non lo e'
+    const uint8_t* payload = nullptr;    // il suo contenuto (per Packet e Control)
+    size_t payloadLen = 0;
     Reply replies[2];  // datagrammi da rispedire al nodo (sfida, risposta)
     size_t nReplies = 0;
   };
 
   struct Stats {
     uint32_t sent = 0, received = 0, badSignature = 0, replays = 0, unknown = 0, ignored = 0, challenges = 0, authenticated = 0;
+    uint32_t lost = 0;  // datagrammi dell'altro nodo persi per strada: i buchi del suo contatore fra quelli accettati
   };
 
   // bootId e rng: l'id di avvio casuale e il generatore dei numeri della sfida (sul PC si danno valori fissi).
@@ -93,6 +100,7 @@ class NodeLink {
   size_t makeHello(uint8_t* out, size_t cap);
   size_t makeKeepalive(uint8_t* out, size_t cap);
   size_t makePacket(const uint8_t* wire, size_t len, uint8_t* out, size_t cap);  // 0 se len e' troppo lungo
+  size_t makeQuality(const uint8_t* report, size_t len, uint8_t* out, size_t cap) { return build(kNodeQuality, report, len, out, cap); }
 
   Rx& onDatagram(const uint8_t* d, size_t n, uint32_t nowMs);
 

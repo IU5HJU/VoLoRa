@@ -251,6 +251,22 @@ void NodeCore::tick(uint32_t nowMs, bool mayTransmit0) {
       heard_.snrValid = radio_.hasSnr();
       heard_.snrDb = heard_.snrValid ? radio_.lastSnr() : 0.0f;
       heard_.atMs = nowMs;
+      // il rapporto di ricezione per il reflector: solo la voce (non i testi), e solo i pacchetti che sono andati davvero in rete
+      if (p.mode == voiceMode_) quality_.onPacket(p, rssi, heard_.snrValid, heard_.snrDb, radio_.rxCrcErrors(), nowMs);
+    }
+  }
+
+  // fine di una trasmissione: il rapporto parte verso il reflector (e' un datagramma firmato come gli altri; un reflector che non lo conosce lo ignora)
+  QualityReport rep;
+  if (quality_.poll(nowMs, rep) && link_.linkUp(nowMs)) {
+    uint8_t qb[kQualityBytes];
+    const size_t qn = encodeQualityReport(rep, qb, sizeof(qb));
+    const size_t qk = qn ? link_.makeQuality(qb, qn, dg, sizeof(dg)) : 0;
+    if (qk) {
+      net_.sendDatagram(dg, qk);
+      stats_.qualityReports++;
+      lastReport_ = rep;
+      haveLastReport_ = true;
     }
   }
 

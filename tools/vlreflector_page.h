@@ -37,14 +37,17 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
   .msg.err { color:var(--bad); border-color:var(--bad); }
   .msg.warn { color:var(--warn); border-color:var(--warn); }
   .msg.ok { color:var(--ok); border-color:var(--ok); }
+  .v-ok { color:var(--ok); font-weight:600; }
+  .v-radio, .v-net, .v-both { color:var(--bad); font-weight:600; }
+  .v-radio { color:var(--warn); }
+  .v-nd { color:var(--muted); }
   #login { display:none; }
   /* telefono: meno colonne, il resto resta nel riquadro */
   @media (max-width: 640px) {
     main { padding:10px; }
     section { padding:10px; }
     th, td { padding:6px 4px; }
-    #clients td:nth-child(5), thead th:nth-child(5) { display:none; }
-    #recent td:nth-child(5) { display:none; }
+    .hm { display:none; }
   }
 </style>
 </head>
@@ -69,7 +72,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     <section>
       <h2>Collegati</h2>
       <div class="tw"><table>
-        <thead><tr><th>Nominativo</th><th>Id</th><th>Stato</th><th>Ultimo segnale</th><th>Pacchetti in/out</th><th title="L'indirizzo IP pubblico del nodo, cioe' quello da cui si collega a Internet. Lo dice il nodo stesso (non e' verificato); se il nodo ha un firmware vecchio e il server lo vede da un indirizzo pubblico si usa quello; vuoto negli altri casi">IP del Nodo</th><th></th></tr></thead>
+        <thead><tr><th>Nominativo</th><th>Id</th><th>Stato</th><th>Ultimo segnale</th><th title="Datagrammi del nodo persi per strada fra il nodo e il reflector da quando e' collegato (buchi nel contatore dei datagrammi), su quelli spediti. Con una rete in ordine e' zero.">Persi in rete</th><th class="hm">Pacchetti in/out</th><th title="L'indirizzo IP pubblico del nodo, cioe' quello da cui si collega a Internet. Lo dice il nodo stesso (non e' verificato); se il nodo ha un firmware vecchio e il server lo vede da un indirizzo pubblico si usa quello; vuoto negli altri casi">IP del Nodo</th><th></th></tr></thead>
         <tbody id="clients"></tbody>
       </table></div>
       <p class="muted" id="clientsEmpty" hidden>Nessun nodo in elenco.</p>
@@ -78,10 +81,11 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     <section>
       <h2>Ultime trasmissioni</h2>
       <div class="tw"><table>
-        <thead><tr><th>Quando</th><th>Nominativo</th><th>Da</th><th>Durata</th><th>Pacchetti</th></tr></thead>
+        <thead><tr><th>Quando</th><th>Nominativo</th><th class="hm">Da</th><th class="hm">Modo</th><th class="hm">Durata</th><th class="hm">Pacchetti</th><th title="Con che segnale il nodo ha ricevuto l'utente in radio: SNR (medio e minimo) e RSSI. Lo dice il nodo con il rapporto di ricezione a fine trasmissione (firmware del nodo aggiornato).">Segnale al nodo</th><th title="Pacchetti radio che il nodo non ha ricevuto (buchi nella sequenza) su quelli che dovevano arrivare, e errori CRC visti">Persi in radio</th><th title="Pacchetti che il nodo ha mandato e al reflector non sono arrivati, e datagrammi persi fra nodo e reflector mentre la trasmissione passava">Persi in rete</th><th title="radio: segnale al limite o pacchetti persi in radio; rete: pacchetti persi fra nodo e reflector; buona: niente di rilevante; n.d.: il nodo non manda il rapporto">Giudizio</th></tr></thead>
         <tbody id="recent"></tbody>
       </table></div>
       <p class="muted" id="recentEmpty">Ancora nessuna.</p>
+      <p class="muted">Per ogni trasmissione si vede <strong>con che qualita' il nodo ha ricevuto l'utente in radio</strong> (SNR e RSSI) e se i pacchetti si sono persi <strong>in radio</strong> o <strong>fra il nodo e il reflector</strong>. Il segnale lo dice il nodo (firmware aggiornato); i buchi di rete li misura il reflector. Un nodo che non manda il rapporto compare con «n.d.», ma i buchi di rete si vedono lo stesso.</p>
     </section>
 
     <section>
@@ -148,6 +152,8 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
   }
   const fmtAgo = (ms) => ms < 0 ? 'mai' : ms < 60000 ? Math.round(ms / 1000) + ' s fa' : ms < 3600000 ? Math.round(ms / 60000) + ' min fa' : Math.round(ms / 3600000) + ' h fa';
   const fmtDur = (ms) => (ms / 1000).toFixed(1) + ' s';
+  function cellx(tr, text, cls, title) { const td = cell(tr, text); if (cls) td.className = cls; if (title) td.title = title; return td; }
+  const fmtLoss = (lost, rx) => (rx + lost) ? lost + ' su ' + (rx + lost) + (lost ? ' (' + (100 * lost / (rx + lost)).toFixed(1) + '%)' : '') : '-';
   function cell(tr, text) { const td = document.createElement('td'); td.textContent = esc(text); tr.appendChild(td); return td; }
   async function refresh() {
     let s;
@@ -168,7 +174,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
       const n = cell(tr, c.name); n.style.fontWeight = '600';
       cell(tr, c.id);
       const st = document.createElement('td'); const d = document.createElement('span'); d.className = 'dot' + (c.up ? ' up' : ''); st.appendChild(d); st.appendChild(document.createTextNode(c.up ? 'collegato' : 'non collegato')); tr.appendChild(st);
-      cell(tr, fmtAgo(c.seenMs)); cell(tr, c.in + ' / ' + c.out); cell(tr, c.nodeIp || '-');
+      cell(tr, fmtAgo(c.seenMs)); cell(tr, fmtLoss(c.lostDg, c.rxDg)); cellx(tr, c.in + ' / ' + c.out, 'hm'); cell(tr, c.nodeIp || '-');
       const act = document.createElement('td'); const del = document.createElement('button'); del.className = 'danger'; del.textContent = 'Togli';
       del.addEventListener('click', async () => { if (!confirm('Togliere ' + c.name + ' (id ' + c.id + ')? Il nodo non potrà più collegarsi.')) return; await api('/api/remove', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + c.id }); refresh(); });
       act.appendChild(del); tr.appendChild(act);
@@ -176,7 +182,22 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     }
     $('clientsEmpty').hidden = s.clients.length > 0;
     const rb = $('recent'); rb.innerHTML = '';
-    for (const t of s.recent) { const tr = document.createElement('tr'); cell(tr, fmtAgo(t.agoMs)); cell(tr, t.callsign); cell(tr, t.client); cell(tr, fmtDur(t.durationMs)); cell(tr, t.packets); rb.appendChild(tr); }
+    for (const t of s.recent) {
+      const tr = document.createElement('tr');
+      cell(tr, fmtAgo(t.agoMs)); cell(tr, t.callsign); cellx(tr, t.client, 'hm');
+      cellx(tr, t.mode, 'hm'); cellx(tr, fmtDur(t.durationMs), 'hm'); cellx(tr, t.packets, 'hm');
+      const r = t.radio, n = t.net;
+      if (r) {
+        cellx(tr, (r.snrValid ? 'SNR ' + r.snr.toFixed(1) + ' dB (min ' + r.snrMin.toFixed(1) + ') · ' : '') + 'RSSI ' + r.rssi + ' dBm', '', 'Margine sopra il limite di demodulazione LoRa (SF' + r.sf + '): ' + (r.snrValid ? r.marginAvg.toFixed(1) + ' dB in media, ' + r.marginMin.toFixed(1) + ' dB al minimo' : 'non noto') + '. RSSI piu\' basso ' + r.rssiMin + ' dBm.');
+        cellx(tr, r.missing + ' su ' + (r.rx + r.missing) + (r.crc ? ' · CRC ' + r.crc : ''));
+        cellx(tr, n.lost + (n.gaps ? ' (buchi ' + n.gaps + ')' : ''), '', 'Intervallo massimo fra due pacchetti: ' + n.gapMaxMs + ' ms');
+      } else {
+        cellx(tr, 'n.d.', 'v-nd'); cellx(tr, 'n.d.', 'v-nd');
+        cellx(tr, n.gaps ? 'buchi ' + n.gaps : '-', '', 'Intervallo massimo fra due pacchetti: ' + n.gapMaxMs + ' ms');
+      }
+      cellx(tr, t.verdictText, 'v-' + t.verdict);
+      rb.appendChild(tr);
+    }
     $('recentEmpty').hidden = s.recent.length > 0;
     refreshAprs();
   }

@@ -85,6 +85,9 @@ NodeLink::Rx& NodeLink::onDatagram(const uint8_t* d, size_t n, uint32_t nowMs) {
   rx.kind = Kind::Ignored;
   rx.packet = nullptr;
   rx.packetLen = 0;
+  rx.type = 0;
+  rx.payload = nullptr;
+  rx.payloadLen = 0;
   rx.nReplies = 0;
   if (!d || n < kNodeHeaderBytes + kNodeSigBytes || d[0] != 'V' || d[1] != 'L' || d[2] != kNodeVersion) {
     stats_.ignored++;
@@ -120,6 +123,9 @@ NodeLink::Rx& NodeLink::onDatagram(const uint8_t* d, size_t n, uint32_t nowMs) {
     rx.replies[rx.nReplies].len = build(kNodeResponse, payload, len, rx.replies[rx.nReplies].data, sizeof(rx.replies[0].data));
     rx.nReplies++;
     const bool known = peerAuth_ && boot == peerBoot_ && id == peerSeenId_;
+    if (known && counter > peerLastCounter_) {  // una sfida del nodo che conosciamo: il suo contatore e' andato avanti, non e' una perdita
+      peerLastCounter_ = counter;
+    }
     if (!known && (!haveChallengeMs_ || nowMs - lastChallengeMs_ >= kNodeChallengeGapMs)) {
       makeChallenge(nowMs, rx.replies[rx.nReplies]);
       rx.nReplies++;
@@ -166,16 +172,20 @@ NodeLink::Rx& NodeLink::onDatagram(const uint8_t* d, size_t n, uint32_t nowMs) {
     rx.kind = Kind::Replay;
     return rx;
   }
+  if (counter > peerLastCounter_ + 1) stats_.lost += counter - peerLastCounter_ - 1;  // buchi nel contatore: datagrammi persi per strada
   peerLastCounter_ = counter;
   haveRx_ = true;
   lastRxMs_ = nowMs;
   stats_.received++;
+  rx.type = type;
+  rx.payload = payload;
+  rx.payloadLen = len;
   if (type == kNodePacket) {
     rx.kind = Kind::Packet;
     rx.packet = payload;
     rx.packetLen = len;
   } else {
-    rx.kind = Kind::Control;  // HELLO o KEEPALIVE dello stesso avvio
+    rx.kind = Kind::Control;  // HELLO o KEEPALIVE dello stesso avvio, o un tipo che non conosciamo (per esempio il rapporto di ricezione)
     if ((type == kNodeHello || type == kNodeKeepalive) && len >= 5) {
       peerAcceptsMe_ = (payload[0] & 1) != 0 && get32(payload + 1) == boot_;
       if (len >= 9) peerPublic_ = get32(payload + 5);  // l'indirizzo pubblico dichiarato dal nodo (le versioni vecchie mandano 5 byte)

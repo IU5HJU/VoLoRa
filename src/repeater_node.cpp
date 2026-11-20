@@ -286,6 +286,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
     lc.peerId = settings.peerId;
     memcpy(lc.key, settings.nodeKey, sizeof(lc.key));
     uplink = new lcr::RepeaterUplink(net, lc, esp_random(), []() -> uint32_t { return esp_random(); }, prof.codecMode);
+    uplink->setRadioInfo(prof.sf);  // per il margine del segnale nel rapporto di ricezione che va al reflector
     Serial.printf("[ripetitore] RX: in rete con \"%s\", reflector %s:%u (id %lu), il mio id %lu\n", settings.wifiSsid, settings.peerIp, static_cast<unsigned>(settings.peerPort),
                   static_cast<unsigned long>(settings.peerId), static_cast<unsigned long>(settings.nodeId));
   }
@@ -367,7 +368,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
         const lcr::Repeater::Verdict v = rep.onPacket(p, now, out);
         if (v == lcr::Repeater::Verdict::Forward) {
           // con la rete: la voce locale passa solo se non sta parlando il reflector, e va anche al reflector
-          const bool toTx = uplink ? uplink->fromRadio(out, now) : true;
+          const bool toTx = uplink ? uplink->fromRadio(out, now, rssi, radio.hasSnr(), radio.hasSnr() ? radio.lastSnr() : 0.0f, radio.rxCrcErrors()) : true;
           uint8_t wire[lcr::kMaxWireBytes];
           const size_t m = toTx ? lcr::encodePacket(out, wire, sizeof(wire)) : 0;
           if (m > 0) {
@@ -393,6 +394,16 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
     // 1a. rete: i pacchetti del reflector vanno alla TX per essere trasmessi sull'uscita
     if (uplink) {
       uplink->tick(now);
+      {  // il rapporto di ricezione mandato al reflector a fine trasmissione (una riga sulla seriale)
+        static uint32_t lastQ = 0;
+        const lcr::QualityReport* r = uplink->lastReport();
+        if (r && uplink->stats().qualityReports != lastQ) {
+          lastQ = uplink->stats().qualityReports;
+          Serial.printf("[ripetitore] rapporto di ricezione %lu: sessione %04X, SNR %s%.1f dB (minimo %.1f), RSSI %d dBm (minimo %d), pacchetti %u, mancanti in radio %u, errori CRC %u\n",
+                      static_cast<unsigned long>(lastQ), r->session, r->snrValid ? "" : "n.d. ", static_cast<double>(r->snrAvgDb), static_cast<double>(r->snrMinDb), r->rssiAvgDbm,
+                      r->rssiMinDbm, r->rxPackets, r->missing, r->crcErrors);
+        }
+      }
       uplink->setPublicAddress(net.publicAddress());  // l'indirizzo pubblico, per il reflector
       const bool netUp = uplink->linkUp(now);
       net.setLinkUp(netUp);
@@ -758,6 +769,7 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
   memcpy(lc.key, settings.nodeKey, sizeof(lc.key));
   static lcr::NodeCore core(radio, net, lc, esp_random(), []() -> uint32_t { return esp_random(); }, lcr::profileFor(settings.profile).codecMode);
   core.setIdentification(settings.callsign, static_cast<uint32_t>(settings.idIntervalMin) * 60000u, settings.profileFreqKhz());  // IDINT, come il ripetitore
+  core.setRadioInfo(lcr::profileFor(settings.profile).sf);  // per il margine del segnale nel rapporto di ricezione che va al reflector
   core.setMorseId(settings.idMorse);  // IDMORSE: dopo il testo, il nominativo in Morse a tono in FM (15 wpm, 700 Hz, +-2,5 kHz)
   // Comandi del sysop via radio, come il ripetitore: servono nominativo e chiave del sysop (CFG SET SYSOP, SYSOPKEY)
   if (settings.sysopKeySet && settings.sysopCall[0]) {
@@ -839,6 +851,16 @@ void configWindow(UiNotifier& ui, CfgHandler handler, uint32_t windowMs, const c
       }
     }
     if (lan.loop()) restartNow(ui);
+    {  // il rapporto di ricezione mandato al reflector a fine trasmissione (una riga sulla seriale)
+      static uint32_t lastQ = 0;
+      const lcr::QualityReport* r = core.lastReport();
+      if (r && core.stats().qualityReports != lastQ) {
+        lastQ = core.stats().qualityReports;
+        Serial.printf("[nodo] rapporto di ricezione %lu: sessione %04X, SNR %s%.1f dB (minimo %.1f), RSSI %d dBm (minimo %d), pacchetti %u, mancanti in radio %u, errori CRC %u\n",
+                      static_cast<unsigned long>(lastQ), r->session, r->snrValid ? "" : "n.d. ", static_cast<double>(r->snrAvgDb), static_cast<double>(r->snrMinDb), r->rssiAvgDbm,
+                      r->rssiMinDbm, r->rxPackets, r->missing, r->crcErrors);
+      }
+    }
     {  // una riga sulla seriale per ogni stazione che transita (come "RX fine" della scheda normale)
       const lcr::NodeCore::Heard& h = core.heard();
       if (h.valid && h.callsign[0] && h.session != lastLoggedSession) {

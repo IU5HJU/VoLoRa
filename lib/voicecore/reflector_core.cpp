@@ -113,6 +113,62 @@ void ReflectorCore::endTalk() {
   cur_ = Talk();
 }
 
+void ReflectorCore::trackVoicePacket(Talk& t, const Client& c, const Packet& p, uint32_t nowMs) {
+  t.netPackets++;
+  if (!t.haveSeq) {
+    t.haveSeq = true;
+    t.lastSeq = p.seq;
+    if (!(p.flags & kFlagStart) && p.seq < 64) t.seqMissing += p.seq;  // l'inizio non e' arrivato: i pacchetti prima di questo sono persi
+  } else {
+    const uint8_t d = static_cast<uint8_t>(p.seq - t.lastSeq);
+    if (d >= 2 && d < 128) t.seqMissing += static_cast<uint32_t>(d - 1);
+    if (d >= 1 && d < 128) t.lastSeq = p.seq;
+  }
+  if (t.havePkt) {
+    const uint32_t gap = nowMs - t.lastPktMs;
+    if (gap > t.gapMaxMs) t.gapMaxMs = gap;
+  }
+  t.havePkt = true;
+  t.lastPktMs = nowMs;
+  const uint32_t lost = c.link->stats().lost;
+  t.netGaps = lost >= t.lostAtStart ? lost - t.lostAtStart : 0;
+}
+
+// Il rapporto di ricezione di un nodo: si attacca alla sua trasmissione (in corso o fra le ultime) con la stessa sessione.
+void ReflectorCore::onQuality(const Client& c, const uint8_t* payload, size_t len, uint32_t nowMs) {
+  (void)nowMs;
+  QualityReport rep;
+  if (!decodeQualityReport(payload, len, rep)) return;  // di una versione che non conosciamo: si ignora
+  Talk* t = nullptr;
+  if (cur_.active && cur_.clientId == c.id && cur_.session == rep.session) t = &cur_;
+  else {
+    for (auto& r : recent_) {
+      if (r.clientId == c.id && r.session == rep.session) {
+        t = &r;
+        break;
+      }
+    }
+  }
+  if (!t) {
+    stats_.qualityOrphans++;
+    return;
+  }
+  t->haveReport = true;
+  t->report = rep;
+  stats_.qualityReports++;
+  const Judgement j = judge(*t);
+  char b[256];
+  if (rep.snrValid) {
+    snprintf(b, sizeof(b), "qualita' %s via %s: %s; radio SNR %.1f dB (minimo %.1f, margine %.1f), RSSI %d dBm (minimo %d), pacchetti %u, persi in radio %u, CRC %u; rete persi %u, buchi %u",
+             t->callsign.c_str(), c.name.c_str(), verdictText(j.verdict), static_cast<double>(rep.snrAvgDb), static_cast<double>(rep.snrMinDb), static_cast<double>(j.marginAvgDb),
+             rep.rssiAvgDbm, rep.rssiMinDbm, rep.rxPackets, rep.missing, rep.crcErrors, j.netLost, j.netGaps);
+  } else {
+    snprintf(b, sizeof(b), "qualita' %s via %s: %s; radio RSSI %d dBm (minimo %d), pacchetti %u, persi in radio %u, CRC %u; rete persi %u, buchi %u", t->callsign.c_str(), c.name.c_str(),
+             verdictText(j.verdict), rep.rssiAvgDbm, rep.rssiMinDbm, rep.rxPackets, rep.missing, rep.crcErrors, j.netLost, j.netGaps);
+  }
+  say(b);
+}
+
 ReflectorCore::Talk ReflectorCore::currentTalk(uint32_t nowMs) const {
   Talk t = cur_;
   if (t.active && nowMs - talkLastMs_ > kTalkHangMs) t.active = false;  // e' finita per silenzio: la chiude il prossimo giro di tick()
@@ -158,6 +214,10 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
     say(std::string("client ") + c->name + (up ? " collegato" : " non piu' collegato"));
   }
 
+  if (rx.kind == NodeLink::Kind::Control && rx.type == kNodeQuality) {  // il rapporto di ricezione del nodo: non si inoltra, si attacca alla trasmissione
+    onQuality(*c, rx.payload, rx.payloadLen, nowMs);
+    return;
+  }
   if (rx.kind != NodeLink::Kind::Packet) return;
   c->packetsIn++;
   Packet p;
@@ -188,6 +248,8 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
         cur_.client = c->name;
         cur_.callsign = p.hasCallsign() ? p.callsign : "-";
         cur_.startMs = nowMs;
+        cur_.session = p.session;
+        cur_.lostAtStart = c->link->stats().lost;
         char b[96];
         snprintf(b, sizeof(b), "parla %s (%s), sessione %04X", p.hasCallsign() ? p.callsign : "-", c->name.c_str(), p.session);
         say(b);
@@ -209,6 +271,11 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
       talkLastMs_ = nowMs;
       cur_.lastMs = nowMs;
     }
+    // La qualita' di quello che passa: il pacchetto va alla trasmissione in corso, o a quella appena finita (la parita' arriva dopo il pacchetto di fine)
+    Talk* tk = nullptr;
+    if (cur_.active && cur_.clientId == c->id && cur_.session == p.session) tk = &cur_;
+    else if (!recent_.empty() && recent_[0].clientId == c->id && recent_[0].session == p.session) tk = &recent_[0];
+    if (tk) trackVoicePacket(*tk, *c, p, nowMs);
   }
   p.flags = static_cast<uint8_t>(p.flags | kFlagRelayed);
   uint8_t wire[kMaxWireBytes];
@@ -277,6 +344,8 @@ std::vector<ReflectorCore::ClientInfo> ReflectorCore::clients(uint32_t nowMs) co
     i.lastSeenMs = c->lastSeenMs;
     i.packetsIn = c->packetsIn;
     i.packetsOut = c->packetsOut;
+    i.lostDatagrams = c->link->stats().lost;
+    i.rxDatagrams = c->link->stats().received;
     i.declaredAddr = c->link->peerPublicAddress();
     v.push_back(i);
   }

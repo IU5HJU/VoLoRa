@@ -513,6 +513,150 @@ static void testPositionHandler() {
   r.sendPacket(a, start);
 }
 
+
+// Datagramma spedito dal client e perso per strada: il contatore avanza ma il reflector non lo vede mai
+static void skipPacket(Client& c, const Packet& p) {
+  uint8_t wire[kMaxWireBytes], out[kNodeMaxDatagram];
+  const size_t w = encodePacket(p, wire, sizeof(wire));
+  c.link->makePacket(wire, w, out, sizeof(out));
+}
+
+static void sendQuality(Rig& r, Client& c, const QualityReport& q) {
+  uint8_t b[40], out[kNodeMaxDatagram];
+  const size_t n = encodeQualityReport(q, b, sizeof(b));
+  const size_t k = c.link->makeQuality(b, n, out, sizeof(out));
+  r.core.onDatagram(c.ep, out, k, r.t);
+  r.pump();
+}
+
+static QualityReport goodReport(uint16_t session, uint16_t packets) {
+  QualityReport q;
+  q.session = session;
+  q.sf = 7;
+  q.mode = 4;
+  q.ended = true;
+  q.snrValid = true;
+  q.rxPackets = packets;
+  q.rssiAvgDbm = -95;
+  q.rssiMinDbm = -101;
+  q.snrAvgDb = 5.0f;
+  q.snrMinDb = 2.0f;
+  return q;
+}
+
+// Qualita' dei collegamenti: il rapporto di ricezione del nodo si attacca alla trasmissione e il giudizio distingue radio e rete
+static void testQualityReports() {
+  Rig r;
+  Client& a = r.add(1, 0xA1, 5001);
+  Client& b = r.add(2, 0xB2, 5002);
+  r.run(4000);
+  // 1) trasmissione pulita: 6 pacchetti (con parita' dopo il pacchetto di fine) e rapporto buono
+  for (uint8_t i = 0; i < 5; i++) r.sendPacket(a, voicePacket(4, 0x0A01, i, i == 0 ? kFlagStart : (i == 4 ? kFlagEnd : 0), "IU5HJU"));
+  Packet par;
+  par.mode = 4;
+  par.session = 0x0A01;
+  par.seq = 5;
+  par.flags = kFlagParity;
+  par.payloadLen = static_cast<uint8_t>(kParityHeader + 16);
+  par.payload[0] = 4;  // pacchetti del gruppo
+  r.sendPacket(a, par);  // la parita' arriva dopo il fine: finisce lo stesso nella trasmissione appena chiusa
+  CHECK(r.core.recentTalks().size() == 1);
+  {
+    const ReflectorCore::Talk& t = r.core.recentTalks()[0];
+    CHECK(t.session == 0x0A01 && t.netPackets == 6 && t.seqMissing == 0 && t.netGaps == 0 && !t.haveReport);
+    CHECK(ReflectorCore::judge(t).verdict == Verdict::Unknown);  // senza rapporto e senza buchi di rete: non si sa
+  }
+  sendQuality(r, a, goodReport(0x0A01, 6));
+  CHECK(r.core.stats().qualityReports == 1 && r.core.stats().qualityOrphans == 0);
+  {
+    const ReflectorCore::Talk& t = r.core.recentTalks()[0];
+    CHECK(t.haveReport && t.report.rxPackets == 6 && ReflectorCore::judge(t).verdict == Verdict::Good);
+  }
+  // Il rapporto non si inoltra agli altri client
+  size_t gotB = b.received.size();
+  r.run(100);
+  CHECK(b.received.size() == gotB);
+
+  // 2) la rete perde due datagrammi di una trasmissione: il nodo ne ha mandati 8, ne arrivano 6
+  r.run(4000);
+  r.sendPacket(a, voicePacket(4, 0x0A02, 0, kFlagStart, "IU5HJU"));
+  r.sendPacket(a, voicePacket(4, 0x0A02, 1, 0));
+  skipPacket(a, voicePacket(4, 0x0A02, 2, 0));
+  skipPacket(a, voicePacket(4, 0x0A02, 3, 0));
+  r.sendPacket(a, voicePacket(4, 0x0A02, 4, 0));
+  r.sendPacket(a, voicePacket(4, 0x0A02, 5, 0));
+  r.sendPacket(a, voicePacket(4, 0x0A02, 6, 0));
+  r.sendPacket(a, voicePacket(4, 0x0A02, 7, kFlagEnd));
+  {
+    const ReflectorCore::Talk& t = r.core.recentTalks()[0];
+    CHECK(t.session == 0x0A02 && t.netPackets == 6 && t.seqMissing == 2 && t.netGaps == 2);
+    CHECK(ReflectorCore::judge(t).verdict == Verdict::Network);  // anche senza il rapporto del nodo: i buchi nel contatore dicono "rete"
+  }
+  sendQuality(r, a, goodReport(0x0A02, 8));
+  {
+    const ReflectorCore::Talk& t = r.core.recentTalks()[0];
+    const Judgement j = ReflectorCore::judge(t);
+    CHECK(j.verdict == Verdict::Network && j.netLost == 2 && j.netGaps == 2 && !j.radioWeak && !j.radioLoss);
+  }
+
+  // 3) la radio perde pacchetti: il nodo non li ha mai ricevuti, quindi non li ha mandati; il rapporto dice 6 ricevuti e 2 mancanti
+  r.run(4000);
+  const uint8_t seqs[] = {0, 1, 3, 4, 6, 7};
+  for (uint8_t s : seqs) r.sendPacket(a, voicePacket(4, 0x0A03, s, s == 0 ? kFlagStart : (s == 7 ? kFlagEnd : 0), "IU5HJU"));
+  QualityReport q = goodReport(0x0A03, 6);
+  q.missing = 2;
+  q.snrAvgDb = -8.0f;  // SF7: limite -7,5 dB, margine sotto zero
+  q.snrMinDb = -11.0f;
+  sendQuality(r, a, q);
+  {
+    const ReflectorCore::Talk& t = r.core.recentTalks()[0];
+    const Judgement j = ReflectorCore::judge(t);
+    CHECK(t.seqMissing == 2 && t.netGaps == 0 && j.verdict == Verdict::Radio && j.netLost == 0 && j.radioWeak && j.radioLoss);
+  }
+
+  // 4) rapporto di una trasmissione che il reflector non ha, e di un altro client: si conta e non si attacca a niente
+  const uint32_t reports = r.core.stats().qualityReports;
+  sendQuality(r, a, goodReport(0x7777, 3));
+  sendQuality(r, b, goodReport(0x0A03, 3));  // la sessione c'e', ma e' di un altro client
+  CHECK(r.core.stats().qualityOrphans == 2 && r.core.stats().qualityReports == reports);
+  CHECK(r.core.recentTalks()[0].report.rxPackets == 6);  // quello di prima non e' stato toccato
+
+  // 5) un rapporto di una versione che non si conosce (versione 0) e uno troppo corto si ignorano senza fare danni
+  {
+    uint8_t bad[40] = {0}, out[kNodeMaxDatagram];
+    size_t k = a.link->makeQuality(bad, 19, out, sizeof(out));
+    r.core.onDatagram(a.ep, out, k, r.t);
+    k = a.link->makeQuality(bad, 5, out, sizeof(out));
+    r.core.onDatagram(a.ep, out, k, r.t);
+    r.pump();
+    CHECK(r.core.stats().qualityReports == reports && r.up(1));
+  }
+
+  // 6) i contatori per client: i datagrammi persi si contano
+  bool found = false;
+  for (const auto& ci : r.core.clients(r.t)) {
+    if (ci.id == 1) {
+      found = true;
+      CHECK(ci.lostDatagrams == 2 && ci.rxDatagrams > 10);
+    }
+  }
+  CHECK(found);
+}
+
+// Il rapporto che arriva mentre la trasmissione e' ancora in corso (nodo che lo manda presto) si attacca lo stesso
+static void testQualityReportWhileActive() {
+  Rig r;
+  Client& a = r.add(1, 0xA1, 5001);
+  r.run(4000);
+  r.sendPacket(a, voicePacket(4, 0x0B01, 0, kFlagStart, "IU5HJU"));
+  r.sendPacket(a, voicePacket(4, 0x0B01, 1, 0));
+  sendQuality(r, a, goodReport(0x0B01, 2));
+  const ReflectorCore::Talk t = r.core.currentTalk(r.t);
+  CHECK(t.active && t.haveReport && r.core.stats().qualityReports == 1);
+  r.sendPacket(a, voicePacket(4, 0x0B01, 2, kFlagEnd));
+  CHECK(r.core.recentTalks()[0].haveReport && r.core.recentTalks()[0].netPackets == 3);
+}
+
 int main() {
   testHandshake();
   testTextAndRelayed();
@@ -528,5 +672,7 @@ int main() {
   testDeclaredAddress();
   testPublicIpv4();
   testPositionHandler();
+  testQualityReports();
+  testQualityReportWhileActive();
   TEST_MAIN_END();
 }

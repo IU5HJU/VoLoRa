@@ -620,6 +620,85 @@ static void testSysopOffByDefault() {
   CHECK(r.a.air.log[0].size() == 1);
 }
 
+// Il rapporto di ricezione: a fine trasmissione il nodo manda al reflector (qui l'altro nodo) un datagramma QUALITY con RSSI, SNR, pacchetti e buchi
+static void testQualityReportSent() {
+  Rig r;
+  r.run(3000);
+  r.a.core->setRadioInfo(8);
+  r.a.radio.snrOn = true;
+  r.a.radio.rxSnr = 4.0f;
+  r.a.radio.rxRssi = -95;
+  const auto msg = makeMessage(0x4444, 20, "IU5HJU");
+  CHECK(r.a.core->lastReport() == nullptr);
+  injectToA(r, msg);
+  // ancora niente subito dopo l'ultimo pacchetto: si aspetta la parita'
+  CHECK(r.a.core->stats().qualityReports == 0);
+  r.run(2500);
+  CHECK(r.a.core->stats().qualityReports == 1);
+  const QualityReport* q = r.a.core->lastReport();
+  CHECK(q != nullptr);
+  if (q) {
+    CHECK(q->session == 0x4444 && q->sf == 8 && q->mode == kModeCodec2_1200 && q->snrValid && q->ended);
+    CHECK(q->rxPackets == msg.size() && q->missing == 0 && q->crcErrors == 0);
+    CHECK(q->rssiAvgDbm == -95 && q->rssiMinDbm == -95 && std::fabs(q->snrAvgDb - 4.0f) < 0.01f);
+  }
+  // B ha ricevuto il datagramma firmato come un controllo valido: il collegamento resta su e non e' stato trasmesso niente in radio per quello
+  CHECK(r.b.core->link().stats().received > 0 && r.b.air.sent[0] == static_cast<int>(msg.size()));
+  CHECK(r.a.core->linkUp(r.t) && r.b.core->linkUp(r.t));
+  // un solo rapporto per trasmissione, anche lasciando passare altro tempo
+  r.run(6000);
+  CHECK(r.a.core->stats().qualityReports == 1);
+}
+
+static void testQualityReportCountsRadioLoss() {
+  Rig r;
+  r.run(3000);
+  r.a.core->setRadioInfo(7);
+  r.a.radio.snrOn = true;
+  r.a.radio.rxSnr = -3.0f;
+  auto msg = makeMessage(0x5555, 80, "IU5HJU");  // una quindicina di pacchetti
+  // si perdono due pacchetti in radio (non arrivano al nodo): il quarto e il quinto; e due errori CRC fra il primo e l'ultimo
+  std::vector<Packet> heard;
+  for (size_t i = 0; i < msg.size(); i++) {
+    if (i == 3 || i == 4) continue;
+    heard.push_back(msg[i]);
+  }
+  for (size_t i = 0; i < heard.size(); i++) {
+    if (i == 3) r.a.radio.crcTotal += 2;
+    r.a.air.inbox[0].push_back(wireOf(heard[i]));
+    r.run(100);
+  }
+  r.run(2500);
+  const QualityReport* q = r.a.core->lastReport();
+  CHECK(q != nullptr);
+  if (q) {
+    CHECK(q->rxPackets == heard.size() && q->missing == 2 && q->crcErrors == 2);
+    CHECK(std::fabs(q->snrAvgDb + 3.0f) < 0.01f);
+  }
+  // Un messaggio di testo non genera rapporto (non e' voce)
+  const uint32_t before = r.a.core->stats().qualityReports;
+  Packet text;
+  text.mode = kModeText;
+  text.session = 0x6666;
+  text.flags = kFlagStart | kFlagEnd;
+  strcpy(text.callsign, "IU5HJU");
+  strcpy(reinterpret_cast<char*>(text.payload), "ciao");
+  text.payloadLen = 4;
+  r.a.air.inbox[0].push_back(wireOf(text));
+  r.run(6000);
+  CHECK(r.a.core->stats().qualityReports == before);
+}
+
+static void testQualityReportNeedsLink() {
+  // Senza collegamento attivo il rapporto non parte (e non si accumula all'infinito)
+  Rig r;
+  r.net.up = false;
+  r.run(1000);
+  injectToA(r, makeMessage(0x7788, 10, "IU5HJU"));
+  r.run(6000);
+  CHECK(r.a.core->stats().qualityReports == 0 && r.a.core->lastReport() == nullptr);
+}
+
 int main() {
   testLinkComesUp();
   testVoiceAcrossTheNet();
@@ -639,5 +718,8 @@ int main() {
   testMorseId();
   testSysopCommands();
   testSysopOffByDefault();
+  testQualityReportSent();
+  testQualityReportCountsRadioLoss();
+  testQualityReportNeedsLink();
   TEST_MAIN_END();
 }

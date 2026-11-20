@@ -102,6 +102,32 @@ Attenzione:
 - Chi gestisce un reflector **si fida dei nodi registrati**: un nodo registrato può scrivere un nominativo qualsiasi nel pacchetto (la firma dice chi ha mandato il pacchetto al reflector, non chi era davanti alla radio), quindi può far comparire su APRS una posizione con un nominativo non suo. È lo stesso limite di tutta la rete (vedi "Limiti noti").
 - Il formato della riga e l'accesso con una password APRS-IS vera sono stati provati il 20/11/2026 su un vero server APRS-IS ([prove.md](prove.md)); resta da provare solo **più di una stazione** e un'altra scheda oltre alla T-Beam/T3 del sysop. Sul PC la prova usa un server finto: `make reflector-smoke`, `tests/fake_aprs_server.py`. Per controllare soltanto che il server si raggiunga, senza pubblicare niente, usa la password `-1`.
 
+## Qualità dei collegamenti: radio o rete? (20/11/2026, provata sul PC, non ancora con le schede)
+
+Su un reflector di un altro sistema (per esempio il C4FM) si vede con che qualità l'utente entra nel nodo: un segnale debole in radio si riconosce a orecchio, e lo stesso vale per i buchi dovuti alla rete, ma solo con i numeri (SNR, perdite) si capisce **quale dei due** è la causa. Qui è lo stesso: per ogni trasmissione la pagina di amministrazione mostra il **modo**, il **segnale con cui il nodo ha ricevuto l'utente**, i pacchetti **persi in radio**, quelli **persi in rete** e un **giudizio**.
+
+Cosa si vede, nella tabella "Ultime trasmissioni":
+- **Segnale al nodo:** SNR (medio e minimo) e RSSI con cui il nodo, o la RX del ripetitore, ha ricevuto l'utente. Passandoci sopra col mouse: il **margine sopra il limite di demodulazione LoRa** per quell'SF (−7,5 dB a SF7, 2,5 dB in meno a ogni SF).
+- **Persi in radio:** pacchetti che il nodo non ha ricevuto (buchi nel numero di sequenza, compresi i primi se l'inizio è andato perso) su quelli che dovevano arrivare, e gli errori CRC visti.
+- **Persi in rete:** pacchetti che il nodo ha mandato e al reflector non sono arrivati, e i "buchi" nel contatore dei datagrammi mentre la trasmissione passava. Passandoci sopra: l'intervallo massimo fra due pacchetti.
+- **Giudizio:** **buona**; **radio** (segnale al limite, cioè margine medio sotto 4 dB o minimo sotto 1,5 dB, oppure pacchetti persi o errori CRC in radio); **rete** (pacchetti persi fra nodo e reflector); **radio e rete**; **n.d.** (il nodo non manda il rapporto e non ci sono buchi di rete).
+- Nella tabella "Collegati" la colonna **Persi in rete** conta i datagrammi del nodo persi per strada da quando è collegato, sul totale.
+- Nel registro: una riga per trasmissione, per esempio `qualita' IK5PWR via IK5PWR MONTELUPO: buona; radio SNR 4.5 dB (minimo 2.0, margine 12.0), RSSI -98 dBm (minimo -121), pacchetti 57, persi in radio 0, CRC 0; rete persi 0, buchi 0`.
+
+Come funziona:
+- **Rete (solo reflector, nessun aggiornamento delle schede):** ogni datagramma di un nodo ha un contatore che cresce; un buco è un datagramma perso fra il nodo e il reflector. Il reflector conta anche i pacchetti della trasmissione che gli arrivano, i buchi nella loro sequenza e l'intervallo massimo fra due pacchetti. Vale per i nodi e i ripetitori già in campo.
+- **Radio (serve il firmware aggiornato del nodo e della RX del ripetitore):** il segnale è una misura locale del nodo e nel pacchetto non c'è. Alla fine di ogni trasmissione di voce il nodo manda al reflector un **rapporto di ricezione**: un datagramma firmato di un tipo nuovo (`QUALITY`, tipo 6, 19 byte) con SF, modo, pacchetti ricevuti, mancanti, errori CRC, RSSI e SNR medio e minimo. Il reflector lo attacca alla trasmissione con la stessa sessione.
+- **Radio contro rete:** il rapporto dice quanti pacchetti il nodo ha mandato; il reflector sa quanti ne sono arrivati. La differenza è la perdita di rete. Quello che il nodo non ha mai ricevuto in radio non lo ha mandato, e si vede nei suoi "mancanti".
+- **Compatibilità:** un tipo di datagramma sconosciuto è trattato come un controllo valido e ignorato, quindi un reflector vecchio non si rompe con un nodo nuovo e un nodo vecchio con un reflector nuovo compare con «n.d.». Il protocollo radio non cambia.
+- Non si manda per i testi, solo per la voce; non si manda se il collegamento con il reflector non è attivo.
+
+Limiti:
+- Il nodo non decodifica la voce, quindi non c'è un "BER": gli equivalenti sono l'SNR e i pacchetti persi. Un pacchetto di parità XOR ogni quattro recupera una perdita isolata (se il nodo ne ha persa una, la voce può essere comunque buona).
+- Gli errori CRC si contano fra il primo e l'ultimo pacchetto ricevuti: quelli prima o dopo non si vedono.
+- Se manca il primo pacchetto, i mancanti includono quelli prima del primo ricevuto (la sequenza parte da 0).
+- Per una trasmissione senza il rapporto (nodo vecchio, collegamento caduto) i buchi di rete si vedono lo stesso, ma non la radio.
+- **Non provato con schede vere**: sul PC è provato con le prove del reflector, del nodo e della RX (`make test`, `make reflector-smoke` con `vlnode --quality ... --drop N`). La pagina pubblica non mostra ancora la qualità.
+
 ## La pagina pubblica (per i colleghi)
 
 Come per le altre reti, chiunque può guardare chi è collegato e chi trasmette. `--public-web 8081` apre una **seconda porta** (di base su tutti gli indirizzi, `--public-bind` per cambiare) con una pagina ridotta, **di sola lettura**:

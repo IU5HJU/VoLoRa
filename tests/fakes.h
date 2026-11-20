@@ -98,9 +98,17 @@ class Radio : public lcr::IRadio {
     const size_t n = q.front().size() < cap ? q.front().size() : cap;
     memcpy(buf, q.front().data(), n);
     q.pop_front();
-    if (rssi) *rssi = -90;
+    if (rssi) *rssi = rxRssi;
     return n;
   }
+  // SNR e errori CRC finti, per le prove del rapporto di ricezione del nodo
+  int rxRssi = -90;
+  bool snrOn = false;
+  float rxSnr = 0.0f;
+  uint32_t crcTotal = 0;
+  bool hasSnr() const override { return snrOn; }
+  float lastSnr() const override { return rxSnr; }
+  uint32_t rxCrcErrors() const override { return crcTotal; }
 
  private:
   Air& air_;

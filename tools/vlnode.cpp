@@ -4,7 +4,7 @@
 //
 //   make vlnode
 //   build/vlnode --id 2 --peer-id 1 --key 000102030405060708090a0b0c0d0e0f --listen 5400 --peer 192.168.1.50:5400   (--peer puo' essere anche un nome; --listen 0 sceglie una porta)
-//                [--send-text IU5HJU "Prova del nodo" [--every 10]] [--send-voice IU5HJU [--frames 100] [--position LAT,LON]] [--duration 60] [--public-addr A.B.C.D]
+//                [--send-text IU5HJU "Prova del nodo" [--every 10]] [--send-voice IU5HJU [--frames 100] [--position LAT,LON] [--quality RSSI SNR [MANCANTI [CRC]]] [--drop N]] [--duration 60] [--public-addr A.B.C.D]
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -21,6 +21,7 @@
 
 #include "node_link.h"
 #include "packet.h"
+#include "quality_report.h"
 #include "tx_session.h"
 
 using namespace lcr;
@@ -48,6 +49,10 @@ int main(int argc, char** argv) {
   NodeLink::Config cfg;
   int listenPort = 5400, peerPort = 0, duration = 0, every = 0, frames = 100;
   std::string peerHost, textCall, text, voiceCall;
+  bool qualityOn = false;
+  int qRssi = -95, qMissing = 0, qCrc = 0, dropEvery = 0;
+  float qSnr = 5.0f;
+  bool qualitySent = false;
   Position position;  // --position LAT,LON: la voce finta porta una posizione nel pacchetto di inizio
   bool haveKey = false;
   uint32_t publicAddr = 0;  // l'indirizzo pubblico che il nodo dichiara al reflector (per provare)
@@ -68,6 +73,13 @@ int main(int argc, char** argv) {
       text = next();
     } else if (a == "--send-voice") voiceCall = next();
     else if (a == "--frames") frames = atoi(next());
+    else if (a == "--quality") {  // dopo la voce manda il rapporto di ricezione che mandera' un nodo vero (quality_report.h): RSSI dBm, SNR dB, pacchetti mancanti in radio, errori CRC
+      qualityOn = true;
+      qRssi = atoi(next());
+      qSnr = static_cast<float>(atof(next()));
+      if (i + 1 < argc && argv[i + 1][0] != '-') qMissing = atoi(next());
+      if (i + 1 < argc && argv[i + 1][0] != '-') qCrc = atoi(next());
+    } else if (a == "--drop") dropEvery = atoi(next());  // perde un pacchetto di voce ogni N (simula una rete che perde: il contatore dei datagrammi avanza lo stesso)
     else if (a == "--position") {
       double la = 0, lo = 0;
       if (sscanf(next(), "%lf,%lf", &la, &lo) == 2) {
@@ -210,10 +222,32 @@ int main(int argc, char** argv) {
       uint8_t wire[kMaxWireBytes];
       const size_t w = encodePacket(voice[voiceIdx], wire, sizeof(wire));
       const size_t k = w ? link.makePacket(wire, w, out, sizeof(out)) : 0;
-      if (k) sendTo(out, k);
+      const bool dropped = dropEvery > 0 && (voiceIdx % static_cast<size_t>(dropEvery)) == static_cast<size_t>(dropEvery - 1);  // perso per strada
+      if (k && !dropped) sendTo(out, k);
       voiceIdx++;
       nextVoiceMs = t + 400;
       if (voiceIdx == voice.size()) printf("[vlnode] mandati %zu pacchetti di voce finta\n", voice.size());
+    }
+    if (up && qualityOn && !qualitySent && !voice.empty() && voiceIdx == voice.size() && t >= nextVoiceMs + 1500) {  // il rapporto del nodo arriva dopo la fine della trasmissione
+      QualityReport q;
+      q.session = voice[0].session;
+      q.sf = 7;
+      q.mode = voice[0].mode;
+      q.ended = true;
+      q.snrValid = true;
+      q.rxPackets = static_cast<uint16_t>(voice.size());
+      q.missing = static_cast<uint16_t>(qMissing);
+      q.crcErrors = static_cast<uint8_t>(qCrc);
+      q.rssiAvgDbm = static_cast<int16_t>(qRssi);
+      q.rssiMinDbm = static_cast<int16_t>(qRssi - 5);
+      q.snrAvgDb = qSnr;
+      q.snrMinDb = qSnr - 2.0f;
+      uint8_t qb[kQualityBytes];
+      const size_t qn = encodeQualityReport(q, qb, sizeof(qb));
+      const size_t qk = qn ? link.makeQuality(qb, qn, out, sizeof(out)) : 0;
+      if (qk) sendTo(out, qk);
+      qualitySent = true;
+      printf("[vlnode] mandato il rapporto di ricezione: RSSI %d dBm, SNR %.1f dB, mancanti %d, CRC %d\n", qRssi, static_cast<double>(qSnr), qMissing, qCrc);
     }
   }
   const NodeLink::Stats& s = link.stats();

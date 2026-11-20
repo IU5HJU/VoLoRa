@@ -18,6 +18,7 @@
 
 #include "node_link.h"
 #include "position.h"
+#include "quality_report.h"
 
 namespace lcr {
 
@@ -56,6 +57,8 @@ class ReflectorCore {
     uint32_t badMode = 0;         // modo non inoltrato
     uint32_t badPacket = 0;       // non e' un pacchetto radio valido
     uint32_t talks = 0;           // trasmissioni iniziate
+    uint32_t qualityReports = 0;  // rapporti di ricezione dei nodi attaccati a una trasmissione
+    uint32_t qualityOrphans = 0;  // rapporti di una trasmissione che il reflector non ha (troppo vecchia, o di un altro client)
   };
 
   // Una trasmissione (finita o in corso): chi l'ha fatta arrivare e con quale nominativo.
@@ -67,7 +70,23 @@ class ReflectorCore {
     uint32_t lastMs = 0;     // ultimo pacchetto
     uint32_t packets = 0;
     bool active = false;
+    // Qualita' (docs/reflector.md, "Qualita' dei collegamenti"): quello che il reflector vede passare di questa trasmissione, e il rapporto del nodo se e' arrivato
+    uint16_t session = 0;
+    uint32_t netPackets = 0;   // tutti i pacchetti della sessione arrivati da quel client (la parita' compresa)
+    uint32_t seqMissing = 0;   // buchi nel numero di sequenza fra quelli arrivati (persi in radio o in rete: da soli non si distinguono)
+    uint32_t netGaps = 0;      // datagrammi persi fra il nodo e il reflector mentre la trasmissione passava (buchi nel contatore dei datagrammi)
+    uint32_t gapMaxMs = 0;     // il piu' lungo intervallo fra due pacchetti consecutivi
+    bool haveReport = false;   // e' arrivato il rapporto di ricezione del nodo
+    QualityReport report;
+    // dati di lavoro
+    bool haveSeq = false;
+    uint8_t lastSeq = 0;
+    bool havePkt = false;
+    uint32_t lastPktMs = 0;
+    uint32_t lostAtStart = 0;
   };
+  // Il giudizio (radio o rete) di una trasmissione, dal rapporto del nodo e da quello che ha visto il reflector.
+  static Judgement judge(const Talk& t) { return judgeTransmission(t.haveReport ? &t.report : nullptr, t.netPackets, t.netGaps); }
   static constexpr size_t kRecentTalks = 20;
 
   struct ClientInfo {
@@ -79,6 +98,8 @@ class ReflectorCore {
     uint32_t lastSeenMs = 0;
     uint32_t packetsIn = 0;
     uint32_t packetsOut = 0;
+    uint32_t lostDatagrams = 0; // datagrammi del nodo persi per strada da quando e' collegato (buchi nel contatore)
+    uint32_t rxDatagrams = 0;   // datagrammi del nodo accettati
     uint32_t declaredAddr = 0;  // l'indirizzo pubblico che il nodo dice di avere (a<<24|b<<16|c<<8|d), 0 = non lo dice; non verificato
   };
 
@@ -127,6 +148,8 @@ class ReflectorCore {
   Client* find(uint32_t id);
   const Client* find(uint32_t id) const;
   void endTalk();
+  void trackVoicePacket(Talk& t, const Client& c, const Packet& p, uint32_t nowMs);
+  void onQuality(const Client& c, const uint8_t* payload, size_t len, uint32_t nowMs);
   void forward(const Client& from, const uint8_t* wire, size_t len, bool voice, uint32_t nowMs);
   void say(const std::string& s) const;
 
