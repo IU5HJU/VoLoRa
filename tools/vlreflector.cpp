@@ -301,7 +301,7 @@ struct Admin {
                        : st == AprsGate::State::Unverified ? "unverified" : "down";
     std::ostringstream o;
     o << "{\"enabled\":" << (c.enabled ? "true" : "false") << ",\"host\":\"" << jsonEscape(c.host) << "\",\"port\":" << c.port << ",\"login\":\"" << jsonEscape(c.login)
-      << "\",\"passSet\":" << (c.pass.empty() ? "false" : "true") << ",\"intervalS\":" << c.minIntervalS << ",\"state\":\"" << code << "\",\"stateText\":\"" << aprsStateText(st)
+      << "\",\"passSet\":" << (c.pass.empty() ? "false" : "true") << ",\"intervalS\":" << c.minIntervalS << ",\"symbol\":\"" << jsonEscape(c.symbol) << "\",\"state\":\"" << code << "\",\"stateText\":\"" << aprsStateText(st)
       << "\",\"detail\":\"" << jsonEscape(aprs->detail()) << "\",\"queued\":" << aprs->pending() << ",\"seen\":" << s.seen << ",\"sent\":" << s.sent
       << ",\"tooSoon\":" << s.tooSoon << ",\"invalid\":" << s.invalid << ",\"dropped\":" << s.dropped << "}";
     return o.str();
@@ -446,6 +446,8 @@ struct Admin {
       const long interval = strtol(intervalText.c_str(), &end, 10);
       if (intervalText.empty() || *end != 0 || interval < 0) return fail(400, "l'intervallo deve essere un numero di secondi");
       c.minIntervalS = static_cast<uint32_t>(interval > 10000000 ? 10000000 : interval);
+      const std::string symbol = formParam(req.body, "symbol");
+      if (!symbol.empty()) c.symbol = symbol;  // senza il campo resta quello di prima
       const std::string pass = formParam(req.body, "pass");
       if (!pass.empty()) c.pass = pass;  // vuota = resta quella di prima (la password non torna mai alla pagina)
       std::string err;

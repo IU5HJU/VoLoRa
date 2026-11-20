@@ -43,8 +43,11 @@ static void testCoordinates() {
 
 static void testLine() {
   const Position p = pos(437696000, 108807000);
-  CHECK(aprsPositionLine("IU5HJU", p, "N0CALL-10") == "IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18N/01052.84E-VoLoRa");
-  CHECK(aprsPositionLine("IU5HJU-7", p, "N0CALL") == "IU5HJU-7>APZVLR,qAR,N0CALL:!4346.18N/01052.84E-VoLoRa");
+  CHECK(aprsPositionLine("IU5HJU", p, "N0CALL-10") == "IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E_VoLoRa");
+  CHECK(aprsPositionLine("IU5HJU-7", p, "N0CALL") == "IU5HJU-7>APZVLR,qAR,N0CALL:!4346.18NV01052.84E_VoLoRa");
+  CHECK(aprsPositionLine("IU5HJU", p, "N0CALL-10", "/-") == "IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18N/01052.84E-VoLoRa");  // la casetta di prima
+  CHECK(aprsPositionLine("IU5HJU", p, "N0CALL-10", "\\&") == "IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18N\\01052.84E&VoLoRa");
+  CHECK(aprsPositionLine("IU5HJU", p, "N0CALL-10", "V ").empty() && aprsPositionLine("IU5HJU", p, "N0CALL-10", "V").empty());
   CHECK(aprsPositionLine("IU5HJU/P", p, "N0CALL-10").empty());  // AX.25 non ha la barra
   CHECK(aprsPositionLine("", p, "N0CALL-10").empty());
   CHECK(aprsPositionLine("IU5HJU", p, "").empty());
@@ -62,6 +65,24 @@ static void testValidators() {
   CHECK(!isValidAprsSource("IU5HJU/P") && !isValidAprsSource("") && !isValidAprsSource("IU5HJUX") && !isValidAprsSource("iu5hju"));
   CHECK(isValidAprsPass("-1") && isValidAprsPass("12345") && isValidAprsPass(std::string(32, 'x')));
   CHECK(!isValidAprsPass("") && !isValidAprsPass("a b") && !isValidAprsPass(std::string(33, 'x')) && !isValidAprsPass("a\tb") && !isValidAprsPass("a\x7f"));
+}
+
+static void testSymbol() {
+  CHECK(isValidAprsSymbol("V_") && isValidAprsSymbol("/-") && isValidAprsSymbol("\\&") && isValidAprsSymbol("1#") && isValidAprsSymbol("A>"));
+  CHECK(!isValidAprsSymbol("") && !isValidAprsSymbol("V") && !isValidAprsSymbol("V__") && !isValidAprsSymbol("v_") && !isValidAprsSymbol("V ") && !isValidAprsSymbol("V|") &&
+        !isValidAprsSymbol("V~") && !isValidAprsSymbol("-_") && !isValidAprsSymbol("*A"));
+  AprsConfig c;
+  CHECK(c.symbol == "V_");  // di base un cerchio blu con la V
+  c = goodConfig();
+  c.symbol = "VV ";
+  std::string err;
+  CHECK(!validateAprsConfig(c, err) && !err.empty());
+  // Nel file: se manca resta quello di base, se c'e' si legge, se e' sbagliato e' un errore con la riga
+  AprsConfig back;
+  CHECK(parseAprsConfig("host=h\n", back, err) && back.symbol == "V_");
+  CHECK(parseAprsConfig("symbol=/-\n", back, err) && back.symbol == "/-");
+  CHECK(!parseAprsConfig("symbol=xx\n", back, err));
+  CHECK(formatAprsConfig(goodConfig()).find("symbol=V_\n") != std::string::npos);
 }
 
 static void testValidateConfig() {
@@ -212,6 +233,7 @@ int main() {
   testCoordinates();
   testLine();
   testValidators();
+  testSymbol();
   testValidateConfig();
   testFileRoundTrip();
   testLoginLine();

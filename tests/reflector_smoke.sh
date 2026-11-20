@@ -98,7 +98,7 @@ grep -q "12345" "$D/ref.out" && ko "APRS: la password e' nel registro del reflec
 # una trasmissione con posizione arriva al server APRS
 build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --position 43.7696,10.8807 --frames 30 --duration 12 > "$D/a2.out" 2>&1
 sleep 0.5
-check "$D/aprs.rows" "^IZ5IOF>APZVLR,qAR,N0CALL-10:!4346.18N/01052.84E-VoLoRa$" "APRS: la posizione della stazione che trasmette e' arrivata al server"
+check "$D/aprs.rows" "^IZ5IOF>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E_VoLoRa$" "APRS: la posizione della stazione che trasmette e' arrivata al server"
 [ "$(grep -c '^IZ5IOF>' "$D/aprs.rows")" = "1" ] && ok "APRS: una sola posizione per quella trasmissione" || ko "APRS: posizioni ripetute"
 check "$D/ref.out" "\[aprs\] inviato: IZ5IOF>APZVLR" "APRS: il registro scrive la posizione inviata"
 # spento: il collegamento si chiude

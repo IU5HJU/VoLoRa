@@ -5,8 +5,9 @@
 //
 // Cosa si manda: una posizione APRS "senza timestamp", con la stazione come sorgente e il reflector come iGate, come fa un iGate quando porta
 // su Internet un pacchetto arrivato via radio:
-//   NOMINATIVO>APZVLR,qAR,LOGIN:!DDMM.mmN/DDDMM.mmE-VoLoRa
-// (APZ... e' il prefisso dei programmi sperimentali non registrati; "/-" e' il simbolo della stazione fissa).
+//   NOMINATIVO>APZVLR,qAR,LOGIN:!DDMM.mmNVDDDMM.mmE_VoLoRa
+// (APZ... e' il prefisso dei programmi sperimentali non registrati; "V" e "_" sono la tabella e il codice del simbolo: di base un cerchio blu con la V,
+// cioe' il simbolo alternativo "_" con la lettera V sovrapposta; il sysop lo puo' cambiare).
 // Il reflector manda solo le posizioni che le stazioni gia' trasmettono in chiaro via radio (impostazione "pos" della scheda).
 #pragma once
 
@@ -27,10 +28,11 @@ struct AprsConfig {
   std::string login;             // nominativo (con SSID) con cui il reflector si presenta al server, per esempio N0CALL-10
   std::string pass;              // password APRS-IS di quel nominativo (-1 = solo ascolto, non pubblica)
   uint32_t minIntervalS = 600;   // una stazione si ripete al massimo ogni tanti secondi (APRS: non piu' spesso di ogni 10 minuti)
+  std::string symbol = "V_";    // simbolo APRS: tabella (o lettera di sovrapposizione) e codice; "V_" = cerchio blu con la V (docs/reflector.md)
 
   bool complete() const { return !host.empty() && !login.empty() && !pass.empty(); }
   bool operator==(const AprsConfig& o) const {
-    return enabled == o.enabled && host == o.host && port == o.port && login == o.login && pass == o.pass && minIntervalS == o.minIntervalS;
+    return enabled == o.enabled && host == o.host && port == o.port && login == o.login && pass == o.pass && minIntervalS == o.minIntervalS && symbol == o.symbol;
   }
 };
 
@@ -44,10 +46,13 @@ bool isValidAprsHost(const std::string& s);
 bool isValidAprsLogin(const std::string& s);
 // Password: da 1 a 32 caratteri visibili, senza spazi ("-1" e' valida).
 bool isValidAprsPass(const std::string& s);
+// Simbolo: due caratteri. Il primo e' la tabella ('/' principale, '\\' alternativa) oppure una lettera maiuscola o una cifra (sovrapposizione sulla tabella alternativa);
+// il secondo e' il codice del simbolo (carattere visibile, tranne '|' e '~' che le TNC usano per altro).
+bool isValidAprsSymbol(const std::string& s);
 // Sorgente di un pacchetto APRS (AX.25): da 1 a 6 lettere o cifre e, facoltativo, '-' e un SSID da 0 a 15. Un "/P" non c'e' in AX.25.
 bool isValidAprsSource(const std::string& s);
 
-// File di configurazione (righe "chiave=valore", righe vuote e # ignorate): enabled, host, port, login, pass, interval.
+// File di configurazione (righe "chiave=valore", righe vuote e # ignorate): enabled, host, port, login, pass, interval, symbol.
 // false con 'err' (con il numero di riga) se qualcosa non e' valido. Un file con valori mancanti dara' una configurazione incompleta (non attiva).
 bool parseAprsConfig(const std::string& text, AprsConfig& out, std::string& err);
 std::string formatAprsConfig(const AprsConfig& c);
@@ -57,8 +62,8 @@ bool validateAprsConfig(const AprsConfig& c, std::string& err);
 // "5143.98N" e "00852.84E": latitudine (DDMM.mmN) e longitudine (DDDMM.mmE) dalla posizione, in centesimi di primo.
 std::string aprsLatitude(int32_t latE7);
 std::string aprsLongitude(int32_t lonE7);
-// La riga da mandare al server (senza il fine riga): vuota se il nominativo o la posizione non sono validi.
-std::string aprsPositionLine(const std::string& callsign, const Position& pos, const std::string& login);
+// La riga da mandare al server (senza il fine riga): vuota se il nominativo, la posizione o il simbolo non sono validi.
+std::string aprsPositionLine(const std::string& callsign, const Position& pos, const std::string& login, const std::string& symbol = "V_");
 // La riga di accesso al server (senza il fine riga). Contiene la password: non va scritta nei registri.
 std::string aprsLoginLine(const AprsConfig& c);
 

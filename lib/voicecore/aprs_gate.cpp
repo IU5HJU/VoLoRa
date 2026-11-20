@@ -52,6 +52,14 @@ bool isValidAprsPass(const std::string& s) {
   return true;
 }
 
+bool isValidAprsSymbol(const std::string& s) {
+  if (s.size() != 2) return false;
+  const char t = s[0], c = s[1];
+  if (!(t == '/' || t == '\\' || isUpperAlnum(t))) return false;
+  const unsigned char u = static_cast<unsigned char>(c);
+  return u > ' ' && u < 127 && c != '|' && c != '~';
+}
+
 bool validateAprsConfig(const AprsConfig& c, std::string& err) {
   if (!c.host.empty() && !isValidAprsHost(c.host)) {
     err = "l'indirizzo del server puo' avere lettere, cifre, punto, - e _ (massimo 253 caratteri)";
@@ -71,6 +79,10 @@ bool validateAprsConfig(const AprsConfig& c, std::string& err) {
   }
   if (c.minIntervalS < kAprsMinIntervalS || c.minIntervalS > kAprsMaxIntervalS) {
     err = "l'intervallo fra due posizioni della stessa stazione va da 60 secondi a un giorno";
+    return false;
+  }
+  if (!isValidAprsSymbol(c.symbol)) {
+    err = "il simbolo sono due caratteri: la tabella (/ oppure \\ oppure una lettera maiuscola o una cifra per la sovrapposizione) e il codice del simbolo";
     return false;
   }
   if (c.enabled && !c.complete()) {
@@ -125,8 +137,10 @@ bool parseAprsConfig(const std::string& text, AprsConfig& out, std::string& err)
       c.login = val;
     } else if (key == "pass") {
       c.pass = val;
+    } else if (key == "symbol") {
+      c.symbol = val;
     } else {
-      snprintf(msg, sizeof(msg), "riga %d: chiave sconosciuta (enabled, host, port, login, pass, interval)", lineNo);
+      snprintf(msg, sizeof(msg), "riga %d: chiave sconosciuta (enabled, host, port, login, pass, interval, symbol)", lineNo);
       err = msg;
       return false;
     }
@@ -150,6 +164,7 @@ std::string formatAprsConfig(const AprsConfig& c) {
   s += "login=" + c.login + "\n";
   s += "pass=" + c.pass + "\n";
   s += "interval=" + std::to_string(c.minIntervalS) + "\n";
+  s += "symbol=" + c.symbol + "\n";
   return s;
 }
 
@@ -173,9 +188,9 @@ std::string aprsLongitude(int32_t lonE7) {
   return b;
 }
 
-std::string aprsPositionLine(const std::string& callsign, const Position& pos, const std::string& login) {
-  if (!pos.valid || !isValidCoordinate(pos.latE7, pos.lonE7) || !isValidAprsSource(callsign) || !isValidAprsLogin(login)) return std::string();
-  return callsign + ">APZVLR,qAR," + login + ":!" + aprsLatitude(pos.latE7) + "/" + aprsLongitude(pos.lonE7) + "-VoLoRa";
+std::string aprsPositionLine(const std::string& callsign, const Position& pos, const std::string& login, const std::string& symbol) {
+  if (!pos.valid || !isValidCoordinate(pos.latE7, pos.lonE7) || !isValidAprsSource(callsign) || !isValidAprsLogin(login) || !isValidAprsSymbol(symbol)) return std::string();
+  return callsign + ">APZVLR,qAR," + login + ":!" + aprsLatitude(pos.latE7) + symbol[0] + aprsLongitude(pos.lonE7) + symbol[1] + "VoLoRa";
 }
 
 std::string aprsLoginLine(const AprsConfig& c) { return "user " + c.login + " pass " + c.pass + " vers VoLoRa-reflector 0.1"; }
@@ -221,7 +236,7 @@ void AprsGate::onPosition(const std::string& callsign, const Position& pos, uint
     stats_.invalid++;
     return;
   }
-  const std::string line = aprsPositionLine(callsign, pos, cfg_.login);
+  const std::string line = aprsPositionLine(callsign, pos, cfg_.login, cfg_.symbol);
   if (line.empty()) {
     stats_.invalid++;
     return;
