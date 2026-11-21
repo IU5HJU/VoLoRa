@@ -227,7 +227,7 @@ Se il telefono dice "nessun Internet" e la pagina non si apre: scegli di **resta
 
 ## Ripetitore a due schede (ruoli RX e TX, 10/11/2026)
 
-Studio e decisioni: [studio-ripetitore.md](studio-ripetitore.md). **Scritto, non ancora provato sulle schede** (compila solo se Actions è verde; la logica è provata sul PC).
+Studio e decisioni: [studio-ripetitore.md](studio-ripetitore.md). **Provato a banco con due T3** (16-18/11/2026: configurazione RX→TX, TX forzata, comandi del sysop, messaggi, voce) e, con il reflector, nei due sensi (18/11/2026): esiti in [prove.md](prove.md).
 
 **Il ripetitore** è fatto da **due T3 uguali, normali e già cablate** (microfono, altoparlante e pulsanti restano come sono: la RX può avere l'altoparlante di monitor, vedi sotto): la scheda **RX** ascolta la frequenza di ingresso e manda i pacchetti da ripetere alla scheda **TX**, che li trasmette sulla frequenza di uscita. Ripete il **modo del profilo scelto** (di base lo Standard, Codec2 1200) e i **messaggi di testo** (modo 7, dall'11/11/2026: un pacchetto solo, la seconda copia del mittente non si ripete) e aggiunge ai pacchetti il flag `RELAYED`. Un testo non fa parte del turno vocale in corso e non ne cambia la durata. Ogni scheda ha la **sua antenna**: la separazione fra le due antenne (distanza, filtri, cavità) è a cura dell'operatore.
 

@@ -79,7 +79,7 @@ Le righe `[nodo]` dell'avvio (con la memoria libera), le righe ogni 30 s dopo un
 - Il nodo accetta datagrammi da qualunque indirizzo (conta la firma) ma **risponde solo all'indirizzo impostato** con `PEER`: va bene per la rete locale; per Internet vero serve il reflector.
 - La password del Wi-Fi è salvata in chiaro nella memoria della scheda (come tutte le impostazioni).
 
-## Configurazione dal Wi-Fi in modo nodo (dal 14/11/2026, non ancora provata su una scheda)
+## Configurazione dal Wi-Fi in modo nodo (dal 14/11/2026, provata su una scheda il 19/11/2026)
 
 Il nodo non usa PTT, tasti né menu, quindi la scheda funziona uguale su tutte le piattaforme (T3, T-Beam e altre). Per configurarla senza computer, all'avvio in modo nodo la scheda apre **per 3 minuti** il proprio Wi-Fi di configurazione:
 
@@ -92,11 +92,11 @@ Il nodo non usa PTT, tasti né menu, quindi la scheda funziona uguale su tutte l
 
 Costo: ogni avvio in modo nodo ritarda di 3 minuti la partenza del collegamento (anche dopo un'interruzione di corrente). Nessun costo di spazio nel programma: la pagina e il server sono già nel firmware; la memoria del server si libera alla chiusura.
 
-## Chi transita dal nodo (dal 14/11/2026, non ancora provato su una scheda)
+## Chi transita dal nodo (dal 14/11/2026, provato su una T-Beam SX1278)
 
 La schermata del nodo mostra in basso l'ultima stazione passata dal nodo, come la ricezione normale: **`RX IU5HJU -85 7.5dB`** (nominativo, RSSI e SNR dell'ultimo pacchetto ricevuto in radio e mandato all'altro nodo). Con un nominativo di 6 caratteri il formato completo `RX IU5HJU -85dBm 7.5dB` supererebbe i 21 caratteri dello schermo: si scrive allora senza `dBm`. `RX` fino a 5 secondi dopo l'ultimo pacchetto, poi `Ult`; se il nominativo non è ancora arrivato compare `?`; senza nessun transito `Radio: nessuno`. Se la riga è troppo lunga (nominativo di 8 caratteri, valori molto bassi) si accorcia togliendo prima `dBm`, poi i decimali dell'SNR. La seriale scrive una riga per ogni stazione: `[nodo] transito N: <nominativo> RSSI ... dBm SNR ... dB`. Con N0CALL la prima riga dice `NODO N0CALL: no TX`. Coda e pacchetti persi compaiono nella riga dei contatori solo se non sono zero (`C` e `P`).
 
-## Gestione dalla rete di casa (dal 14/11/2026, non ancora provata su una scheda)
+## Gestione dalla rete di casa (dal 14/11/2026, provata su schede il 19/11/2026)
 
 Quando il nodo è collegato al Wi-Fi di casa serve **la stessa pagina di configurazione** anche sulla rete interna, senza cavo e senza il Wi-Fi della scheda:
 

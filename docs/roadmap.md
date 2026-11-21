@@ -2,9 +2,19 @@
 
 > **Nota del 12/11/2026 sui nomi dei profili.** Questo documento è stato scritto con i nomi di allora: *Standard* (Codec2 1200, SF8), *Messaggio* e *Qualità* (Codec2 3200, SF7). Da quel giorno si chiamano **Range** (1200, SF8, lettera R), **Messaggio** (M) e **Standard** (3200, SF7, lettera S). Le parti storiche non sono state riscritte.
 
-Aggiornato il 18 novembre 2026 (sezione "Stato al 18/11/2026" qui sotto; sezione "Stato al 14/11/2026" qui sotto; sezione "Stato al 10/11/2026" qui sotto; le decisioni dell'8 novembre sono più sotto).
+Aggiornato il 21 novembre 2026 (sezione "Stato al 21/11/2026" qui sotto; sezione "Stato al 18/11/2026"; sezione "Stato al 14/11/2026" qui sotto; sezione "Stato al 10/11/2026" qui sotto; le decisioni dell'8 novembre sono più sotto).
 
-## Stato al 18/11/2026: la rc.1 è vicina
+## Stato al 21/11/2026: la rc.1 è pubblicata, `main` è più avanti
+
+La **rc.1** è pubblicata dal 19/11/2026 (pre-release, tag `v0.1.0-rc.1`, commit `0efa2a3`); le sue note sono quelle del 19/11 e **non** comprendono quanto fatto dopo. Su `main`, dopo la rc.1 (esiti in [prove.md](prove.md), dettagli in [reflector.md](reflector.md)):
+
+- **Reflector:** pagina pubblica **a blocchi per il telefono**, con la **qualità del collegamento** di ogni trasmissione (radio o rete) e, in **HTTPS** servito dal reflector stesso con certificato di Let's Encrypt e rinnovo automatico (provato il 21/11/2026 su `https://volora.iu5hju.it`); la pagina di amministrazione ha il riquadro Server APRS e la qualità.
+- **APRS:** le **stazioni** che trasmettono con la posizione compaiono su aprs.fi con il simbolo `V&` (rombo con la V) e un commento con frequenza e protocollo; il **nodo** (e la RX del ripetitore) si presenta con un messaggio firmato nuovo (`INFO`, tipo 7) e compare come `NOMINATIVO-SSID`. Provato il 20-21/11/2026 con `IU5HJU-11` e con `IR5XXX-14`.
+- **Nodo:** impostazioni `NODESSID` e `NODETEXT`, pagina di rete locale riordinata a sezioni (chiave di collegamento al reflector distinta dalla chiave del sysop) e riquadro **Stato del nodo** con l'ultima stazione e la qualità dell'ultima trasmissione (provato su scheda il 21/11/2026).
+- **Provati con tre nodi collegati insieme** (21/11/2026). **Da provare:** la voce ascoltata su tutti i nodi, due nodi che trasmettono quasi insieme, i giudizi di qualità diversi da «buona», il collegamento caduto, il primo rinnovo del certificato (verso il 19/01/2027) e più stazioni insieme su APRS.
+- **Prossimo passo:** una nuova versione (rc.2 o stabile) che porti queste novità nei binari delle schede e nelle note di rilascio.
+
+## Stato al 18/11/2026: la rc.1 è vicina (storico)
 
 Firmware `b465287` (Build #391) e successivi. **Nessuna delle prove rimaste blocca la rc.1**: le note di rilascio devono dire che non sono provate. L'elenco completo, con cosa fare e cosa riportare, è in [prove-da-fare-rc1.md](prove-da-fare-rc1.md) (25 voci, alcune già avviate).
 

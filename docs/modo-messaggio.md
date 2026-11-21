@@ -48,7 +48,7 @@ Il messaggio vocale ricevuto **non si riproduce più da solo**: finita la ricezi
 - **Testo (modo 7, [protocollo.md](protocollo.md)):** stesso schema, ma all'arrivo suona **"SMS" in Morse** (stessa nota e stessa velocità di "MSG"), il display mostra la **busta** e **"Premi PTT: leggi"**. Il PTT breve apre il testo, che resta in mostra (6 righe da 21 caratteri; con più pagine il **volume breve** passa alla successiva); un'altra pressione del PTT lo chiude e lo cancella.
 - **Invio:** menu a bordo (volume lungo) → **"Invia testo"** → PTT per scegliere uno dei testi non vuoti, volume breve per inviare, volume lungo per uscire (10 s senza tasti: esce). I cinque testi si impostano dalla pagina web (passo 2) o dalla pagina Wi-Fi della scheda, o con `CFG SET TEXT1 ...` (massimo 150 caratteri ASCII, senza le parentesi graffe, valgono subito, senza riavvio).
 - **Da definire insieme:** i gesti con più messaggi in coda (oggi ce n'è uno solo), l'ingresso nel menu dei messaggi dal tasto volume, e in futuro una tastiera o un'app per telefono (Bluetooth) per scrivere testi liberi.
-- **Stato:** scritto e provato sul PC (`make test`, prove della pagina); **da provare su scheda**.
+- **Stato:** provato sul PC (`make test`, prove della pagina) **e fra le schede** (messaggi ricevuti correttamente nel profilo Messaggio, con la distanza, 10-14/11/2026; via ripetitore, 18/11/2026: [prove.md](prove.md)).
 
 ## Messaggi via ripetitore (18/11/2026)
 
