@@ -180,17 +180,29 @@ Il collegamento si vede subito nella pagina del sysop ("Collegati") e nel regist
 
 ## Pagina pubblica in HTTPS (21/11/2026, provata con un Apache di prova, non ancora sulla macchina vera)
 
-La pagina pubblica ascolta in HTTP (`--public-web 8081`). Per pubblicarla in HTTPS con un nome proprio (per esempio `volora.iu5hju.it`) si usa l'**Apache che c'è già** (per esempio quello di SVX Guardian), con un sito in più sulla stessa porta HTTPS: Apache sceglie il sito dal nome richiesto, quindi gli altri siti non cambiano. Il reflector può stare su un'altra macchina della rete di casa.
+La pagina pubblica ascolta in HTTP (`--public-web 8081`). Per pubblicarla in HTTPS con un nome proprio (per esempio `volora.iu5hju.it`) si mette **Apache sulla stessa macchina del reflector** (a casa di IU5HJU: PRAIM), che tiene il certificato e fa da proxy verso la pagina. Così VoLoRa **non dipende da altre macchine** (per esempio dal Raspberry di SVX Guardian, che andrà alla sezione ARI di Vinci con i suoi certificati e la sua rete). Non serve una VPS.
 
-1. **DNS**: nel pannello del dominio crea `volora` come **CNAME verso `iu5hju.ddns.net`** (segue il tuo IP dinamico).
-2. **Chiave e richiesta di certificato** sulla macchina dell'Apache, con lo script di SVX Guardian (`install/ssl/create-csr.sh`), scrivendo come nome `volora.iu5hju.it`: crea `/etc/svxguardian/ssl/volora.iu5hju.it.key` (che non va mai copiata né pubblicata) e il `.csr` da mandare all'ente che emette il certificato.
-3. **Certificato**: quando l'ente lo emette, scarica il certificato e la catena. Se sono in file separati vanno uniti in uno solo, **certificato per primo**: `cat certificato.crt catena.crt > volora.iu5hju.it-catena.pem`.
-4. **Installazione del certificato** con `install/ssl/setup-https.sh`, opzione 2 (nome `volora.iu5hju.it`, file PEM). **Alla domanda "Configure Apache HTTPS now?" rispondi `n`**: quello script scrive sempre `svxguardian.conf` e sovrascriverebbe il sito di SVX Guardian.
-5. **Il sito di Apache** con `tools/https-pagina-pubblica.sh` (sulla macchina dell'Apache, come root): chiede il nome del sito, la porta HTTPS (443), l'indirizzo della macchina del reflector nella rete di casa e la porta della pagina pubblica (8081). Controlla il certificato e la chiave, che la pagina del reflector risponda, scrive **solo** `/etc/apache2/sites-available/volora-public.conf` (con copia di sicurezza se c'era già), prova la configurazione (se non va, la toglie e gli altri siti restano come prima), ricarica Apache e prova l'indirizzo. `--stampa` fa vedere il file di configurazione senza cambiare niente.
-6. **Sicurezza**: il sito accetta solo GET e HEAD (le altre richieste: 403) e inoltra solo la pagina pubblica; la pagina di amministrazione del reflector non è raggiungibile da lì. Il reflector deve ascoltare sulla rete di casa (`--public-bind 0.0.0.0`) e la macchina dell'Apache deve poterlo raggiungere. La porta 443 è quella che SVX Guardian ha già aperta sul router: non serve aprirne altre, e il port forward della 8081 verso Internet non serve più.
-7. **Rinnovo**: alla scadenza del certificato si ripetono i passi 2-4 (senza rigenerare la chiave se l'ente la accetta di nuovo) e basta un `sudo systemctl reload apache2`.
+**Schema**: `volora.iu5hju.it` (CNAME verso `iu5hju.ddns.net`, che segue l'IP di casa) → router, porta **443 verso PRAIM** → Apache di PRAIM (certificato) → `127.0.0.1:8081`. Il sito principale `iu5hju.it` (hosting) resta il punto di informazioni per i colleghi e ha il link alla pagina del reflector.
 
-Provato con un Apache 2.4 di prova, un certificato autofirmato e un sito "esistente" sulla stessa porta: la pagina del reflector si apre dal nuovo nome, il sito esistente risponde come prima, un POST dà 403, `/api/status` dà 404, un secondo lancio dello script fa la copia di sicurezza, e con la pagina del reflector spenta o senza certificato lo script si ferma prima di toccare Apache.
+**Prima**
+- **Router**: la 443 va a PRAIM. Se prima andava al Raspberry di SVX Guardian, quello si sposta su un'altra porta esterna (per esempio **8444 → porta 443 del Raspberry**: il Raspberry non cambia, e il suo certificato vale per il nome, non per la porta; cambia l'indirizzo con cui si raggiunge, `https://iu5hju.ddns.net:8444/`). Controlla i segnalibri e i link che puntano a quel servizio.
+- **Porta 443 e 80 su PRAIM**: `ss -tlnp | grep -E ':(80|443)\b'`. Apache vuole la 443 (e di base anche la 80, che qui non serve: per il certificato non serve aprirla). Se la 80 è già usata da un altro programma (per esempio il decoder ADS-B di FR24), togli la riga `Listen 80` da `/etc/apache2/ports.conf` e Apache ascolta solo sulla 443. Le porte del reflector (5400/UDP, 8080, 8081) e quelle di FR24 non vanno in conflitto con la 443.
+- **Apache**: `sudo apt install apache2`.
+
+**Passi** (tutti con `tools/https-pagina-pubblica.sh`, come root; i file stanno in `/etc/volora/ssl`)
+1. **DNS**: nel pannello del dominio `volora` come **CNAME verso `iu5hju.ddns.net`**.
+2. `sudo ./https-pagina-pubblica.sh --csr`: crea la chiave privata (che non va mai copiata né pubblicata) e la richiesta di certificato (CSR). Il CSR (`sudo cat /etc/volora/ssl/volora.iu5hju.it.csr`) va all'ente che emette il certificato. Non sovrascrive una chiave già esistente.
+3. Quando l'ente emette il certificato: scarica certificato e catena. Se sono in file separati vanno uniti in uno, **certificato per primo**: `cat certificato.crt catena.crt > volora.iu5hju.it.pem`. Poi `sudo ./https-pagina-pubblica.sh --installa volora.iu5hju.it.pem`: controlla che il primo certificato valga per il nome, che sia in corso di validità e che sia la coppia della chiave; lo installa (con copia di sicurezza di quello di prima).
+4. `sudo ./https-pagina-pubblica.sh`: chiede il nome del sito, la porta HTTPS (443), l'indirizzo del reflector (`127.0.0.1` se è la stessa macchina) e la porta della pagina pubblica (8081). Scrive **solo** `/etc/apache2/sites-available/volora-public.conf` (copia di sicurezza se c'era già), prova la configurazione (se non va, toglie il sito nuovo e gli altri restano come prima), ricarica Apache e prova l'indirizzo. `--stampa` fa vedere il file di configurazione senza cambiare niente.
+
+**Sicurezza**
+- Il sito accetta solo GET e HEAD (le altre richieste: 403) e inoltra solo la pagina pubblica; la pagina di amministrazione del reflector non è raggiungibile da lì.
+- Con Apache sulla stessa macchina il reflector può ascoltare la pagina pubblica **solo in locale** (`--public-bind 127.0.0.1`): non serve più il port forward della 8081 sul router, e in Internet si vede solo l'HTTPS.
+- Nel router vanno aperte solo la 443 (TCP) e la 5400 (UDP, il reflector).
+
+**Rinnovo**: alla scadenza del certificato si ripetono i passi 2-3 (la chiave nuova richiede di cancellare a mano quella vecchia, per non sovrascriverla per sbaglio) e un `sudo systemctl reload apache2`.
+
+**Provato** con un Apache 2.4 di prova e certificati autofirmati: richiesta del certificato (e rifiuto di sovrascrivere la chiave), installazione (con i rifiuti per catena prima del certificato, nome sbagliato, certificato di un'altra chiave, copia di sicurezza), la pagina del reflector si apre dal nuovo nome, un POST dà 403, `/api/status` dà 404, con un altro sito già presente sulla stessa porta quello risponde come prima, e con la pagina del reflector spenta o senza certificato lo script si ferma prima di toccare Apache.
 
 ## Cosa fa
 
