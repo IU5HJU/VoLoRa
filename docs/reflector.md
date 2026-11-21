@@ -128,7 +128,7 @@ Limiti:
 - Se manca il primo pacchetto, i mancanti includono quelli prima del primo ricevuto (la sequenza parte da 0).
 - Per una trasmissione senza il rapporto (nodo vecchio, collegamento caduto) i buchi di rete si vedono lo stesso, ma non la radio.
 - **Non provato con schede vere**: sul PC è provato con le prove del reflector, del nodo e della RX (`make test`, `make reflector-smoke` con `vlnode --quality ... --drop N`).
-- **Pagina pubblica**: nella tabella "Ultime trasmissioni" compaiono anche il segnale (SNR medio con il nodo, fra parentesi il margine sul limite del modo; l'RSSI se manca l'SNR) e il giudizio del collegamento (buona / radio / rete / radio e rete / n.d.), con i pacchetti persi nel suggerimento al passaggio del mouse. Niente contatori, indirizzi o id: sono solo numeri di radio, già impliciti nel modo e nel nodo da cui passa la trasmissione.
+- **Pagina pubblica**: nella tabella "Ultime trasmissioni" la colonna "Qualità collegamento" dà il giudizio (Buono; Segnale radio debole o al limite; Problemi di rete; entrambi; Non disponibile se il nodo non manda il rapporto) e sotto, in piccolo, SNR e margine, RSSI, pacchetti persi in radio e in rete. "Debole" = pacchetti persi o errori CRC in radio, oppure margine medio sotto 1,5 dB; "al limite" = margine medio sotto 4 dB o minimo sotto 1,5 dB. Niente contatori, indirizzi o id: solo numeri di radio.
 
 ## La pagina pubblica (per i colleghi)
 

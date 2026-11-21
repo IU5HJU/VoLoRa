@@ -416,9 +416,8 @@ struct Admin {
   // visibile fra le stazioni collegate), segnale con cui il nodo l'ha ricevuta se ha mandato il rapporto, pacchetti persi in radio e in rete.
   std::string publicQualityJson(const ReflectorCore::Talk& r) const {
     const Judgement j = ReflectorCore::judge(r);
-    const uint8_t mode = r.haveReport && r.report.mode ? r.report.mode : static_cast<uint8_t>(voiceMode);
     std::ostringstream o;
-    o << ",\"mode\":\"" << (mode == 4 ? "Standard" : "Range") << "\",\"via\":\"" << jsonEscape(r.client) << "\",\"quality\":";
+    o << ",\"quality\":";
     if (r.haveReport) {
       char b[200];
       if (r.report.snrValid)
@@ -431,7 +430,11 @@ struct Admin {
     } else {
       o << "null";
     }
-    o << ",\"netLost\":" << (j.haveRadio ? j.netLost : j.netGaps) << ",\"verdict\":\"" << verdictCode(j.verdict) << "\",\"verdictText\":\"" << verdictText(j.verdict) << "\"";
+    // livello del problema di radio: 2 = debole (pacchetti persi o errori CRC, o margine medio sotto 1,5 dB), 1 = al limite, 0 = niente
+    int level = 0;
+    if (j.radioLoss || (r.haveReport && r.report.snrValid && j.marginAvgDb < 1.5f)) level = 2;
+    else if (j.radioWeak) level = 1;
+    o << ",\"netLost\":" << (j.haveRadio ? j.netLost : j.netGaps) << ",\"verdict\":\"" << verdictCode(j.verdict) << "\",\"radioLevel\":" << level;
     return o.str();
   }
   // La porta pubblica risponde solo a GET della pagina e di /status.json: nessun altro indirizzo, nessun comando.

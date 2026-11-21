@@ -29,7 +29,8 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
   .v-ok { color:var(--ok); font-weight:600; }
   .v-radio, .v-net, .v-both { color:var(--bad); font-weight:600; }
   .v-nd { color:var(--muted); }
-  @media (max-width: 520px) { .hm { display:none; } }
+  .dt { color:var(--muted); font-size:.8rem; font-weight:400; }
+  th { white-space:pre-line; }
 </style>
 </head>
 <body>
@@ -82,18 +83,23 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
     var rc = $("recent"); rc.textContent = "";
     if (!d.recent.length) rc.appendChild(el("p", "Ancora nessuna trasmissione.", "muted"));
     else {
-      rc.appendChild(table(["Stazione", "Quando", "Durata", "Segnale", "Collegamento"], d.recent.map(function (x) {
-        var q = x.quality, sig = "-";
-        if (q && q.snr !== null) sig = q.snr.toFixed(1) + " dB (" + (q.marginDb >= 0 ? "+" : "") + q.marginDb.toFixed(1) + ")";
-        else if (q) sig = q.rssi + " dBm";
-        var lost = [];
-        if (q && q.radioLost) lost.push(q.radioLost + "/" + q.radioTotal + " persi in radio");
-        if (x.netLost) lost.push(x.netLost + " persi in rete");
-        var v = el("span", x.verdictText, "v-" + x.verdict);
-        if (lost.length) v.title = lost.join(", ");
-        return [x.callsign, ago(x.agoS), dur(x.durationS), sig, v];
+      rc.appendChild(table(["Stazione", "Quando", "Durata", "Qualit\u00e0\ncollegamento"], d.recent.map(function (x) {
+        var q = x.quality, n1 = function (v) { return v.toFixed(1).replace(".", ","); };
+        var radio = x.radioLevel === 2 ? "Segnale radio debole" : x.radioLevel === 1 ? "Segnale radio al limite" : "";
+        var net = x.netLost > 0 ? "Problemi di rete" : "";
+        var text = radio && net ? radio + " e problemi di rete" : radio || net || (q ? "Buono" : "Non disponibile");
+        var cls = radio && net ? "both" : radio ? "radio" : net ? "net" : q ? "ok" : "nd";
+        var det = [];
+        if (q) {
+          if (q.snr !== null) det.push("SNR " + n1(q.snr) + " dB (margine " + (q.marginDb >= 0 ? "+" : "") + n1(q.marginDb) + ")");
+          det.push("RSSI " + q.rssi + " dBm");
+          det.push("persi in radio " + q.radioLost + " su " + q.radioTotal);
+        } else det.push("rapporto del nodo non ricevuto");
+        det.push("persi in rete " + x.netLost);
+        var c = el("span"); c.appendChild(el("span", text, "v-" + cls)); c.appendChild(el("div", det.join(" - "), "dt"));
+        return [x.callsign, ago(x.agoS), dur(x.durationS), c];
       })));
-      $("legend").textContent = "Segnale: SNR medio con il nodo e, fra parentesi, il margine sopra il limite del modo. Collegamento: buona, oppure il problema (radio = segnale debole o pacchetti persi in aria, rete = pacchetti persi fra nodo e reflector). n.d. se il nodo non manda il rapporto.";
+      $("legend").textContent = "Margine: SNR sopra il limite del modo. Persi in radio: pacchetti non ricevuti dal nodo; persi in rete: pacchetti non arrivati dal nodo al reflector.";
     }
     $("err").textContent = "";
   }
