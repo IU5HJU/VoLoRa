@@ -39,7 +39,12 @@ vlreflector: build/vlreflector
 # HTTPS della pagina pubblica (tools/tls_server.h): serve OpenSSL con le intestazioni (sudo apt install libssl-dev pkg-config); senza, il reflector si compila
 # lo stesso e la pagina pubblica resta in HTTP (vlreflector --tls-check dice se il TLS c'e').
 TLS_FLAGS := $(shell pkg-config --exists openssl 2>/dev/null && echo "-DVL_TLS $$(pkg-config --cflags --libs openssl)")
-build/vlreflector: tools/vlreflector.cpp $(CORE) $(HDRS)
+# Un file che cambia solo quando cambiano le opzioni di OpenSSL: cosi' il reflector si ricompila da solo dopo "apt install libssl-dev".
+.PHONY: tlsflags-stamp
+build/tlsflags: tlsflags-stamp
+	@mkdir -p build
+	@echo '$(TLS_FLAGS)' | cmp -s - $@ || echo '$(TLS_FLAGS)' > $@
+build/vlreflector: tools/vlreflector.cpp $(CORE) $(HDRS) build/tlsflags
 	@mkdir -p build
 	$(CXX) -std=c++17 -Wall -Wextra -O1 -pthread -Ilib/voicecore -Itools -o $@ $< $(CORE) $(TLS_FLAGS)
 
