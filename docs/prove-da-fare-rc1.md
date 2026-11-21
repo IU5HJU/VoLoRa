@@ -1,4 +1,4 @@
-# Prove da fare prima di pubblicare la rc.1
+# Prove da fare dopo la pubblicazione della rc.1 (pubblicata il 19/11/2026)
 
 Scaletta delle prove su schede ancora mancanti (stato al 18/11/2026, firmware `dev` dalla Build #380, commit `833fcd5`, in poi; la riga d'avvio mostra `fw <versione>`; la riga d'avvio dice `firmware <commit>`). Per ogni prova: **cosa fare**, **cosa deve succedere** e **cosa riportare**. Gli esiti vanno in [prove.md](prove.md); le note di rilascio ([v0.1.0-rc.1.md](note-rilascio/v0.1.0-rc.1.md)) si correggono di conseguenza. Il tag lo crea chi pubblica, a mano.
 

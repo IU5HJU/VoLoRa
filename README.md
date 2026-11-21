@@ -21,7 +21,7 @@ Funzionamento in breve:
 3. Al rilascio del PTT (massimo 30 s) si invia l'ultimo audio e il segnale di fine turno (OVER).
 4. Tutte le stazioni in ascolto sulla frequenza ricevono e riproducono. Dopo 5-10 s di attesa si risponde.
 
-> **Progetto sperimentale, in preparazione della prima release candidate (rc.1).** La voce passa da una scheda all'altra ed è
+> **Progetto sperimentale. La prima release candidate (rc.1) è pubblicata dal 19/11/2026 come pre-release.** La voce passa da una scheda all'altra ed è
 > **provata sulle schede** (T3 e T-Beam, nei tre profili, 10/11/2026), **in aria a 5,02 km in movimento** (prova di potenza,
 > 14/11/2026) e **attraverso il ripetitore a due T3** (16-18/11/2026): esiti in [docs/prove.md](docs/prove.md). **Mancano ancora misure sul campo oltre quella distanza** e diverse
 > prove su schede (elenco in [docs/prove-da-fare-rc1.md](docs/prove-da-fare-rc1.md) e [docs/note-rilascio/v0.1.0-rc.1.md](docs/note-rilascio/v0.1.0-rc.1.md)). Possono trasmettere solo radioamatori con il proprio nominativo, sulle frequenze e con le

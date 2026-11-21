@@ -16,13 +16,13 @@ Firmware `b465287` (Build #391) e successivi. **Nessuna delle prove rimaste bloc
 - **Display:** la **versione del firmware all'avvio** (`fw <versione>`), l'uscita dal modo prova con tre clic che torna su ASCOLTO, la riga `RX identificativo` con il segnale giusto.
 - **Altro:** audio su **T-Beam SX1278** (microfono, amplificatore e altoparlante, anche attraverso il ripetitore) provato il 17/11/2026; "coda" rumorosa dopo il PTT risolta (ricezione di un pacchetto di parità isolato); lo **shift vale solo per Standard e Range di una stazione normale** (Diretta e Messaggio trasmettono dove ascoltano).
 
-**Prima della rc.1 resta da provare** (tutto in [prove-da-fare-rc1.md](prove-da-fare-rc1.md)): le prove della T-Beam SX1262 (Standard, Range, trasmissione verso una SX1278, prova dei toni).
+**Dopo la rc.1 (pubblicata il 19/11/2026) resta da provare** (tutto in [prove-da-fare-rc1.md](prove-da-fare-rc1.md)): le prove della T-Beam SX1262 (Standard, Range, trasmissione verso una SX1278, prova dei toni).
 
-## Stato al 14/11/2026: verso la prima release candidate
+## Stato al 14/11/2026: verso la prima release candidate (pubblicata il 19/11/2026)
 
 **Fatto dalla beta.2** (nell'ordine in cui è arrivato; dettagli e prove in [prove.md](prove.md)): testi brevi e casella dei messaggi, MeshCom, ripetitore con due T3 (identificativo anche in Morse FM, comandi firmati del sysop), profili Standard (3200) / Range (1200) / Messaggio, shift libero da 0 a 10 MHz, nodo Internet su Wi-Fi, reflector (pagina di amministrazione con password, pagina pubblica anche in HTTPS con Let's Encrypt, IP del nodo, qualità dei collegamenti radio/rete, posizione di stazioni e nodi su APRS), prova di potenza, aggiornamento dalla pagina che conserva le impostazioni, firmware per la T-Beam con radio SX1262.
 
-**Prima della release candidate, da fare o da confermare su schede** (nessuna di queste cose blocca la rc, ma le note di rilascio devono dire che non sono provate):
+**Dopo la release candidate, da fare o da confermare su schede** (nessuna di queste cose blocca la rc, ma le note di rilascio devono dire che non sono provate):
 
 1. Prova di potenza in aria fra due schede: **fatta il 14/11/2026 a 5,02 km** ([prove.md](prove.md)); resta da documentare l'esito sul display di **entrambe** le schede e la distanza in km (nuova, 14/11/2026).
 2. **Voce attraverso il reflector** fra schede: **provata il 18/11/2026 nei due sensi**, ascoltata con la chiavetta SDR (nodo mobile, reflector, RX e TX del ripetitore). **Prova superata.**

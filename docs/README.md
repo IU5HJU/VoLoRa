@@ -8,7 +8,7 @@
 | [protocollo.md](protocollo.md) | Pacchetti, parità XOR, pausa tra i pacchetti, modi 1 e 4 (Codec2 1200 e 3200), modi 2 e 3 (prova di collegamento e di potenza), 5 (sysop), 6 (ripetitore occupato), 7 (testo) |
 | [prova-collegamento.md](prova-collegamento.md) | **Prova di potenza**: frame noti dalla potenza massima alla minima, tre clic sul PTT, esito sul display di entrambe le schede |
 | [formato-pacchetto.pdf](formato-pacchetto.pdf) | Formato del pacchetto radio in 3 pagine, da girare a chi lo chiede (sintesi di [protocollo.md](protocollo.md)) |
-| [note-rilascio/](note-rilascio/v0.1.0-beta.2.md) | Note di rilascio di ogni versione ([beta.1](note-rilascio/v0.1.0-beta.1.md), [beta.2](note-rilascio/v0.1.0-beta.2.md), [rc.1](note-rilascio/v0.1.0-rc.1.md), pronta per la pubblicazione), da incollare nella release su GitHub |
+| [note-rilascio/](note-rilascio/v0.1.0-beta.2.md) | Note di rilascio di ogni versione ([beta.1](note-rilascio/v0.1.0-beta.1.md), [beta.2](note-rilascio/v0.1.0-beta.2.md), [rc.1](note-rilascio/v0.1.0-rc.1.md), pubblicata il 19/11/2026), da incollare nella release su GitHub |
 | [ISTRUZIONI-SESSIONE-SDR.md](ISTRUZIONI-SESSIONE-SDR.md) | Testo da incollare in una nuova sessione per continuare la configurazione del ricevitore SDR |
 | [meshcom-testo.md](meshcom-testo.md) | MeshCom: avvisi e accordi con testi (SMS) su reti radioamatoriali a pacchetto sui 433,175 MHz, con un'escursione a tempo dal menu |
 | [modo-messaggio.md](modo-messaggio.md) | Profilo Messaggio (lungo raggio, SF12/BW125): come funziona, percentuale, suono in Morse, posizione |
@@ -23,7 +23,7 @@
 | [codec2.md](codec2.md) | Modi del Codec2: costo in CPU e memoria, tempo in aria, ascolto comparativo (`codec_compare`) |
 | [sdr.md](sdr.md) | Ricevere e decodificare le trasmissioni con un SDR (NESDR / RTL-SDR, GNU Radio, `lcr_decode`) |
 | [prove.md](prove.md) | Registro delle prove sulle schede e aiuto per la diagnosi (registri integrali in [prove-log/](prove-log/2026-11-14-tbeam-sx1262-ricezione-messaggio.txt)) |
-| [prove-da-fare-rc1.md](prove-da-fare-rc1.md) | **Scaletta delle prove su schede ancora mancanti** prima di pubblicare la rc.1, con cosa deve succedere e cosa riportare |
+| [prove-da-fare-rc1.md](prove-da-fare-rc1.md) | **Scaletta delle prove su schede ancora mancanti** dopo la pubblicazione della rc.1 (19/11/2026), con cosa deve succedere e cosa riportare |
 | [roadmap.md](roadmap.md) | Decisioni e prossimi lavori |
 | [ripetitore.md](ripetitore.md) | **Riepilogo del ripetitore**: com'è fatto, collegamento a quattro fili, configurazione, funzioni, cosa è provato e cosa no |
 | [banco-ripetitore.md](banco-ripetitore.md) | Prova a banco del ripetitore con due T3: cablaggio, seriale, display, altoparlante |
