@@ -52,6 +52,21 @@ Una rc è la versione che si pensa sia quella buona: prima di proporla si contro
 
 Il tag lo crea chi pubblica, a mano: i documenti non lo creano.
 
+## Prima della stabile `v0.1.0` (checklist, preparata il 21/11/2026)
+
+Una stabile è una rc che **non ha richiesto modifiche**. La rc.1 (19/11/2026, commit `0efa2a3`) è però **più indietro di `main`**: dopo di lei sono arrivati HTTPS, APRS di stazioni e nodi (messaggio `INFO`), qualità del collegamento sulla pagina pubblica, riquadro "Stato del nodo" e `NODESSID`/`NODETEXT`, cioè **cambiamenti al firmware dei nodi**. Quindi, a regola, il percorso corretto è **una rc.2 con queste novità** e, se non emergono difetti, la stabile con gli stessi binari. Pubblicare la stabile direttamente da `main` è una scelta di chi pubblica e va detta nelle note (le note [v0.1.0.md](note-rilascio/v0.1.0.md) sono già scritte per questo caso e comprendono le novità dalla rc.1).
+
+Prima del tag `v0.1.0`:
+
+1. **`main` verde** su GitHub Actions (test sul PC, prova della pagina, prova del reflector, compilazione di **tutte** le schede) e `make test` in locale; si annota il numero della Build in [prove.md](prove.md).
+2. **Binari provati:** le tre schede (T3, T-Beam SX1278, T-Beam SX1262 se si ha una scheda) aggiornate **dalla pagina web** con il firmware del commit che si tagga, senza perdere le impostazioni; sul firmware **di quel commit**: avvio (`CFG VERSION`), voce a turni, prova di potenza, collegamento al reflector, pagina dalla rete di casa e riquadro "Stato del nodo". Ogni esito in [prove.md](prove.md).
+3. **Reflector:** `tools/aggiorna-reflector.sh` sul server alla stessa versione, `--tls-check` dice `TLS: si`, pagina pubblica in HTTPS raggiungibile da fuori casa, APRS acceso con il nodo e almeno una stazione visti su aprs.fi.
+4. **Documenti allineati al commit del tag:** [README](../README.md), [roadmap](roadmap.md), [indice](README.md), [reflector.md](reflector.md), [firmware.md](firmware.md), [protocollo.md](protocollo.md), [prove-da-fare-rc1.md](prove-da-fare-rc1.md) (le prove ancora aperte, riportate come tali) e le note [v0.1.0.md](note-rilascio/v0.1.0.md): tolto l'avviso di **BOZZA** e confermate o tolte le righe **[DA CONFERMARE]**; nessuna frase "in preparazione" o "pronta, non pubblicata" nei documenti.
+5. **Note di rilascio oneste:** cosa è provato su scheda e cosa no (le prove ancora aperte sono nell'elenco "Cosa NON è ancora stato provato" delle note). Non bloccano la stabile ma vanno dette: T-Beam SX1262 (Standard, Range, trasmissione verso SX1278, toni), MeshCom con dispositivi di terzi, deviazione del Morse, reflector con più nodi, giudizi di qualità degradati, primo rinnovo del certificato, distanze lunghe.
+6. **Dopo il tag:** controllare la Build del tag e che la release sia **non** pre-release (tag senza trattino), che la pagina proponga la versione nuova e che `CFG VERSION` mostri `fw=v0.1.0`; annotare tutto in [prove.md](prove.md).
+
+Il tag lo crea chi pubblica, a mano: i documenti non lo creano.
+
 ## Limiti per ora
 
 - La pagina web pubblica sempre l'ultima versione (un tag o `main`): un canale "stabile" separato da quello "di sviluppo" non c'è ancora. Se serve, si aggiunge quando esisterà una versione stabile.
