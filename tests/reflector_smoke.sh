@@ -149,10 +149,11 @@ echo "$PS" | grep -q '"quality":{"snr":-9.0,"snrMin":-11.0,"rssi":-120,"marginDb
 echo "$PS" | grep -qE 'endpoint|key|127\.0\.0\.1|203\.0\.113|public|"id"|"in"|"out"|stats|badSignature|unknown|session|packets' && ko "pubblica: con la qualita' compare qualcosa di riservato ($PS)" || ok "pubblica: la qualita' non porta indirizzi, id o contatori"
 curl -s -m 5 $P/ | grep -q "Qualit.*collegamento" && ok "pubblica: la pagina ha la colonna del collegamento" || ko "pubblica: colonna collegamento"
 wait $QP
-# Una trasmissione di un nodo che non manda il rapporto (firmware vecchio): "n.d." e nessun errore. Si guarda la trasmissione piu' recente (la prima della lista)
+# Una trasmissione di un nodo che non manda il rapporto (firmware vecchio): "n.d." e nessun errore. Si guarda la trasmissione piu' recente (la prima della lista). Pausa e attesa lunga: nel Build #511 il nodo finto, appena dopo quello di prima, ha impiegato piu' di 20 s a collegarsi sul runner
+sleep 4
 build/vlnode --id 2 --peer-id 1000 --key $KEYA --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 20 --duration 20 > "$D/q3.out" 2>&1 &
 QP=$!
-poll '"recent":\[{"client":"nodoA","callsign":"IZ5IOF","agoMs":[0-9]*,"durationMs":[0-9]*,"packets":[0-9]*,"session":[0-9]*,"mode":"Range 1200","net":{[^}]*},"radio":null,"verdict":"nd","verdictText":"n.d."' 20 && ok "qualita': senza rapporto del nodo il giudizio e' n.d." || ko "qualita': senza rapporto ($SQ) | nodo: $(cat "$D/q3.out")"
+poll '"recent":\[{"client":"nodoA","callsign":"IZ5IOF","agoMs":[0-9]*,"durationMs":[0-9]*,"packets":[0-9]*,"session":[0-9]*,"mode":"Range 1200","net":{[^}]*},"radio":null,"verdict":"nd","verdictText":"n.d."' 45 && ok "qualita': senza rapporto del nodo il giudizio e' n.d." || ko "qualita': senza rapporto ($SQ) | nodo: $(cat "$D/q3.out")"
 wait $QP
 
 # password al posto del token: si sceglie con --set-password e si applica con un reload (SIGHUP)
