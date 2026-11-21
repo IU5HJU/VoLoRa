@@ -69,7 +69,7 @@ quando arriva, perché i cloni possono differire.
 
 | Pin modulo | Collegamento |
 |---|---|
-| VIN | 5 V se disponibile (più volume), altrimenti 3,3 V. Con USB il pin 5 V della scheda è comodo. |
+| VIN | 5 V se disponibile (più volume), altrimenti 3,3 V. Con USB il pin 5 V della scheda è comodo. **Sulla T-Beam: direttamente al polo + della batteria**, non al pin 5V (che c'è solo con l'USB): vedi [pinout.md](pinout.md). |
 | GND | massa in comune |
 | DIN | dati I2S in uscita dall'ESP32 |
 | BCLK | clock di bit I2S |

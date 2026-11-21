@@ -72,11 +72,11 @@
 <text x="550" y="436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#e5e7eb">2</text>
 <circle cx="592" cy="452" r="7" fill="#111827" stroke="#ffffff" stroke-width="2"/>
 <text x="592" y="436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#e5e7eb">GND</text>
-<circle cx="634" cy="452" r="7" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
-<text x="634" y="436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#e5e7eb">5V</text>
+<circle cx="634" cy="452" r="7" fill="#6b7280" stroke="#6b7280" stroke-width="2"/>
+<text x="634" y="436" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#9ca3af">5V</text>
 <text x="338" y="398" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="middle" fill="#9ca3af">35, 32, 33: occupati (AXP2101 e radio)</text>
 <text x="614" y="478" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#111827">GND -&gt; massa comune</text>
-<text x="642" y="498" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#dc2626">5V -&gt; VIN amplificatore</text>
+<text x="624" y="498" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="start" fill="#9ca3af">5V: non usato</text>
 <rect x="196" y="520" width="232" height="82" rx="10" fill="#fff7ed" stroke="#fdba74" stroke-width="2"/>
 <polyline points="256,452 256,566" fill="none" stroke="#ffffff" stroke-width="11" stroke-linejoin="round"/>
 <polyline points="256,452 256,566" fill="none" stroke="#ca8a04" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
@@ -129,8 +129,8 @@
 <text x="965" y="808" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#111827">BCLK</text>
 <circle cx="1030" cy="780" r="7" fill="#16a34a" stroke="#ffffff" stroke-width="2"/>
 <text x="1030" y="808" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" text-anchor="middle" fill="#111827">LRC</text>
-<rect x="624.0" y="740" width="32" height="22" rx="11" fill="#dc2626" stroke="none" stroke-width="0"/>
-<text x="640" y="756" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#ffffff">5V</text>
+<rect x="601.5" y="740" width="77" height="22" rx="11" fill="#dc2626" stroke="none" stroke-width="0"/>
+<text x="640" y="756" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#ffffff">+ batt.</text>
 <line x1="640" y1="762" x2="640" y2="780" stroke="#dc2626" stroke-width="3"/>
 <rect x="684.5" y="740" width="41" height="22" rx="11" fill="#111827" stroke="none" stroke-width="0"/>
 <text x="705" y="756" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" text-anchor="middle" fill="#ffffff">GND</text>
@@ -179,11 +179,11 @@
 <text x="1142" y="384" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#111827">GND</text>
 <text x="1250" y="384" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">massa comune a tutti i moduli</text>
 <line x1="1080" y1="411" x2="1128" y2="411" stroke="#dc2626" stroke-width="6" stroke-linecap="round"/>
-<text x="1142" y="416" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#111827">5V</text>
-<text x="1250" y="416" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">VIN dell'amplificatore</text>
+<text x="1142" y="416" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" text-anchor="start" fill="#111827">+ batt.</text>
+<text x="1250" y="416" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">VIN dell'amplificatore (filo al + batteria)</text>
 <text x="1080" y="454" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="12" font-weight="normal" text-anchor="start" fill="#6b7280">Non toccati: 35 (AXP2101), 32 e 33 (radio), GPS 34/12, LED di bordo GPIO4.</text>
 <rect x="40" y="916" width="1620" height="196" rx="10" fill="#f9fafb" stroke="#e5e7eb" stroke-width="2"/>
-<text x="60" y="948" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Alimentazione: il pin 5V del connettore va a VIN dell'amplificatore (da verificare con il tester se c'e' anche a batteria; altrimenti usare 3,3 V). GND in comune per tutti i moduli.</text>
+<text x="60" y="948" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Alimentazione: VIN dell'amplificatore va direttamente al polo + della batteria, non al pin 5V del connettore (c'e' solo con l'USB): cosi' c'e' corrente a sufficienza anche senza USB. GND in comune. Debug: IU5SEK David.</text>
 <text x="60" y="978" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">* Il connettore a 13 pin NON ha un pin 3,3 V: il 3,3 V per VDD del microfono va preso da un punto a 3,3 V della scheda (per esempio il VCC del connettore dell'OLED), verificato con il tester. Mai oltre 3,6 V.</text>
 <text x="60" y="1008" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">Elettrolitico da circa 100 uF tra VIN e GND dell'amplificatore. GAIN libero (9 dB; a GND 12 dB). INMP441: L/R a GND (canale sinistro); SCK e WS sono in comune con l'amplificatore. Fili corti, lontani dall'antenna.</text>
 <text x="60" y="1038" font-family="DejaVu Sans, Arial, Helvetica, sans-serif" font-size="14" font-weight="normal" text-anchor="start" fill="#374151">PTT: il tasto IO38 di bordo (nessun filo). Se l'OLED mostra "PTT? pin instabile" serve un pull-up da 10 kohm tra IO38 e 3,3 V. Volume: pulsante opzionale tra il pin 15 e GND.</text>

@@ -264,7 +264,7 @@ def draw_tbeam():
     text(886, 398, "IO38 = tasto PTT (sulla scheda)", 13, "middle", "bold", C["ptt"])
 
     used = {"VP": C["mic"], "15": C["vol"], "25": C["sd"], "14": C["bclk"], "13": C["ws"], "2": C["din"],
-            "GND": C["gnd"], "5V": C["5v"]}
+            "GND": C["gnd"]}
     blocked = {"35", "32", "33"}
 
     # moduli sotto la scheda
@@ -293,7 +293,7 @@ def draw_tbeam():
         text(x, YH - 16, name, 13, "middle", "bold", "#e5e7eb" if on else "#9ca3af")
     text(px["35"] + 40, 398, "35, 32, 33: occupati (AXP2101 e radio)", 12, "middle", "normal", "#9ca3af")
     text(px["GND"] + 22, 478, "GND -> massa comune", 13, "start", "bold", C["gnd"])
-    text(px["5V"] + 8, 498, "5V -> VIN amplificatore", 13, "start", "bold", C["5v"])
+    text(px["5V"] - 10, 498, "5V: non usato", 13, "start", "bold", "#9ca3af")
 
     # volume (opzionale)
     rect(196, 520, 232, 82, "#fff7ed", "#fdba74", rx=10)
@@ -323,7 +323,7 @@ def draw_tbeam():
         col = {"SD": C["sd"], "DIN": C["din"], "BCLK": C["bclk"], "LRC": C["ws"]}.get(n, C["grey"])
         dot(x, MY, col)
         text(x, MY + 28, n, 13, "middle", "bold")
-    for n, label, col in (("VIN", "5V", C["5v"]), ("GND", "GND", C["gnd"]), ("GAIN", "libero", "#9ca3af")):
+    for n, label, col in (("VIN", "+ batt.", C["5v"]), ("GND", "GND", C["gnd"]), ("GAIN", "libero", "#9ca3af")):
         x = AMP_X[n]
         w = 14 + 9 * len(label)
         rect(x - w / 2, MY - 40, w, 22, col, rx=11, sw=0)
@@ -349,7 +349,7 @@ def draw_tbeam():
             ("14", "SCK del microfono e BCLK dell'amplificatore", C["bclk"]),
             ("13", "WS del microfono e LRC dell'amplificatore", C["ws"]),
             ("2", "DIN dell'amplificatore (dati altoparlante)", C["din"]), ("15", "pulsante volume (opzionale) a GND", C["vol"]),
-            ("GND", "massa comune a tutti i moduli", C["gnd"]), ("5V", "VIN dell'amplificatore", C["5v"])]
+            ("GND", "massa comune a tutti i moduli", C["gnd"]), ("+ batt.", "VIN dell'amplificatore (filo al + batteria)", C["5v"])]
     for i, (pin, what, col) in enumerate(rows):
         y = 192 + 32 * i
         add(f'<line x1="1080" y1="{y - 5}" x2="1128" y2="{y - 5}" stroke="{col}" stroke-width="6" stroke-linecap="round"/>')
@@ -358,7 +358,7 @@ def draw_tbeam():
     text(1080, 192 + 32 * 8 + 6, "Non toccati: 35 (AXP2101), 32 e 33 (radio), GPS 34/12, LED di bordo GPIO4.", 12, fill="#6b7280")
 
     notes_panel([
-        "Alimentazione: il pin 5V del connettore va a VIN dell'amplificatore (da verificare con il tester se c'e' anche a batteria; altrimenti usare 3,3 V). GND in comune per tutti i moduli.",
+        "Alimentazione: VIN dell'amplificatore va direttamente al polo + della batteria, non al pin 5V del connettore (c'e' solo con l'USB): cosi' c'e' corrente a sufficienza anche senza USB. GND in comune. Debug: IU5SEK David.",
         "* Il connettore a 13 pin NON ha un pin 3,3 V: il 3,3 V per VDD del microfono va preso da un punto a 3,3 V della scheda (per esempio il VCC del connettore dell'OLED), verificato con il tester. Mai oltre 3,6 V.",
         "Elettrolitico da circa 100 uF tra VIN e GND dell'amplificatore. GAIN libero (9 dB; a GND 12 dB). INMP441: L/R a GND (canale sinistro); SCK e WS sono in comune con l'amplificatore. Fili corti, lontani dall'antenna.",
         "PTT: il tasto IO38 di bordo (nessun filo). Se l'OLED mostra \"PTT? pin instabile\" serve un pull-up da 10 kohm tra IO38 e 3,3 V. Volume: pulsante opzionale tra il pin 15 e GND.",

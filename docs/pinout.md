@@ -112,7 +112,7 @@ Confronto con lo schema ufficiale LILYGO della T3 V1.6.1 (pin sul connettore, da
 
 ## Alimentazione
 
-- Il pin `5V` del connettore dà i 5 V solo con USB collegato. Con batteria l'amplificatore va a 3,3 V (circa 0,7 W su 8 Ω); il 3,3 V è condiviso con ESP32 e radio, quindi un condensatore da circa 100 µF vicino all'amplificatore è utile.
+- **T-Beam:** `VIN` dell'amplificatore va al polo + della batteria, non al pin `5V` (vedi la sezione sulla T-Beam). **T3:** il pin `5V` del connettore dà i 5 V solo con USB collegato. Con batteria l'amplificatore va a 3,3 V (circa 0,7 W su 8 Ω); il 3,3 V è condiviso con ESP32 e radio, quindi un condensatore da circa 100 µF vicino all'amplificatore è utile.
 - Questa versione non ha un circuito di protezione della batteria: usare una LiPo con protezione.
 - Il LED `CHG` indica la carica.
 
@@ -173,4 +173,4 @@ Il collegamento fisso del microfono (`VDD` a 3,3 V, `GND`, `L/R` a GND) e dell'a
 - **Il tasto IO38** ha un pull-up esterno sulla scheda? GPIO38 non ne ha di interni. Il firmware controlla all'avvio che il pin sia stabile: se cambia livello da solo, il PTT viene **disattivato** e l'OLED mostra "PTT? pin instabile". In quel caso serve una resistenza di pull-up (10 kΩ verso 3,3 V).
 - **Il chip radio** è davvero un SX127x (se fosse SX1262 compare "ERRORE radio"; serve allora una variante del codice).
 - **La batteria:** all'avvio la seriale stampa `[pmu] AXP2101 ok, batteria presente/assente, … mV, … %, USB …, carica …`.
-- **Alimentazione dell'amplificatore** dal pin 5V del connettore o dalla batteria: stesse regole della T3.
+- **Alimentazione dell'amplificatore (T-Beam, modifica del 21/11/2026):** collega `VIN` del MAX98357A **direttamente al polo + della batteria** e **non** al pin `5V` del connettore. Il pin `5V` dà tensione solo con l'USB collegato: con la batteria da sola l'amplificatore restava senza corrente sufficiente. Con il filo al + della batteria l'alimentazione basta anche a USB scollegata (riferito dall'operatore, individuato nel debug con **IU5SEK David**). Il polo + è quello della batteria 18650 o del suo connettore; `GND` resta in comune con la scheda e il microfono. Il filo deve essere corto e isolato; l'amplificatore resta collegato alla batteria anche a scheda spenta, quindi per lunghi periodi di inattività conviene staccare il filo. Il condensatore da circa 100 µF tra `VIN` e `GND` resta consigliato. Lo schema qui sopra è già aggiornato.
