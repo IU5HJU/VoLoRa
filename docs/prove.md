@@ -901,3 +901,9 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **SSID del nodo cambiato (21/11/2026, riferito e dal registro):** il nodo usava lo stesso `IU5HJU-10` del collegamento APRS del reflector. Messo `NODESSID` a 11 e riavviata la scheda: dal registro del reflector il nodo si pubblica come `IU5HJU-11` (`[aprs] inviato: IU5HJU-11>APZVLR,qAR,IU5HJU-10:...`) alle 18:00, 18:10 e 18:20, cioe' ogni 10 minuti, con il commento di prima (frequenza, modo, rete, testo del sysop, indirizzo della pagina pubblica). Il punto `IU5HJU-10` gia' pubblicato resta su aprs.fi finche' il sito non lo toglie da solo.
 - **Limiti:** non si e' ancora visto un rinnovo vero del certificato (il primo e' previsto verso il 19/01/2027); la porta SSH della macchina, che nella iliadbox risultava aperta a Internet, e' stata chiusa (21/11/2026, riferito).
 
+
+### 21/11/2026, casa, IU5HJU (riquadro "Stato del nodo" sulla pagina di rete locale)
+
+- **Prova:** pagina della scheda nodo (`http://192.168.1.50`, modo Nodo Internet) aperta dalla rete di casa, dopo alcune trasmissioni (foto).
+- **Esito:** il riquadro compare e si compila: collegamento con il reflector attivo, trasmissioni passate dal nodo 3, pacchetti mandati in rete 47, rapporti di ricezione mandati 3. **Ultima stazione:** IU5HJU, 3 s fa, RSSI -77 dBm, SNR 9,8 dB. **Ultima trasmissione** (1 s fa): SNR medio 10,1 dB (minimo 9,8), margine 17,6 dB (minimo 17,3), RSSI -63 dBm (minimo -77), pacchetti ricevuti 20, mancanti 0, errori CRC 0, giudizio **buona**.
+- **Non ancora verificato:** il confronto riga per riga con la seriale e con il registro del reflector, il giudizio "al limite" o "pacchetti persi", il comportamento a collegamento caduto e la riga della RX del ripetitore.

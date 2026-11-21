@@ -243,7 +243,7 @@ Limiti:
 - Gli errori CRC si contano fra il primo e l'ultimo pacchetto ricevuti: quelli prima o dopo non si vedono.
 - Se manca il primo pacchetto, i mancanti includono quelli prima del primo ricevuto (la sequenza parte da 0).
 - Per una trasmissione senza il rapporto (nodo vecchio, collegamento caduto) i buchi di rete si vedono lo stesso, ma non la radio.
-- Il riquadro "Stato del nodo" sulla pagina di rete locale e la riga della RX del ripetitore non sono ancora stati provati su una scheda.
+- Il riquadro "Stato del nodo" sulla pagina di rete locale è stato provato su una scheda il 21/11/2026 ([prove.md](prove.md)); la riga della RX del ripetitore non è ancora stata provata.
 
 ## L'indirizzo IP mostrato per un nodo
 
