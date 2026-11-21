@@ -31,7 +31,7 @@ struct AprsConfig {
   std::string pass;              // password APRS-IS di quel nominativo (-1 = solo ascolto, non pubblica)
   uint32_t minIntervalS = 600;   // una stazione si ripete al massimo ogni tanti secondi (APRS: non piu' spesso di ogni 10 minuti)
   std::string symbol = "V&";    // simbolo APRS: tabella (o lettera di sovrapposizione) e codice; "V&" = rombo con la V (docs/reflector.md). Non "_": e' il simbolo delle stazioni meteo
-  std::string url;              // facoltativo: la pagina pubblica del reflector, nel commento APRS dei nodi (per esempio https://volora.iu5hju.it)
+  std::string url;              // facoltativo: la pagina pubblica del reflector, nel commento APRS dei nodi (per esempio https://reflector.example.org)
 
   bool complete() const { return !host.empty() && !login.empty() && !pass.empty(); }
   bool operator==(const AprsConfig& o) const {

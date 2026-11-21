@@ -4,7 +4,7 @@
 #
 # Da lanciare come root, nella cartella del repository o da qualunque posto:
 #   sudo tools/certificato-https.sh --csr                  crea la chiave privata e la richiesta di certificato (CSR) per il nome del sito
-#                                                          (per esempio volora.iu5hju.it): il CSR si manda all'ente che emette il certificato
+#                                                          (per esempio reflector.example.org): il CSR si manda all'ente che emette il certificato
 #   sudo tools/certificato-https.sh --installa FILE.pem    controlla il certificato ricevuto (nome, validita', coppia con la chiave) e lo installa.
 #                                                          Se l'ente manda certificato e catena in file separati, unirli in uno solo, CERTIFICATO PER PRIMO:
 #                                                          cat certificato.crt catena.crt > FILE.pem
@@ -65,7 +65,7 @@ else
   echo "Attenzione: l utente $UTENTE non esiste: i file restano di root e il reflector non li potra leggere (usa --utente con l utente del servizio)."
 fi
 
-chiedi VOLORA_HOST "Nome del sito (per esempio volora.iu5hju.it)"
+chiedi VOLORA_HOST "Nome del sito (per esempio reflector.example.org)"
 [[ "$VOLORA_HOST" =~ ^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$ ]] || { echo "ERRORE: nome del sito non valido"; exit 1; }
 HOSTNAME_="$VOLORA_HOST"
 CERT="${SSL_DIR}/${HOSTNAME_}.pem"

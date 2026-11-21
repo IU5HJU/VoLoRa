@@ -60,7 +60,7 @@ build/vlreflector --tls-check                                                (di
   [Service]
   User=vlreflector
   StateDirectory=vlreflector
-  ExecStart=/opt/vlreflector/vlreflector --config /var/lib/vlreflector/reflector.conf --port 5400 --id 1000 --web 8080 --public-name iu5hju.ddns.net:5400
+  ExecStart=/opt/vlreflector/vlreflector --config /var/lib/vlreflector/reflector.conf --port 5400 --id 1000 --web 8080 --public-name reflector.example.org:5400
   ExecReload=/bin/kill -HUP $MAINPID
   Restart=always
   RestartSec=5
@@ -85,7 +85,7 @@ Con `--web 8080` il reflector serve una pagina (senza librerie esterne) con:
 - **Server APRS**: indirizzo del server, nominativo e password APRS-IS, intervallo, simbolo e, facoltativo, l'**indirizzo della pagina pubblica** (vedi [Server APRS](#server-aprs-posizione-delle-stazioni)), con lo stato del collegamento e i conteggi.
 
 Sicurezza:
-- Di base ascolta **solo su `127.0.0.1`**: dal portatile di casa la raggiungi con un tunnel ssh, `ssh -L 8080:127.0.0.1:8080 IU5HJU@192.168.1.76`, e apri `http://127.0.0.1:8080/`. Con `--web-bind 0.0.0.0` è raggiungibile da tutta la rete locale (`http://indirizzo-del-server:8080/` da qualsiasi PC o telefono di casa; **non inoltrare questa porta nel router**).
+- Di base ascolta **solo su `127.0.0.1`**: dal portatile di casa la raggiungi con un tunnel ssh, `ssh -L 8080:127.0.0.1:8080 utente@indirizzo-del-server`, e apri `http://127.0.0.1:8080/`. Con `--web-bind 0.0.0.0` è raggiungibile da tutta la rete locale (`http://indirizzo-del-server:8080/` da qualsiasi PC o telefono di casa; **non inoltrare questa porta nel router**).
 - I dati e le azioni vogliono la **password di amministrazione**, che la pagina chiede all'ingresso e tiene solo nella scheda del browser (si distinguono maiuscole e minuscole). Dopo 10 tentativi sbagliati in un minuto si blocca per un po'. **La scegli tu**, sul server:
   ```
   sudo -u vlreflector /opt/vlreflector/vlreflector --set-password --config /var/lib/vlreflector/reflector.conf
@@ -138,29 +138,49 @@ Come per le altre reti, chiunque può guardare chi è collegato e chi trasmette.
 - **non c'è** nessun token, nessuna chiave, nessun indirizzo IP, nessun id dei nodi, nessun contatore, nessun comando: l'unico indirizzo oltre alla pagina è `/status.json` con gli stessi dati, e tutto il resto risponde 404 (anche con il token di amministrazione) e solo GET è accettato (le altre richieste: 405);
 - le stazioni **registrate ma non collegate non compaiono**: si vede solo chi è collegato in questo momento, così un collega controlla se il suo nodo è davvero collegato.
 
-In HTTP semplice si attiva aggiungendo `--public-web 8081` all'`ExecStart` e inoltrando nel router la porta TCP 8081 (la sola porta della pagina pubblica: **mai la 8080 di amministrazione**); l'indirizzo da dare ai colleghi è `http://indirizzo-del-server:8081/`. **Meglio in HTTPS**, come descritto qui sotto: l'indirizzo diventa per esempio `https://volora.iu5hju.it/` e la porta 8081 non serve più.
+In HTTP semplice si attiva aggiungendo `--public-web 8081` all'`ExecStart` e inoltrando nel router la porta TCP 8081 (la sola porta della pagina pubblica: **mai la 8080 di amministrazione**); l'indirizzo da dare ai colleghi è `http://indirizzo-del-server:8081/`. **Meglio in HTTPS**, come descritto qui sotto: l'indirizzo diventa per esempio `https://reflector.example.org/` e la porta 8081 non serve più.
 
 ## Pagina pubblica in HTTPS
 
-Provata sul PC e sulla macchina di casa di IU5HJU (21/11/2026). Il reflector fa l'HTTPS **da solo**, senza Apache o altri programmi davanti: con `--public-tls-cert` e `--public-tls-key` la pagina pubblica parla HTTPS invece di HTTP sulla stessa porta (`--public-web`). Solo TLS 1.2 o più nuovo, nessuna compressione. Serve solo il certificato. Non c'è bisogno di una VPS: si può ospitare a casa.
+Provata sul PC e su un server di casa (21/11/2026). Il reflector fa l'HTTPS **da solo**, senza Apache, nginx o altri programmi davanti: con `--public-tls-cert` e `--public-tls-key` la pagina pubblica parla HTTPS invece di HTTP sulla stessa porta (`--public-web`). Solo TLS 1.2 o più nuovo, nessuna compressione. Serve solo un **nome di dominio** che punti al server e un **certificato** per quel nome. Non c'è bisogno di una VPS: si può ospitare anche a casa. Negli esempi sotto il nome è `reflector.example.org`: sostituiscilo con il tuo.
 
-**Prima, una volta**
+### Le porte da aprire sul router
+
+Il server sta dietro un router: le porte esterne vanno **inoltrate** (port forwarding) verso l'indirizzo interno della macchina del reflector (meglio con un indirizzo fisso o una prenotazione DHCP).
+
+| Porta esterna (router) | Protocollo | Porta interna (macchina del reflector) | A cosa serve | Quando |
+|---|---|---|---|---|
+| **5400** | UDP | 5400 (`--port`) | nodi e ripetitori che si collegano | sempre |
+| **443** | TCP | **8443** (`--public-web`) | la pagina pubblica in HTTPS | per l'HTTPS |
+| **80** | TCP | **8088** (porta libera a scelta) | solo la verifica di Let's Encrypt (HTTP-01), a ogni rilascio e rinnovo | solo con Let's Encrypt |
+
+- La porta interna 8443 evita di far girare il reflector come amministratore (le porte sotto 1024 la richiedono). Se vuoi, usa un'altra porta interna libera: basta che coincida con `--public-web` e con la regola del router.
+- **Non aprire mai:** la porta della pagina di amministrazione (`--web`, di base 8080), la porta SSH, né una porta HTTP semplice per la pagina pubblica se usi l'HTTPS. L'unica cosa che serve da fuori è la pagina pubblica, di sola lettura.
+- **La porta esterna 80 non va alla porta 80 della macchina** se lì gira già un altro servizio (un'interfaccia web, un altro server): va a una porta libera come la 8088, che usa solo certbot mentre verifica il nome. Attenzione al verso della regola: **esterna 80 → interna 8088**, non al contrario.
+- Se la 443 esterna è già usata da un altro servizio, hai due strade: spostare quell'altro servizio su un'altra porta esterna, oppure far ascoltare la pagina del reflector su un'altra porta esterna (per esempio 8444 → 8443), che poi si scrive nell'indirizzo (`https://reflector.example.org:8444/`). In ogni caso la verifica di Let's Encrypt vuole la **porta 80 esterna** libera.
+- Dopo aver cambiato le regole controlla anche il **firewall della macchina** (per esempio `ufw`): le porte interne devono essere aperte verso la rete locale.
+- **Senza indirizzo pubblico** (alcuni operatori mobili e fibre danno un indirizzo condiviso, "CGNAT") le porte non si possono inoltrare: serve un indirizzo pubblico, un tunnel o un server esterno.
+- Se il nome del server si risolve da dentro casa al tuo indirizzo pubblico, alcuni router non rimandano il traffico verso l'interno ("NAT loopback"): per provare la pagina usa un telefono con i dati mobili o una rete diversa.
+
+### Prima, una volta
+
 1. **OpenSSL per compilare**: `sudo apt install libssl-dev pkg-config`, poi `~/VoLoRa/tools/aggiorna-reflector.sh` (ricompila). `/opt/vlreflector/vlreflector --tls-check` deve dire `TLS: si`. Senza OpenSSL il reflector si compila lo stesso, ma con le opzioni TLS non parte e dice come rimediare.
-2. **DNS**: nel pannello del dominio `volora` come **CNAME verso il nome dinamico** (per esempio `iu5hju.ddns.net`), che segue l'IP di casa. Se il pannello del dominio ha una funzione "sottodomini" o "redirect", **non usarla**: crea un inoltro e un record `A` che coprono il CNAME; serve un record DNS vero.
+2. **DNS**: nel pannello del dominio crea un record per il nome (`reflector.example.org`): un **record `A`** con il tuo indirizzo pubblico oppure, se l'indirizzo cambia, un **CNAME verso un nome dinamico** (DDNS) che lo segue. Se il pannello ha una funzione "sottodomini" o "redirect/inoltro web", **non usarla**: crea un inoltro e un record che coprono il tuo, e il certificato non si ottiene. Serve un record DNS vero. Controlla con `dig +short reflector.example.org`.
 3. **Certificato**, a scelta:
-   - **Let's Encrypt, gratuito e con rinnovo automatico (consigliato)**. Sul router la porta **esterna 80 (TCP)** va a una porta libera della macchina del reflector, per esempio la **8088**; **non** alla sua 80, che può essere occupata da un altro servizio (a casa di IU5HJU c'è `lighttpd`, l'interfaccia web del decoder ADS-B, che non deve finire su Internet). Attenzione: la regola va scritta **WAN 80 → LAN 8088**, non al contrario. Poi, sulla macchina del reflector:
+   - **Let's Encrypt, gratuito e con rinnovo automatico (consigliato).** Servono la regola esterna 80 → 8088 della tabella e il nome che già punta al tuo indirizzo. Poi, sulla macchina del reflector:
      - `sudo apt install certbot`
-     - `sudo tools/certificato-https.sh --letsencrypt --email TUA@EMAIL` (con il **tuo vero indirizzo**; con `--porta-http 8088` se hai scelto un'altra porta; certbot ti chiede di accettare le condizioni del servizio). Certbot ascolta sulla porta 8088 **solo mentre verifica** il nome (il nome `volora.iu5hju.it` deve già puntare al tuo IP), poi lo script mette certificato e chiave in `/var/lib/vlreflector/ssl` e prepara il passaggio `/etc/letsencrypt/renewal-hooks/deploy/volora-reflector.sh`, che dopo **ogni rinnovo** (da solo, circa ogni 60 giorni) ricopia i file e fa il `reload` del reflector.
+     - `sudo tools/certificato-https.sh --letsencrypt --email TUA@EMAIL` (con il **tuo vero indirizzo** e non un segnaposto; con `--porta-http 8088` se hai scelto un'altra porta; certbot ti chiede di accettare le condizioni del servizio). Certbot ascolta sulla porta 8088 **solo mentre verifica** il nome, poi lo script mette certificato e chiave in `/var/lib/vlreflector/ssl` e prepara il passaggio `/etc/letsencrypt/renewal-hooks/deploy/volora-reflector.sh`, che dopo **ogni rinnovo** (da solo, circa ogni 60 giorni) ricopia i file e fa il `reload` del reflector.
      - `sudo tools/certificato-https.sh --rinnovo-prova` prova il rinnovo senza cambiare niente e dice se il timer di certbot c'è.
-     - La verifica passa dalla porta 80 vista da Internet: dal telefono **con i dati mobili** quella porta può non rispondere (dipende dall'operatore) anche se per Let's Encrypt funziona. Per provare la regola senza chiedere un certificato: `sudo certbot certonly --standalone --preferred-challenges http --http-01-port 8088 -d NOME --dry-run`.
-   - **Un certificato di un ente a pagamento o a mano** (per esempio Actalis, i cui certificati gratuiti sono comunque DV di 90 giorni da rinnovare con un programma ACME: nessun vantaggio rispetto a Let's Encrypt; il certificato dell'hosting del sito, quello che il sito ha già, non è portabile su un altro computer):
-     - `sudo tools/certificato-https.sh --csr`: crea la chiave privata (che non va mai copiata né pubblicata) e la richiesta di certificato (CSR). Il CSR (`sudo cat /var/lib/vlreflector/ssl/volora.iu5hju.it.csr`) va all'ente che emette il certificato. Non sovrascrive una chiave già esistente.
-     - Quando l'ente emette il certificato scarica certificato e catena. Se sono in file separati vanno uniti in uno, **certificato per primo**: `cat certificato.crt catena.crt > volora.iu5hju.it.pem`.
-     - `sudo tools/certificato-https.sh --installa volora.iu5hju.it.pem`: controlla che il primo certificato valga per il nome, che sia in corso di validità e che sia la coppia della chiave; lo installa (con copia di sicurezza di quello di prima).
+     - La verifica passa dalla porta 80 vista da Internet: dal telefono **con i dati mobili** quella porta può non rispondere (dipende dall'operatore) anche se per Let's Encrypt funziona. Per provare la regola senza chiedere un certificato: `sudo certbot certonly --standalone --preferred-challenges http --http-01-port 8088 -d reflector.example.org --dry-run`.
+   - **Un certificato di un ente a pagamento, o fatto a mano:**
+     - `sudo tools/certificato-https.sh --csr`: crea la chiave privata (che non va mai copiata né pubblicata) e la richiesta di certificato (CSR). Il CSR (`sudo cat /var/lib/vlreflector/ssl/reflector.example.org.csr`) va all'ente che emette il certificato. Non sovrascrive una chiave già esistente.
+     - Quando l'ente emette il certificato, scarica certificato e catena. Se sono in file separati vanno uniti in uno, **certificato per primo**: `cat certificato.crt catena.crt > reflector.example.org.pem`.
+     - `sudo tools/certificato-https.sh --installa reflector.example.org.pem`: controlla che il primo certificato valga per il nome, che sia in corso di validità e che sia la coppia della chiave; lo installa (con copia di sicurezza di quello di prima).
+     - Il certificato di un servizio di hosting web (quello del tuo sito) di solito **non è utilizzabile** su un altro computer, perché non ti danno la chiave privata: ne serve uno per il nome del reflector.
    - `sudo tools/certificato-https.sh --controlla`: quanto dura il certificato installato.
-4. **Il servizio**: aggiungi a `ExecStart` `--public-web 8443 --public-bind 0.0.0.0 --public-tls-cert /var/lib/vlreflector/ssl/volora.iu5hju.it.pem --public-tls-key /var/lib/vlreflector/ssl/volora.iu5hju.it.key` (al posto di un eventuale `--public-web 8081`), poi `sudo systemctl daemon-reload && sudo systemctl restart vlreflector`. Il registro (`journalctl -u vlreflector`) dice `pagina pubblica su https://...` e fino a quando vale il certificato.
-5. **Router**: la porta **443 (TCP) verso la macchina del reflector, porta interna 8443** (e, con Let's Encrypt, la 80 esterna verso la 8088 come sopra). La porta 8443 evita di far girare il reflector con privilegi di root o con permessi speciali. Se la 443 serviva a un altro servizio (per esempio un'altra macchina) quello si sposta su un'altra porta esterna, e cambia l'indirizzo con cui si raggiunge: controlla segnalibri e link, perché i vecchi indirizzi senza porta aprono la pagina del reflector con un avviso sul certificato. Il port forward della 8081 non serve più e si toglie. Nel router restano la 443 (TCP), la 80 (TCP, solo per Let's Encrypt, verso la 8088) e la 5400 (UDP, il reflector).
-6. **Indirizzo nel commento APRS dei nodi**: nella pagina di amministrazione, campo "Pagina pubblica del reflector", `https://volora.iu5hju.it` (vedi [Il nodo sulla mappa APRS](#il-nodo-sulla-mappa-aprs)).
+4. **Il servizio**: aggiungi a `ExecStart` `--public-web 8443 --public-bind 0.0.0.0 --public-tls-cert /var/lib/vlreflector/ssl/reflector.example.org.pem --public-tls-key /var/lib/vlreflector/ssl/reflector.example.org.key` (al posto di un eventuale `--public-web 8081`), poi `sudo systemctl daemon-reload && sudo systemctl restart vlreflector`. Il registro (`journalctl -u vlreflector`) dice `pagina pubblica su https://...` e fino a quando vale il certificato.
+5. **Router**: le tre regole della tabella sopra. L'indirizzo da dare ai colleghi è `https://reflector.example.org/`. Se in precedenza usavi la pagina in HTTP semplice (per esempio con la porta 8081), togli quella regola. Controlla poi segnalibri e link vecchi: un indirizzo che prima puntava ad altro e ora arriva al reflector mostra un avviso sul certificato.
+6. **Indirizzo nel commento APRS dei nodi**: nella pagina di amministrazione, campo "Pagina pubblica del reflector", `https://reflector.example.org` (vedi [Il nodo sulla mappa APRS](#il-nodo-sulla-mappa-aprs)).
 
 **Sicurezza**
 - La pagina è la stessa di sempre: solo GET (le altre richieste: 405), nessun comando di amministrazione. La pagina di amministrazione resta sulla sua porta, di base solo `127.0.0.1`.
@@ -169,7 +189,7 @@ Provata sul PC e sulla macchina di casa di IU5HJU (21/11/2026). Il reflector fa 
 
 **Rinnovo**: con Let's Encrypt è automatico (certbot rinnova da solo e il passaggio dopo il rinnovo ricarica il reflector). Con un certificato fatto a mano, quando sta per scadere, `--installa` col file nuovo (la chiave resta quella del CSR; se l'ente vuole un CSR nuovo, la vecchia chiave si toglie a mano) e poi **`sudo systemctl reload vlreflector`**: il reflector rilegge il certificato senza fermarsi. Se il file nuovo non è valido o non è la coppia della chiave, resta quello di prima e il registro scrive `certificato non riletto, resta quello di prima` con il motivo.
 
-**Provato** sul PC (smoke del reflector, 13 controlli): partenza in HTTPS, pagina e stato in HTTPS, 405 e 404 per quello che non è ammesso, HTTP semplice rifiutato sulla porta HTTPS, TLS 1.1 rifiutato, certificato nuovo attivo dopo un reload senza riavviare, un certificato che non è della chiave non sostituisce quello buono, avvio fermato con il motivo se certificato e chiave non sono una coppia o ne manca una. Certificato e chiave letti dall'utente `vlreflector`. Sulla macchina di casa (21/11/2026): certificato vero di Let's Encrypt, pagina aperta dal telefono con i dati mobili senza avvisi, prova del rinnovo (`--dry-run`) riuscita. **Non ancora visto**: il primo rinnovo automatico (verso il 19/01/2027).
+**Provato** sul PC (smoke del reflector, 13 controlli): partenza in HTTPS, pagina e stato in HTTPS, 405 e 404 per quello che non è ammesso, HTTP semplice rifiutato sulla porta HTTPS, TLS 1.1 rifiutato, certificato nuovo attivo dopo un reload senza riavviare, un certificato che non è della chiave non sostituisce quello buono, avvio fermato con il motivo se certificato e chiave non sono una coppia o ne manca una. Certificato e chiave letti dall'utente `vlreflector`. Su un server di casa (21/11/2026): certificato vero di Let's Encrypt, pagina aperta dal telefono con i dati mobili senza avvisi, prova del rinnovo (`--dry-run`) riuscita. **Non ancora visto**: il primo rinnovo automatico (a circa 60 giorni dal rilascio).
 
 ## Server APRS (posizione delle stazioni)
 
@@ -185,7 +205,7 @@ Cosa scrive il sysop:
 
 Cosa succede:
 - La posizione viene dal pacchetto di **inizio** della voce: la manda la scheda **solo se l'operatore ha acceso `pos`** (la posizione viaggia già in chiaro via radio, vedi [protocollo.md](protocollo.md)). Una stazione senza posizione non compare su APRS.
-- Il reflector manda una riga APRS "senza orario" con la stazione come sorgente e se stesso come iGate, come fa un iGate quando porta su Internet un pacchetto arrivato via radio: `IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E&433.900MHz VoLoRa Standard` (`APZ...` è il prefisso dei programmi sperimentali non registrati; `V` e `&` sono il **simbolo** sulla mappa; il resto è il **commento**).
+- Il reflector manda una riga APRS "senza orario" con la stazione come sorgente e se stesso come iGate, come fa un iGate quando porta su Internet un pacchetto arrivato via radio: `N0CALL>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E&433.900MHz VoLoRa Standard` (`APZ...` è il prefisso dei programmi sperimentali non registrati; `V` e `&` sono il **simbolo** sulla mappa; il resto è il **commento**).
 - **Commento:** ogni stazione porta nel commento che è in VoLoRa, con il modo e, se il nodo da cui passa ha dichiarato la frequenza (vedi sotto), la frequenza: `433.900MHz VoLoRa Standard`. Senza la frequenza del nodo: `VoLoRa Standard` (o `Range`).
 - **Se una stazione non compare su APRS, la prima cosa da controllare è `pos` sulla sua scheda**: senza `pos=on` e una posizione (QTH o GPS) il pacchetto non ha la posizione e il reflector non può inventarla (verificato il 20/11/2026 con un altro radioamatore: dopo aver acceso la trasmissione della posizione è comparso sulla mappa; prima il registro non mostrava nessun invio per lui). Nel registro del reflector la riga `[aprs] inviato: ...` compare solo per chi manda la posizione; per chi non la manda c'è la riga `nessuna posizione nel pacchetto` (e la pagina conta le trasmissioni "senza posizione").
 - Non si manda: un nominativo segnaposto (`N0CALL`), un nominativo che AX.25 non ammette (con `/P`, più di 6 caratteri), una posizione non valida, una stazione che si ripete prima dell'intervallo.
@@ -201,16 +221,16 @@ Attenzione:
 
 ## Il nodo sulla mappa APRS
 
-**Provato il 21/11/2026** con la scheda di casa: su aprs.fi compare come `IU5HJU-11` (e prima, con SSID 10, come `IU5HJU-10`), con la stella verde con la V, e nel popup il commento completo con la frequenza, il modo, la rete, il testo del sysop e l'indirizzo della pagina pubblica; il reflector lo ripubblica ogni 10 minuti.
+**Provato il 21/11/2026** con una scheda: su aprs.fi compare come `NOMINATIVO-SSID` (per esempio `N0CALL-11`), con la stella verde con la V, e nel popup il commento completo con la frequenza, il modo, la rete, il testo del sysop e l'indirizzo della pagina pubblica; il reflector lo ripubblica ogni 10 minuti.
 
-Il reflector pubblica sulla mappa APRS anche **i nodi**, non solo le stazioni che trasmettono: così chi guarda la mappa vede dov'è il nodo, su che frequenza ascoltarlo e se è in copertura. Il nodo compare come **NOMINATIVO-SSID** (per esempio `IU5HJU-11`) con una stella con la V (il simbolo dei digipeater con la V sovrapposta, `V#`), diverso dal rombo delle stazioni.
+Il reflector pubblica sulla mappa APRS anche **i nodi**, non solo le stazioni che trasmettono: così chi guarda la mappa vede dov'è il nodo, su che frequenza ascoltarlo e se è in copertura. Il nodo compare come **NOMINATIVO-SSID** (per esempio `N0CALL-11`) con una stella con la V (il simbolo dei digipeater con la V sovrapposta, `V#`), diverso dal rombo delle stazioni.
 
 Chi manda cosa: è **il nodo** (o la RX del ripetitore) che dice al reflector posizione, frequenza, modo e il testo del sysop, con un messaggio firmato come gli altri (tipo 7, `lib/voicecore/node_info.h`). Il reflector lo pubblica sul server APRS solo se l'invio APRS è acceso.
 
 - **Sulla scheda del nodo** (pagina di configurazione dalla rete di casa, sezione "Il nodo sulla mappa APRS", oppure console): `CFG SET NODESSID 11` (da 1 a 15; **0 = il nodo non compare**, ed è il valore di base: la posizione è un dato personale), `CFG SET QTH 43.7696,10.8807` (la posizione fissa, in gradi decimali) e, se vuoi, `CFG SET NODETEXT Antenna 5/8, 2 dBi` (fino a 40 caratteri, `NONE` lo toglie). Vale dal riavvio. Senza SSID o senza QTH il nodo non si presenta e la posizione non esce. La posizione si legge anche dalle coordinate di aprs.fi (gradi e primi): `43°47.98' N` = 43 + 47,98/60 = 43,79967.
 - **Quando**: appena il collegamento al reflector è attivo (dopo tre secondi) e poi ogni 10 minuti, **solo finché il nodo è collegato**; se si scollega, il reflector smette di pubblicarlo.
 - **Commento sulla mappa**: `433.475MHz VoLoRa Standard rete NOME-DEL-REFLECTOR testo-del-sysop https://pagina-pubblica`, al massimo 100 caratteri: se non ci sta, si accorcia il testo (l'indirizzo resta). La frequenza è quella del profilo del nodo; il modo è Standard o Range.
-- **Sul reflector**, nella pagina di amministrazione, campo "Pagina pubblica del reflector" (facoltativo, chiave `url` in `aprs.conf`): l'indirizzo della pagina pubblica per il commento dei nodi, per esempio `https://volora.iu5hju.it` (http:// o https://, al massimo 40 caratteri).
+- **Sul reflector**, nella pagina di amministrazione, campo "Pagina pubblica del reflector" (facoltativo, chiave `url` in `aprs.conf`): l'indirizzo della pagina pubblica per il commento dei nodi, per esempio `https://reflector.example.org` (http:// o https://, al massimo 40 caratteri).
 - Il nome del nodo sul reflector deve essere un nominativo valido per APRS (da 1 a 6 lettere o cifre maiuscole): con un nome diverso (per esempio `nodoA`) il registro scrive `[aprs] nodo nodoA: nominativo non valido per APRS` e il nodo non si pubblica. Più nodi con lo stesso nominativo (etichette diverse) devono avere SSID diversi, **e diversi da quello del collegamento APRS del reflector**.
 - Se si cambia l'SSID del nodo, il punto con il nome vecchio **resta su aprs.fi** finché il sito non lo toglie da solo: non si può cancellare a mano.
 - Il reflector non ripete un nodo prima dell'intervallo impostato (meno 60 secondi di margine, perché il nodo si ripresenta ogni 10 minuti).
@@ -249,7 +269,7 @@ Limiti:
 
 La colonna "Indirizzo visto dal server" (e il log `stato: ...=su(indirizzo:porta)`) è **l'indirizzo da cui il reflector riceve i pacchetti**, e non può essere altro: il server non vede l'indirizzo interno della scheda, vede quello che il router (NAT) mette sul pacchetto in uscita. Quindi:
 - una scheda **dietro un router** (casa, hotspot del telefono) compare con l'indirizzo **pubblico del router** (con il telefono, quello dell'operatore) e una porta scelta dal router;
-- una scheda della **stessa rete del server** che si collega con il nome (`iu5hju.ddns.net`) passa dal router e dal "NAT loopback": il server vede l'indirizzo del router. Collegandosi direttamente all'indirizzo interno del server (per esempio `192.168.1.76:5400`) il server vede invece **l'indirizzo interno della scheda**;
+- una scheda della **stessa rete del server** che si collega con il nome (`reflector.example.org`) passa dal router e dal "NAT loopback": il server vede l'indirizzo del router. Collegandosi direttamente all'indirizzo interno del server (per esempio `192.168.1.10:5400`) il server vede invece **l'indirizzo interno della scheda**;
 - non è un errore e non influisce sul funzionamento: il nodo si riconosce dall'id e dalla chiave, e l'indirizzo serve solo a rispondergli.
 
 **L'indirizzo pubblico vero** (quello da cui il collega esce su Internet) il server non lo può vedere se il router riscrive l'origine (per esempio 192.168.1.254), quindi lo **dice il nodo**: la colonna **"Indirizzo pubblico dichiarato dal nodo"** della pagina di amministrazione (provato, [prove.md](prove.md)). Come funziona:
@@ -272,7 +292,7 @@ La colonna "Indirizzo visto dal server" (e il log `stato: ...=su(indirizzo:porta
 
 ```
 build/vlreflector --config reflector.conf --port 5400 --id 1000 --voice-mode 1
-build/vlnode --id 2 --peer-id 1000 --key <chiave> --listen 0 --peer localhost:5400 --send-text IU5HJU "Prova"
+build/vlnode --id 2 --peer-id 1000 --key <chiave> --listen 0 --peer localhost:5400 --send-text N0CALL "Prova"
 build/vlnode --id 3 --peer-id 1000 --key <chiave> --listen 0 --peer localhost:5400
 ```
 
