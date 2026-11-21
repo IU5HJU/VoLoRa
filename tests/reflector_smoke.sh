@@ -18,6 +18,10 @@ fail=0
 ok() { echo "ok    $1"; }
 ko() { echo "FALLITO $1"; fail=1; }
 check() { if grep -q -- "$2" "$1"; then ok "$3"; else ko "$3"; fi; }
+# waitfor FILE REGEX [SECONDI]: aspetta che nel file compaia la riga (fino a 25 s)
+waitfor() { local f="$1" re="$2" n="${3:-25}" i; for i in $(seq 1 "$n"); do grep -q -- "$re" "$f" 2>/dev/null && return 0; sleep 1; done; return 1; }
+# runvl FILE REGEX OUT ARGOMENTI...: lancia vlnode, aspetta (fino a 30 s) che compaia la riga attesa, lo ferma e lascia liberare il canale (3 s di silenzio)
+runvl() { local f="$1" re="$2" out="$3"; shift 3; build/vlnode "$@" --duration 45 > "$out" 2>&1 & local p=$!; waitfor "$f" "$re" 30 || true; sleep 1; kill $p 2>/dev/null; wait $p 2>/dev/null; sleep 4; }
 
 build/vlreflector --config "$D/ref.conf" --port $PORT --id 1000 --voice-mode 1 --web $WEB --public-web $PUB --public-bind 127.0.0.1 --public-name prova.example:$PORT --duration 330 > "$D/ref.out" 2>&1 &
 REF=$!
@@ -97,29 +101,24 @@ check "$D/aprs.rows" "^user N0CALL-10 pass 12345 vers VoLoRa-reflector 0.1$" "AP
 [ -f "$D/aprs.conf" ] && [ "$(stat -c %a "$D/aprs.conf")" = "600" ] && grep -q "pass=12345" "$D/aprs.conf" && ok "APRS: aprs.conf scritto con permessi 600" || ko "APRS: aprs.conf ($(stat -c %a "$D/aprs.conf" 2>&1))"
 grep -q "12345" "$D/ref.out" && ko "APRS: la password e' nel registro del reflector" || ok "APRS: la password non e' nel registro del reflector"
 # una trasmissione con posizione arriva al server APRS
-build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --position 43.7696,10.8807 --frames 30 --duration 12 > "$D/a2.out" 2>&1
-sleep 0.5
+runvl "$D/ref.out" "\[aprs\] inviato: IZ5IOF>APZVLR" "$D/a2.out" --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --position 43.7696,10.8807 --frames 30
 check "$D/aprs.rows" "^IZ5IOF>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E&VoLoRa Range$" "APRS: la posizione della stazione che trasmette e' arrivata al server"
 [ "$(grep -c '^IZ5IOF>' "$D/aprs.rows")" = "1" ] && ok "APRS: una sola posizione per quella trasmissione" || ko "APRS: posizioni ripetute"
 check "$D/ref.out" "\[aprs\] inviato: IZ5IOF>APZVLR" "APRS: il registro scrive la posizione inviata"
 # una trasmissione senza posizione: il registro dice perche' non si manda (e la pagina la conta)
-build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 20 --duration 9 > "$D/a3.out" 2>&1
-sleep 0.5
+runvl "$D/ref.out" "\[aprs\] IZ5IOF: nessuna posizione nel pacchetto" "$D/a3.out" --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 20
 check "$D/ref.out" "\\[aprs\\] IZ5IOF: nessuna posizione nel pacchetto" "APRS: il registro dice perche' una stazione senza posizione non e' stata mandata"
 A5=$(api "http://127.0.0.1:$WEB/api/aprs")
 echo "$A5" | grep -q '"noPosition":1' && ok "APRS: la pagina conta le trasmissioni senza posizione" || ko "APRS: contatore senza posizione ($A5)"
 # il nodo sulla mappa APRS: il nodo (con un nominativo valido) manda posizione, frequenza e testo e il reflector lo pubblica come NOMINATIVO-SSID
 api -X POST -d "enabled=1&host=127.0.0.1&port=$APRS&login=N0CALL-10&pass=12345&interval=60&url=ftp://x" "http://127.0.0.1:$WEB/api/aprs" | grep -q '"ok":false' && ok "APRS: indirizzo della pagina pubblica non valido rifiutato" || ko "APRS: url non valido accettato"
-build/vlnode --id 12 --peer-id 1000 --key 202122232425262728292a2b2c2d2e2f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 "Antenna 5/8" --duration 8 > "$D/n1.out" 2>&1
-sleep 0.5
+runvl "$D/aprs.rows" "^IU5HJU-10>APZVLR" "$D/n1.out" --id 12 --peer-id 1000 --key 202122232425262728292a2b2c2d2e2f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 "Antenna 5/8"
 check "$D/aprs.rows" "^IU5HJU-10>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E#433.900MHz VoLoRa Standard rete prova.example:$PORT Antenna 5/8$" "APRS: il nodo e' sulla mappa (SSID, simbolo dei nodi, frequenza, modo, rete e testo del sysop)"
 # una stazione che passa da un nodo che ha dichiarato la frequenza: il commento ha frequenza e protocollo VoLoRa
-build/vlnode --id 12 --peer-id 1000 --key 202122232425262728292a2b2c2d2e2f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 "Antenna 5/8" --send-voice IK5XXX --position 43.7696,10.8807 --frames 20 --duration 10 > "$D/n3.out" 2>&1
-sleep 0.5
+runvl "$D/aprs.rows" "^IK5XXX>APZVLR" "$D/n3.out" --id 12 --peer-id 1000 --key 202122232425262728292a2b2c2d2e2f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 "Antenna 5/8" --send-voice IK5XXX --position 43.7696,10.8807 --frames 20
 check "$D/aprs.rows" "^IK5XXX>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E&433.900MHz VoLoRa Range$" "APRS: la stazione ha nel commento la frequenza del nodo e il protocollo VoLoRa"
 # un nodo con un nome che non e' un nominativo valido non si pubblica, e il registro dice perche'
-build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 --duration 6 > "$D/n2.out" 2>&1
-sleep 0.5
+runvl "$D/ref.out" "\[aprs\] nodo nodoA: nominativo non valido per APRS" "$D/n2.out" --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4
 check "$D/ref.out" "\\[aprs\\] nodo nodoA: nominativo non valido per APRS" "APRS: un nodo senza nominativo valido non si pubblica e il registro dice perche'"
 grep -q "^nodoA-10" "$D/aprs.rows" && ko "APRS: pubblicato un nodo con nome non valido" || ok "APRS: il nodo con nome non valido non e' nel server"
 # spento: il collegamento si chiude
