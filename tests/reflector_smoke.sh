@@ -225,4 +225,38 @@ kill -HUP $REF; sleep 1
 api "http://127.0.0.1:$WEB/api/status" | grep -q '"name":"MANO"' && ok "file con un errore: resta l'elenco di prima" || ko "elenco perso dopo un file sbagliato"
 check "$D/ref.out" "ricaricamento non riuscito" "l'errore e' scritto nel registro"
 check "$D/ref.out" "client IZ5IOF mare collegato" "il registro scrive i collegamenti (con il nome del nodo)"
+
+# Pagina pubblica in HTTPS (tools/tls_server.h): solo se questa versione e' compilata con il TLS (serve libssl-dev)
+if [ "$(build/vlreflector --tls-check)" = "TLS: si" ]; then
+  TP=$((PORT + 4)); TU=$((PORT + 5))
+  mkdir -p "$D/tls"
+  openssl req -x509 -newkey rsa:2048 -nodes -days 30 -keyout "$D/tls/a.key" -out "$D/tls/a.pem" -subj /CN=prova.test -addext subjectAltName=DNS:prova.test >/dev/null 2>&1
+  openssl req -x509 -newkey rsa:2048 -nodes -days 300 -keyout "$D/tls/b.key" -out "$D/tls/b.pem" -subj /CN=prova.test -addext subjectAltName=DNS:prova.test >/dev/null 2>&1
+  cp "$D/tls/a.pem" "$D/tls/cur.pem"; cp "$D/tls/a.key" "$D/tls/cur.key"
+  printf '2 000102030405060708090a0b0c0d0e0f nodoA\n' > "$D/tls/ref.conf"
+  build/vlreflector --config "$D/tls/ref.conf" --port $TU --id 1000 --voice-mode 4 --public-web $TP --public-bind 127.0.0.1 --public-tls-cert "$D/tls/cur.pem" --public-tls-key "$D/tls/cur.key" --duration 40 > "$D/tls/ref.out" 2>&1 &
+  TREF=$!
+  sleep 1
+  check "$D/tls/ref.out" "pagina pubblica su https://127.0.0.1:$TP/" "TLS: la pagina pubblica parte in HTTPS"
+  check "$D/tls/ref.out" "certificato della pagina pubblica: valido fino al" "TLS: il registro dice fino a quando vale il certificato"
+  curl -s -k -m 5 https://127.0.0.1:$TP/status.json | grep -q '"reflector"' && ok "TLS: lo stato si legge in HTTPS" || ko "TLS: stato in HTTPS"
+  curl -s -k -m 5 https://127.0.0.1:$TP/ | grep -q "Stazioni collegate" && ok "TLS: la pagina si apre in HTTPS" || ko "TLS: pagina in HTTPS"
+  [ "$(curl -s -k -m 5 -o /dev/null -w '%{http_code}' -X POST -d x=1 https://127.0.0.1:$TP/)" = "405" ] && [ "$(curl -s -k -m 5 -o /dev/null -w '%{http_code}' https://127.0.0.1:$TP/api/status)" = "404" ] && ok "TLS: solo GET, e nessun comando di amministrazione (405, 404)" || ko "TLS: richieste non ammesse"
+  curl -s -m 3 -o /dev/null http://127.0.0.1:$TP/ && ko "TLS: la porta HTTPS risponde anche in HTTP semplice" || ok "TLS: in HTTP semplice la porta HTTPS non risponde"
+  echo | openssl s_client -connect 127.0.0.1:$TP -tls1_1 >/dev/null 2>&1 && ko "TLS: accetta TLS 1.1" || ok "TLS: TLS 1.1 rifiutato"
+  F1=$(echo | openssl s_client -connect 127.0.0.1:$TP 2>/dev/null | openssl x509 -noout -fingerprint -sha256)
+  cp "$D/tls/b.pem" "$D/tls/cur.pem"; cp "$D/tls/b.key" "$D/tls/cur.key"; kill -HUP $TREF; sleep 1
+  F2=$(echo | openssl s_client -connect 127.0.0.1:$TP 2>/dev/null | openssl x509 -noout -fingerprint -sha256)
+  [ -n "$F1" ] && [ -n "$F2" ] && [ "$F1" != "$F2" ] && ok "TLS: con un reload il certificato nuovo e' attivo, senza riavviare" || ko "TLS: reload del certificato ($F1 / $F2)"
+  check "$D/tls/ref.out" "certificato della pagina pubblica riletto" "TLS: il registro scrive che il certificato e' stato riletto"
+  cp "$D/tls/a.pem" "$D/tls/cur.pem"; kill -HUP $TREF; sleep 1   # certificato e chiave non in coppia
+  F3=$(echo | openssl s_client -connect 127.0.0.1:$TP 2>/dev/null | openssl x509 -noout -fingerprint -sha256)
+  [ "$F3" = "$F2" ] && ok "TLS: un certificato che non e' della chiave non sostituisce quello buono" || ko "TLS: sostituito da un certificato sbagliato"
+  check "$D/tls/ref.out" "certificato non riletto, resta quello di prima" "TLS: il registro dice che il certificato non e' stato riletto"
+  kill $TREF 2>/dev/null; wait $TREF 2>/dev/null
+  build/vlreflector --config "$D/tls/ref.conf" --port $TU --public-web $TP --public-tls-cert "$D/tls/a.pem" --public-tls-key "$D/tls/b.key" --duration 2 2>&1 | grep -q "non sono una coppia" && ok "TLS: all'avvio un certificato non in coppia con la chiave ferma il reflector con il motivo" || ko "TLS: avvio con coppia sbagliata"
+  build/vlreflector --config "$D/tls/ref.conf" --port $TU --public-web $TP --public-tls-cert "$D/tls/a.pem" --duration 2 2>&1 | grep -q "vanno date insieme" && ok "TLS: serve anche la chiave" || ko "TLS: manca la chiave"
+else
+  echo "salto    TLS: questa versione e' compilata senza OpenSSL (sudo apt install libssl-dev pkg-config)"
+fi
 exit $fail

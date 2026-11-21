@@ -5,7 +5,7 @@
 //   make vlreflector
 //   build/vlreflector --config reflector.conf [--port 5400] [--id 1000] [--voice-mode 4] [--status-every 300] [--duration SECONDI]
 //                     [--web 8080 [--web-bind 127.0.0.1] [--admin-token-file FILE] [--public-name nome:5400]]
-//                     [--public-web 8081 [--public-bind 0.0.0.0]] [--aprs-file FILE]
+//                     [--public-web 8081 [--public-bind 0.0.0.0] [--public-tls-cert FILE.pem --public-tls-key FILE.key]] [--aprs-file FILE]
 //   build/vlreflector --set-password [--config FILE | --admin-token-file FILE]    (sceglie la password della pagina di amministrazione)
 //
 // File dei client (una riga per client; righe vuote e # si ignorano):   <id> <chiave: 32 cifre esadecimali> <nome (il nominativo)>
@@ -41,6 +41,7 @@
 
 #include "admin_auth.h"
 #include "aprs_client.h"
+#include "tls_server.h"
 #include "aprs_gate.h"
 #include "http_mini.h"
 #include "packet.h"
@@ -624,13 +625,21 @@ struct Conn {
   int fd;
   std::string in;
   uint32_t startMs;
+  TlsConn* tls = nullptr;  // pagina pubblica in HTTPS: la connessione TLS (altrimenti nullptr: HTTP semplice)
+  bool shaken = false;     // l'handshake TLS e' finito
 };
 
-static void sendAll(int fd, const std::string& data) {
+static TlsServer g_tls;  // il certificato della pagina pubblica (se c'e')
+
+static void sendAll(int fd, const std::string& data, TlsConn* tls = nullptr) {
   timeval tv = {1, 0};
   setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
   int fl = fcntl(fd, F_GETFL, 0);
   fcntl(fd, F_SETFL, fl & ~O_NONBLOCK);
+  if (tls) {
+    g_tls.writeAll(tls, data);
+    return;
+  }
   size_t off = 0;
   while (off < data.size()) {
     const ssize_t w = send(fd, data.data() + off, data.size() - off, MSG_NOSIGNAL);
@@ -643,7 +652,7 @@ int main(int argc, char** argv) {
   Admin adm;
   std::string tokenFile;
   int duration = 0, statusEvery = 300, webPort = 0, pubPort = 0;
-  std::string webBind = "127.0.0.1", pubBind = "0.0.0.0";
+  std::string webBind = "127.0.0.1", pubBind = "0.0.0.0", tlsCert, tlsKey;
   bool setPassword = false;
   for (int i = 1; i < argc; i++) {
     const std::string a = argv[i];
@@ -658,6 +667,12 @@ int main(int argc, char** argv) {
     else if (a == "--web-bind") webBind = next();
     else if (a == "--public-web") pubPort = atoi(next());
     else if (a == "--public-bind") pubBind = next();
+    else if (a == "--public-tls-cert") tlsCert = next();
+    else if (a == "--public-tls-key") tlsKey = next();
+    else if (a == "--tls-check") {  // per gli script: questa versione ha il TLS?
+      printf("TLS: %s\n", TlsServer::compiled() ? "si" : "no");
+      return 0;
+    }
     else if (a == "--admin-token-file") tokenFile = next();
     else if (a == "--set-password") setPassword = true;
     else if (a == "--public-name") adm.publicName = next();
@@ -729,6 +744,21 @@ int main(int argc, char** argv) {
   }
   // Pagina pubblica: solo stazioni collegate e chi trasmette, nessun comando e nessun token
   int pubListen = -1;
+  if (tlsCert.empty() != tlsKey.empty()) {
+    fprintf(stderr, "--public-tls-cert e --public-tls-key vanno date insieme\n");
+    return 2;
+  }
+  if (!tlsCert.empty()) {
+    if (pubPort <= 0) {
+      fprintf(stderr, "--public-tls-cert e --public-tls-key servono con --public-web\n");
+      return 2;
+    }
+    std::string terr;
+    if (!g_tls.load(tlsCert, tlsKey, terr)) {
+      fprintf(stderr, "%s\n", terr.c_str());
+      return 1;
+    }
+  }
   if (pubPort > 0) {
     if (pubPort == webPort) {
       fprintf(stderr, "--public-web e --web devono usare porte diverse\n");
@@ -751,6 +781,7 @@ int main(int argc, char** argv) {
   signal(SIGINT, onSignal);
   signal(SIGTERM, onSignal);
   signal(SIGHUP, onHup);
+  signal(SIGPIPE, SIG_IGN);  // un client che chiude a meta' non deve fermare il reflector (con TLS la scrittura non usa MSG_NOSIGNAL)
   char b[200];
   snprintf(b, sizeof(b), "vlreflector id %u in ascolto sulla porta UDP %d, modo voce %d, %d client in elenco", adm.reflectorId, adm.port, adm.voiceMode,
            static_cast<int>(adm.entries.size()));
@@ -760,8 +791,9 @@ int main(int argc, char** argv) {
     logLine(b);
   }
   if (pubListen >= 0) {
-    snprintf(b, sizeof(b), "pagina pubblica su http://%s:%d/ (solo stazioni collegate e chi trasmette)", pubBind.c_str(), pubPort);
+    snprintf(b, sizeof(b), "pagina pubblica su %s://%s:%d/ (solo stazioni collegate e chi trasmette)", g_tls.enabled() ? "https" : "http", pubBind.c_str(), pubPort);
     logLine(b);
+    if (g_tls.enabled()) logLine("certificato della pagina pubblica: " + g_tls.validity());
   }
 
   // Le due porte web: l'amministrazione (con token) e la pagina pubblica (di sola lettura)
@@ -787,6 +819,11 @@ int main(int argc, char** argv) {
       std::string aerr;
       if (adm.reloadAprs(aerr)) logLine("[aprs] configurazione riletta");
       else logLine("[aprs] configurazione non riletta, resta quella di prima: " + aerr);
+      if (g_tls.enabled()) {  // il certificato rinnovato si legge con un reload, senza fermare il reflector
+        std::string terr;
+        if (g_tls.load(tlsCert, tlsKey, terr)) logLine("certificato della pagina pubblica riletto: " + g_tls.validity());
+        else logLine("certificato non riletto, resta quello di prima: " + terr);
+      }
       if (webListen >= 0) {  // anche la password: si cambia con --set-password e un reload
         AdminAuth na;
         std::string aerr;
@@ -832,7 +869,15 @@ int main(int argc, char** argv) {
             continue;
           }
           fcntl(cfd, F_SETFL, fcntl(cfd, F_GETFL, 0) | O_NONBLOCK);
-          l.conns.push_back({cfd, "", nowMs()});
+          Conn nc{cfd, "", nowMs()};
+          if (l.pub && g_tls.enabled()) {
+            nc.tls = g_tls.open(cfd);
+            if (!nc.tls) {
+              close(cfd);
+              continue;
+            }
+          }
+          l.conns.push_back(nc);
         }
       }
       // le connessioni: quelle pronte si leggono, e si chiude chi ha finito o e' troppo lento
@@ -841,29 +886,43 @@ int main(int argc, char** argv) {
         Conn c = l.conns[i];
         bool done = false;
         if (i < before && (mine[i].revents & (POLLIN | POLLHUP | POLLERR))) {
-          char buf[2048];
-          const ssize_t k = recv(c.fd, buf, sizeof(buf), 0);
-          if (k <= 0) {
-            done = true;
+          char buf[16384];
+          ssize_t k;
+          if (c.tls) {  // HTTPS: prima l'handshake, poi la richiesta (che puo' arrivare insieme alla fine dell'handshake)
+            k = 0;
+            if (!c.shaken) {
+              const int h = g_tls.handshake(c.tls);
+              if (h < 0) k = -1;
+              else if (h == 1) c.shaken = true;
+            }
+            if (k == 0 && c.shaken) k = g_tls.read(c.tls, buf, sizeof(buf));
           } else {
+            k = recv(c.fd, buf, sizeof(buf), 0);
+            if (k == 0) k = -1;  // chiuso dal client
+          }
+          if (k < 0) {
+            done = true;
+          } else if (k > 0) {
             c.in.append(buf, static_cast<size_t>(k));
             HttpRequest req;
             const HttpParse pr = parseHttpRequest(c.in, req);
             if (pr == HttpParse::Ok) {
-              sendAll(c.fd, l.pub ? adm.handlePublic(req, nowMs()) : adm.handle(req, nowMs()));
+              sendAll(c.fd, l.pub ? adm.handlePublic(req, nowMs()) : adm.handle(req, nowMs()), c.tls);
               done = true;
             } else if (pr == HttpParse::Bad) {
-              sendAll(c.fd, httpResponse(400, "text/plain", "richiesta non valida"));
+              sendAll(c.fd, httpResponse(400, "text/plain", "richiesta non valida"), c.tls);
               done = true;
             } else if (pr == HttpParse::TooBig) {
-              sendAll(c.fd, httpResponse(413, "text/plain", "richiesta troppo grande"));
+              sendAll(c.fd, httpResponse(413, "text/plain", "richiesta troppo grande"), c.tls);
               done = true;
             }
           }
         }
         if (!done && nowMs() - c.startMs > 5000) done = true;
-        if (done) close(c.fd);
-        else keep.push_back(c);
+        if (done) {
+          if (c.tls) g_tls.close(c.tls);
+          close(c.fd);
+        } else keep.push_back(c);
       }
       l.conns = keep;
     }

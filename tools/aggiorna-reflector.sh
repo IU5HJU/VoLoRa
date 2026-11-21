@@ -6,6 +6,7 @@ set -e
 cd "$(dirname "$0")/.."
 git pull
 make vlreflector
+build/vlreflector --tls-check | grep -q "TLS: si" || echo "Nota: questa versione e' compilata senza HTTPS. Per la pagina pubblica in HTTPS: sudo apt install libssl-dev pkg-config e rilancia questo script."
 sudo systemctl stop vlreflector
 sudo cp build/vlreflector /opt/vlreflector/
 sudo systemctl start vlreflector

@@ -36,9 +36,12 @@ build/vlnode: tools/vlnode.cpp $(CORE) $(HDRS)
 
 # Reflector VoLoRa per un server (tools/vlreflector.cpp, docs/studio-reflector.md).
 vlreflector: build/vlreflector
+# HTTPS della pagina pubblica (tools/tls_server.h): serve OpenSSL con le intestazioni (sudo apt install libssl-dev pkg-config); senza, il reflector si compila
+# lo stesso e la pagina pubblica resta in HTTP (vlreflector --tls-check dice se il TLS c'e').
+TLS_FLAGS := $(shell pkg-config --exists openssl 2>/dev/null && echo "-DVL_TLS $$(pkg-config --cflags --libs openssl)")
 build/vlreflector: tools/vlreflector.cpp $(CORE) $(HDRS)
 	@mkdir -p build
-	$(CXX) -std=c++17 -Wall -Wextra -O1 -pthread -Ilib/voicecore -Itools -o $@ $< $(CORE)
+	$(CXX) -std=c++17 -Wall -Wextra -O1 -pthread -Ilib/voicecore -Itools -o $@ $< $(CORE) $(TLS_FLAGS)
 
 reflector-smoke: build/vlreflector build/vlnode
 	tests/reflector_smoke.sh

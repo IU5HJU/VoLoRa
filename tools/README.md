@@ -44,6 +44,7 @@ Il ricevitore **non in tempo reale** (un'icona a parte che registrava e decodifi
 | `vlreflector.cpp` (`make vlreflector`) | Il **reflector**: il server a cui si collegano nodi e ripetitori. Pagina di amministrazione (`vlreflector_page.h`), pagina pubblica (`vlreflector_public.h`) e invio delle posizioni al server APRS (`aprs_client.h`) | `make test`, `make reflector-smoke` |
 | `vlnode.cpp` (`make vlnode`) | Un **nodo finto sul PC**: prova il protocollo fra nodi e il reflector su socket veri, manda un testo o una voce finta (anche con una posizione, con il rapporto di ricezione `--quality RSSI SNR [MANCANTI [CRC]]` e con una rete che perde un pacchetto ogni N, `--drop N`) | `make reflector-smoke` |
 | `aggiorna-reflector.sh` | Sul **server**: scarica, ricompila, ferma il servizio, copia il programma e lo riavvia | a mano, sul server |
+| `certificato-https.sh` | Sul **server**: la richiesta di certificato (CSR) e l'installazione del certificato per la **pagina pubblica del reflector in HTTPS** (`--public-tls-cert`, `--public-tls-key`; `tls_server.h` e' la parte OpenSSL, serve `libssl-dev`) | a mano, sul server (`docs/reflector.md`) |
 
 ## Aggiornare il clone del progetto
 

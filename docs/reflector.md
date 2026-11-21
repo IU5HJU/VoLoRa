@@ -178,31 +178,29 @@ La chiave è un segreto condiviso fra il nodo e il reflector, e nasce **dal coll
 
 Il collegamento si vede subito nella pagina del sysop ("Collegati") e nel registro (`journalctl -u vlreflector -f`).
 
-## Pagina pubblica in HTTPS (21/11/2026, provata con un Apache di prova, non ancora sulla macchina vera)
+## Pagina pubblica in HTTPS (21/11/2026, provata sul PC con certificati di prova, non ancora sulla macchina vera)
 
-La pagina pubblica ascolta in HTTP (`--public-web 8081`). Per pubblicarla in HTTPS con un nome proprio (per esempio `volora.iu5hju.it`) si mette **Apache sulla stessa macchina del reflector** (a casa di IU5HJU: PRAIM), che tiene il certificato e fa da proxy verso la pagina. Così VoLoRa **non dipende da altre macchine** (per esempio dal Raspberry di SVX Guardian, che andrà alla sezione ARI di Vinci con i suoi certificati e la sua rete). Non serve una VPS.
+Il reflector fa l'HTTPS **da solo**, senza Apache o altri programmi davanti: con `--public-tls-cert` e `--public-tls-key` la pagina pubblica parla HTTPS invece di HTTP sulla stessa porta (`--public-web`). Solo TLS 1.2 o più nuovo, nessuna compressione. Serve solo il certificato.
 
-**Schema**: `volora.iu5hju.it` (CNAME verso `iu5hju.ddns.net`, che segue l'IP di casa) → router, porta **443 verso PRAIM** → Apache di PRAIM (certificato) → `127.0.0.1:8081`. Il sito principale `iu5hju.it` (hosting) resta il punto di informazioni per i colleghi e ha il link alla pagina del reflector.
-
-**Prima**
-- **Router**: la 443 va a PRAIM. Se prima andava al Raspberry di SVX Guardian, quello si sposta su un'altra porta esterna (per esempio **8444 → porta 443 del Raspberry**: il Raspberry non cambia, e il suo certificato vale per il nome, non per la porta; cambia l'indirizzo con cui si raggiunge, `https://iu5hju.ddns.net:8444/`). Controlla i segnalibri e i link che puntano a quel servizio.
-- **Porta 443 e 80 su PRAIM**: `ss -tlnp | grep -E ':(80|443)\b'`. Apache vuole la 443 (e di base anche la 80, che qui non serve: per il certificato non serve aprirla). Se la 80 è già usata da un altro programma (per esempio il decoder ADS-B di FR24), togli la riga `Listen 80` da `/etc/apache2/ports.conf` e Apache ascolta solo sulla 443. Le porte del reflector (5400/UDP, 8080, 8081) e quelle di FR24 non vanno in conflitto con la 443.
-- **Apache**: `sudo apt install apache2`.
-
-**Passi** (tutti con `tools/https-pagina-pubblica.sh`, come root; i file stanno in `/etc/volora/ssl`)
-1. **DNS**: nel pannello del dominio `volora` come **CNAME verso `iu5hju.ddns.net`**.
-2. `sudo ./https-pagina-pubblica.sh --csr`: crea la chiave privata (che non va mai copiata né pubblicata) e la richiesta di certificato (CSR). Il CSR (`sudo cat /etc/volora/ssl/volora.iu5hju.it.csr`) va all'ente che emette il certificato. Non sovrascrive una chiave già esistente.
-3. Quando l'ente emette il certificato: scarica certificato e catena. Se sono in file separati vanno uniti in uno, **certificato per primo**: `cat certificato.crt catena.crt > volora.iu5hju.it.pem`. Poi `sudo ./https-pagina-pubblica.sh --installa volora.iu5hju.it.pem`: controlla che il primo certificato valga per il nome, che sia in corso di validità e che sia la coppia della chiave; lo installa (con copia di sicurezza di quello di prima).
-4. `sudo ./https-pagina-pubblica.sh`: chiede il nome del sito, la porta HTTPS (443), l'indirizzo del reflector (`127.0.0.1` se è la stessa macchina) e la porta della pagina pubblica (8081). Scrive **solo** `/etc/apache2/sites-available/volora-public.conf` (copia di sicurezza se c'era già), prova la configurazione (se non va, toglie il sito nuovo e gli altri restano come prima), ricarica Apache e prova l'indirizzo. `--stampa` fa vedere il file di configurazione senza cambiare niente.
+**Prima, una volta**
+1. **OpenSSL per compilare**: `sudo apt install libssl-dev pkg-config`, poi `~/VoLoRa/tools/aggiorna-reflector.sh` (ricompila). `build/vlreflector --tls-check` deve dire `TLS: si`. Senza OpenSSL il reflector si compila lo stesso, ma con le opzioni TLS non parte e dice come rimediare.
+2. **DNS**: nel pannello del dominio `volora` come **CNAME verso `iu5hju.ddns.net`** (segue l'IP di casa).
+3. **Certificato** con `tools/certificato-https.sh` (come root; i file stanno in `/var/lib/vlreflector/ssl`, di proprietà dell'utente del servizio):
+   - `sudo tools/certificato-https.sh --csr`: crea la chiave privata (che non va mai copiata né pubblicata) e la richiesta di certificato (CSR) per `volora.iu5hju.it`. Il CSR (`sudo cat /var/lib/vlreflector/ssl/volora.iu5hju.it.csr`) va all'ente che emette il certificato. Non sovrascrive una chiave già esistente.
+   - Quando l'ente emette il certificato scarica certificato e catena. Se sono in file separati vanno uniti in uno, **certificato per primo**: `cat certificato.crt catena.crt > volora.iu5hju.it.pem`.
+   - `sudo tools/certificato-https.sh --installa volora.iu5hju.it.pem`: controlla che il primo certificato valga per il nome, che sia in corso di validità e che sia la coppia della chiave; lo installa (con copia di sicurezza di quello di prima).
+   - `sudo tools/certificato-https.sh --controlla`: quanto dura.
+4. **Il servizio**: nel file `vlreflector.service` (vedi sopra) aggiungi a `ExecStart` `--public-web 8443 --public-bind 0.0.0.0 --public-tls-cert /var/lib/vlreflector/ssl/volora.iu5hju.it.pem --public-tls-key /var/lib/vlreflector/ssl/volora.iu5hju.it.key`, poi `sudo systemctl daemon-reload && sudo systemctl restart vlreflector`. Il registro (`journalctl -u vlreflector`) dice `pagina pubblica su https://...` e fino a quando vale il certificato.
+5. **Router**: la porta **443 (TCP) verso PRAIM, porta interna 8443**. La porta 8443 evita di far girare il reflector con privilegi di root o con permessi speciali. Se la 443 serviva a un altro servizio (per esempio il Raspberry di SVX Guardian) quello si sposta su un'altra porta esterna, e cambia l'indirizzo con cui si raggiunge: controlla segnalibri e link. Il port forward della 8081 non serve più. Nel router restano la 443 (TCP) e la 5400 (UDP, il reflector).
 
 **Sicurezza**
-- Il sito accetta solo GET e HEAD (le altre richieste: 403) e inoltra solo la pagina pubblica; la pagina di amministrazione del reflector non è raggiungibile da lì.
-- Con Apache sulla stessa macchina il reflector può ascoltare la pagina pubblica **solo in locale** (`--public-bind 127.0.0.1`): non serve più il port forward della 8081 sul router, e in Internet si vede solo l'HTTPS.
-- Nel router vanno aperte solo la 443 (TCP) e la 5400 (UDP, il reflector).
+- La pagina è la stessa di sempre: solo GET (le altre richieste: 405), nessun comando di amministrazione. La pagina di amministrazione resta sulla sua porta, di base solo `127.0.0.1`.
+- La porta HTTPS non risponde in HTTP semplice, e non accetta TLS 1.1 o più vecchi.
+- Certificato e chiave devono poter essere letti dall'utente del servizio (di base `vlreflector`): lo script li assegna a lui, con la cartella `0700` e la chiave `0600`.
 
-**Rinnovo**: alla scadenza del certificato si ripetono i passi 2-3 (la chiave nuova richiede di cancellare a mano quella vecchia, per non sovrascriverla per sbaglio) e un `sudo systemctl reload apache2`.
+**Rinnovo**: quando il certificato sta per scadere, `--installa` col file nuovo (la chiave resta quella del CSR; se l'ente vuole un CSR nuovo, la vecchia chiave si toglie a mano) e poi **`sudo systemctl reload vlreflector`**: il reflector rilegge il certificato senza fermarsi. Se il file nuovo non è valido o non è la coppia della chiave, resta quello di prima e il registro scrive `certificato non riletto, resta quello di prima` con il motivo.
 
-**Provato** con un Apache 2.4 di prova e certificati autofirmati: richiesta del certificato (e rifiuto di sovrascrivere la chiave), installazione (con i rifiuti per catena prima del certificato, nome sbagliato, certificato di un'altra chiave, copia di sicurezza), la pagina del reflector si apre dal nuovo nome, un POST dà 403, `/api/status` dà 404, con un altro sito già presente sulla stessa porta quello risponde come prima, e con la pagina del reflector spenta o senza certificato lo script si ferma prima di toccare Apache.
+**Provato** sul PC (smoke del reflector, 13 controlli): partenza in HTTPS, pagina e stato in HTTPS, 405 e 404 per quello che non è ammesso, HTTP semplice rifiutato sulla porta HTTPS, TLS 1.1 rifiutato, certificato nuovo attivo dopo un reload senza riavviare, un certificato che non è della chiave non sostituisce quello buono, avvio fermato con il motivo se certificato e chiave non sono una coppia o ne manca una. Certificato e chiave letti dall'utente `vlreflector`. Non provato ancora: la macchina vera, un certificato di un ente vero e un browser vero.
 
 ## Cosa fa
 
