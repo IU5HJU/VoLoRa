@@ -12,16 +12,18 @@ input,select,button{font:inherit;padding:.5rem;width:100%;box-sizing:border-box;
 button{background:#0b5ed7;color:#fff;border:0;border-radius:.4rem;margin-top:1rem}
 button.sec{background:#e5e7eb;color:#14181f}
 .hint{color:#555;font-size:.85rem;margin:.2rem 0 0}
+h2{font-size:1.25rem;margin:2rem 0 .2rem;padding-top:.7rem;border-top:2px solid #cfd4db}
 details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 .nomode{display:none!important}
 #st{margin-top:1rem;padding:.6rem;border-radius:.4rem;display:none}
 #st.ok{display:block;background:#d9f2e0;color:#14532d}
 #st.err{display:block;background:#fde2e2;color:#7f1d1d}
-@media(prefers-color-scheme:dark){body{background:#12151a;color:#e8eaed}.hint{color:#aab}button.sec{background:#2b3038;color:#e8eaed}input,select{background:#1d2128;color:#e8eaed;border:1px solid #444}}
+@media(prefers-color-scheme:dark){body{background:#12151a;color:#e8eaed}h2{border-top-color:#3a404a}.hint{color:#aab}button.sec{background:#2b3038;color:#e8eaed}input,select{background:#1d2128;color:#e8eaed;border:1px solid #444}}
 </style></head><body>
 <h1>Configurazione</h1>
 <p class="hint" id="intro">Scheda collegata al suo Wi-Fi. Finché questa pagina è aperta <strong>la trasmissione è disattivata</strong>. Per uscire riavvia la scheda (pulsante in fondo o pressione lunga del volume).</p>
 <form id="f" autocomplete="off">
+<h2>La scheda</h2>
 <label for="callsign">Nominativo</label><input id="callsign" maxlength="8" required>
 <label for="role">Modalità della scheda</label>
 <select id="role"><option value="off">Stazione normale</option><option value="rptrx">Ripetitore: scheda RX (ascolta l'ingresso)</option><option value="rpttx">Ripetitore: scheda TX (trasmette l'uscita)</option><option value="node">Nodo Internet (su Wi-Fi)</option></select>
@@ -34,43 +36,21 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <p class="hint"><strong>Nodo Internet:</strong> la scheda porta i pacchetti LoRa a un'altra scheda o a un reflector via Wi-Fi (UDP firmato). Solo profilo Standard. Dopo il riavvio la pagina si apre dalla rete di casa (indirizzo e password compaiono sul display per 25 secondi e sono scritti sulla seriale all'avvio) e, per i primi 3 minuti, dal Wi-Fi della scheda.</p>
 </div>
 <div id="statbox" data-modes="node" hidden><h2>Stato del nodo</h2><p id="statlink" class="hint"></p><p id="statlast"></p><p id="statq"></p><p class="hint">Si aggiorna da solo ogni pochi secondi, solo dalla rete di casa. <strong>Ultima stazione</strong>: nominativo, RSSI e SNR dell'ultimo pacchetto ricevuto in radio. <strong>Ultima trasmissione</strong>: il rapporto che il nodo ha mandato al reflector a fine trasmissione, con il <strong>margine</strong> dell'SNR sopra il limite di demodulazione LoRa (per l'SF del nodo: sotto 4 dB in media o 1,5 dB al minimo il segnale è al limite) e i pacchetti persi in radio.</p></div>
-<div id="netbox" data-modes="rptrx node">
-<h2>Wi-Fi e rete</h2>
-<p class="hint"><strong>Nodo Internet:</strong> tutti i campi servono. <strong>Ripetitore:</strong> si imposta sulla scheda RX (la TX non ha il Wi-Fi); con la rete vuota il ripetitore resta solo in radio. Non serve aprire porte sul router: la scheda scrive lei per prima.</p>
-<label for="wifissid">Rete Wi-Fi (nome)</label><input id="wifissid" maxlength="32" autocomplete="off" placeholder="nome della rete">
-<label for="wifipass">Password del Wi-Fi</label><input id="wifipass" maxlength="64" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="vuota = non cambiarla">
-<p class="hint" id="wifipasshint">Password non impostata (rete aperta).</p>
-<label for="peer">Reflector o altro nodo: nome o indirizzo, e porta</label><input id="peer" autocomplete="off" spellcheck="false" placeholder="reflector.example.org:5400">
-<p class="hint">Un nome si risolve da solo; la porta è la 5400 se manca.</p>
-<label for="peerid">Id del reflector (PEERID)</label><input id="peerid" type="number" min="0" max="4294967295" placeholder="1000">
-<label for="nodeid">Id di questa scheda (NODEID)</label><input id="nodeid" type="number" min="1" max="4294967295" placeholder="lo dà il sysop">
-<p class="hint">Te lo assegna il sysop del reflector quando registra il tuo nodo: lascialo vuoto finché non ti risponde.</p>
-<label for="nodekey">Chiave (32 cifre esadecimali)</label><input id="nodekey" maxlength="32" autocomplete="off" spellcheck="false" placeholder="vuota = non cambiarla">
-<button type="button" class="sec" id="gennodekey">Genera una chiave nuova</button>
-<p class="hint" id="nodekeyhint">Chiave non impostata.</p>
-<pre id="regline" hidden></pre>
-<label for="nodeport">Porta locale (NODEPORT)</label><input id="nodeport" type="number" min="1" max="65535" placeholder="5400">
-</div>
-<div id="rxbox" hidden>
-<label for="monitor">Altoparlante di monitor sulla RX</label><select id="monitor"><option value="off">Spento</option><option value="on">Acceso</option></select>
-<p class="hint">Con un altoparlante collegato (per il sysop in postazione) la RX fa ascoltare la voce che riceve. La seriale fra le due schede non cambia; i pin dell'altoparlante sono nella guida del firmware.</p>
-</div>
-<div id="txbox" hidden>
-<label for="freqout">Frequenza di uscita (MHz)</label><input id="freqout" inputmode="decimal">
-<p class="hint">Da 430.000 a 440.000. Sulla scheda TX sono anche la frequenza dei messaggi.</p>
-<p class="hint" data-modes="rptrx"><strong>Le impostazioni della TX si danno qui, sulla RX</strong>: uscita, potenza, identificativo, Morse, nominativo e chiave del sysop. Dopo il salvataggio la RX le manda da sola alla TX attraverso i fili; la TX le salva e si riavvia. La scheda TX non si imposta: basta caricarvi lo stesso firmware e collegarla alla RX con i quattro fili (5 V, massa, seriale incrociata); riconosce la RX dai suoi battiti e si forza TX da sola, senza cambiare il ruolo salvato.</p>
-</div>
-<div data-modes="rpttx rptrx node">
-<label for="idint">Identificativo ogni (minuti, 1-10)</label><input id="idint" type="number" min="1" max="10">
-<p class="hint">Ogni quanti minuti la scheda trasmette il proprio identificativo (il nominativo qui sopra, in modo testo: le stazioni lo vedono passare senza suoni). Di base 10.</p>
-<label for="idmorse">Identificativo anche in Morse (FM)</label><select id="idmorse"><option value="on">Sì</option><option value="off">No</option></select>
-<p class="hint">Dopo il testo la scheda manda il nominativo in Morse con un tono in FM stretta (15 parole al minuto, 700 Hz): chi non ha le schede LoRa lo sente con un ricevitore FM qualsiasi. Dura circa 6 secondi.</p>
-</div>
+<h2>Radio</h2>
 <label for="profile">Profilo</label>
 <select id="profile"><option value="std">Standard (Codec2 3200)</option><option value="rng">Range (Codec2 1200, collegamenti difficili)</option><option value="msg">Messaggio</option><option value="dir">Diretta (Codec2 3200)</option></select>
 <p class="hint" data-modes="node rptrx rpttx">Il nodo Internet e il ripetitore lavorano solo in Standard (Codec2 3200): gli altri profili non sono selezionabili.</p>
 <div data-modes="off rptrx node"><label for="freq">Frequenza Standard (MHz)</label><input id="freq" inputmode="decimal" required>
 <p class="hint">Da 430.000 a 440.000.</p></div>
+<div id="txbox" hidden>
+<label for="freqout">Frequenza di uscita (MHz)</label><input id="freqout" inputmode="decimal">
+<p class="hint">Da 430.000 a 440.000. Sulla scheda TX sono anche la frequenza dei messaggi.</p>
+<p class="hint" data-modes="rptrx"><strong>Le impostazioni della TX si danno qui, sulla RX</strong>: uscita, potenza, identificativo, Morse, nominativo e chiave del sysop. Dopo il salvataggio la RX le manda da sola alla TX attraverso i fili; la TX le salva e si riavvia. La scheda TX non si imposta: basta caricarvi lo stesso firmware e collegarla alla RX con i quattro fili (5 V, massa, seriale incrociata); riconosce la RX dai suoi battiti e si forza TX da sola, senza cambiare il ruolo salvato.</p>
+</div>
+<div id="rxbox" hidden>
+<label for="monitor">Altoparlante di monitor sulla RX</label><select id="monitor"><option value="off">Spento</option><option value="on">Acceso</option></select>
+<p class="hint">Con un altoparlante collegato (per il sysop in postazione) la RX fa ascoltare la voce che riceve. La seriale fra le due schede non cambia; i pin dell'altoparlante sono nella guida del firmware.</p>
+</div>
 <div data-modes="off">
 <label for="shiftdir">Shift (si applica solo alla frequenza del modo standard)</label><select id="shiftdir"><option value="0">Nessuno (simplex, di base)</option><option value="+">+ (trasmetto sopra)</option><option value="-">- (trasmetto sotto)</option></select>
 <label for="shiftmhz">Scostamento dello shift (MHz, da 0 a 10)</label><input id="shiftmhz" inputmode="decimal" placeholder="7.600">
@@ -86,9 +66,59 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <div data-modes="off rptrx"><label for="volume">Volume (0-10)</label><input id="volume" type="number" min="0" max="10" required></div>
 <div data-modes="off">
 <label for="micfloor">Fondo del microfono (dBFS)</label><input id="micfloor" type="number" min="-80" max="-36" required>
+</div>
+<div id="netbox" data-modes="rptrx node">
+<h2>Wi-Fi e collegamento al reflector</h2>
+<p class="hint"><strong>Nodo Internet:</strong> tutti i campi servono. <strong>Ripetitore:</strong> si imposta sulla scheda RX (la TX non ha il Wi-Fi); con la rete vuota il ripetitore resta solo in radio. Non serve aprire porte sul router: la scheda scrive lei per prima.</p>
+<label for="wifissid">Rete Wi-Fi (nome)</label><input id="wifissid" maxlength="32" autocomplete="off" placeholder="nome della rete">
+<label for="wifipass">Password del Wi-Fi</label><input id="wifipass" maxlength="64" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="vuota = non cambiarla">
+<p class="hint" id="wifipasshint">Password non impostata (rete aperta).</p>
+<label for="peer">Reflector o altro nodo: nome o indirizzo, e porta</label><input id="peer" autocomplete="off" spellcheck="false" placeholder="reflector.example.org:5400">
+<p class="hint">Un nome si risolve da solo; la porta è la 5400 se manca.</p>
+<label for="peerid">Id del reflector (PEERID)</label><input id="peerid" type="number" min="0" max="4294967295" placeholder="1000">
+<label for="nodeid">Id di questa scheda (NODEID)</label><input id="nodeid" type="number" min="1" max="4294967295" placeholder="lo dà il sysop">
+<p class="hint">Te lo assegna il sysop del reflector quando registra il tuo nodo: lascialo vuoto finché non ti risponde.</p>
+<p class="hint" style="margin-top:.9rem">Serve a collegare questa scheda al reflector: la stessa chiave la registra il sysop del reflector per questo nodo. <strong>Non è la chiave del sysop</strong> che firma i comandi via radio (più sotto).</p>
+<label for="nodekey">Chiave di collegamento al reflector (32 cifre esadecimali)</label><input id="nodekey" maxlength="32" autocomplete="off" spellcheck="false" placeholder="vuota = non cambiarla">
+<button type="button" class="sec" id="gennodekey">Genera una chiave nuova</button>
+<p class="hint" id="nodekeyhint">Chiave non impostata.</p>
+<pre id="regline" hidden></pre>
+<label for="nodeport">Porta locale (NODEPORT)</label><input id="nodeport" type="number" min="1" max="65535" placeholder="5400">
+</div>
+<div data-modes="node rptrx">
+<h2>Il nodo sulla mappa APRS</h2>
+<p class="hint">Con un SSID da 1 a 15 e la posizione, il reflector pubblica il nodo sulla mappa APRS come NOMINATIVO-SSID, con frequenza e testo. 0 = il nodo non compare (la posizione è un dato personale). Vale dal riavvio.</p>
+<label for="nodessid">SSID del nodo su APRS (0-15)</label><input id="nodessid" type="number" min="0" max="15">
+<label for="nodeqth">Posizione del nodo (latitudine,longitudine)</label><input id="nodeqth" placeholder="43.7696,11.2558">
+<label for="nodetext">Testo del sysop (fino a 40 caratteri)</label><input id="nodetext" maxlength="40">
+</div>
+<div data-modes="off">
+<h2>Posizione</h2>
 <label for="pos">Trasmetti la posizione</label><select id="pos"><option value="off">No</option><option value="on">Sì</option></select>
 <label for="qth">Posizione fissa (latitudine,longitudine, oppure none)</label><input id="qth" placeholder="43.7696,11.2558">
 <div id="gpsbox" hidden><label for="gps">GPS (solo T-Beam)</label><select id="gps"><option value="off">Spento</option><option value="on">Acceso</option></select></div>
+</div>
+<div data-modes="rpttx rptrx node">
+<h2>Identificativo</h2>
+<label for="idint">Identificativo ogni (minuti, 1-10)</label><input id="idint" type="number" min="1" max="10">
+<p class="hint">Ogni quanti minuti la scheda trasmette il proprio identificativo (il nominativo qui sopra, in modo testo: le stazioni lo vedono passare senza suoni). Di base 10.</p>
+<label for="idmorse">Identificativo anche in Morse (FM)</label><select id="idmorse"><option value="on">Sì</option><option value="off">No</option></select>
+<p class="hint">Dopo il testo la scheda manda il nominativo in Morse con un tono in FM stretta (15 parole al minuto, 700 Hz): chi non ha le schede LoRa lo sente con un ricevitore FM qualsiasi. Dura circa 6 secondi.</p>
+</div>
+<div data-modes="off rptrx node">
+<h2>Comandi del sysop via radio</h2>
+<p class="hint" data-modes="node">Il nodo si comanda via radio come un ripetitore (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA): nominativo del sysop (chi trasmette i comandi) e chiave, uguali sulla scheda del sysop. La chiave non si rilegge mai.</p>
+<p class="hint" data-modes="rptrx">La RX verifica i comandi firmati del sysop (nominativo e chiave) e li gira alla TX; la chiave arriva alla TX dalla RX insieme al resto della configurazione. Il <strong>modo Sysop</strong> (menu &quot;Comandi Sysop&quot;) si accende solo sulla scheda del sysop. Il nominativo e la chiave vanno uguali sulla RX e sulla scheda del sysop; la chiave non si rilegge mai.</p>
+<p class="hint" data-modes="off">Per chi gestisce un ripetitore. Con il <strong>modo Sysop</strong> acceso il menu della scheda (volume lungo) mostra <strong>Comandi Sysop</strong> al posto di Invia testo: scegli il comando (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA) e la scheda lo trasmette firmato al ripetitore. Resta acceso finché non lo spegni. Il nominativo e la chiave vanno impostati uguali sul ripetitore (schede RX e TX) e sulla scheda del sysop; la chiave non si rilegge mai.</p>
+<div data-modes="off"><label for="sysopmode">Modo Sysop</label><select id="sysopmode"><option value="off">Spento</option><option value="on">Acceso</option></select></div>
+<label for="sysop">Nominativo del sysop</label><input id="sysop" maxlength="8" placeholder="IU5HJU">
+<p class="hint" style="margin-top:.9rem">Firma i comandi che il sysop trasmette via radio al ripetitore o al nodo: va uguale sulla scheda del sysop e su questa. <strong>Non è la chiave di collegamento al reflector.</strong></p>
+<label for="sysopkey">Chiave del sysop, per i comandi via radio (32 cifre esadecimali)</label><input id="sysopkey" maxlength="32" autocomplete="off" spellcheck="false">
+<p class="hint" id="sysopkeyhint">Chiave non impostata.</p>
+<button type="button" class="sec" id="genkey">Genera una chiave nuova</button>
+<div id="sysopbox" data-modes="off" hidden><h2>Comandi Sysop</h2><p class="hint">L'elenco che compare sulla scheda al posto dei testi predefiniti.</p><ol id="sysoplist"><li>STATO</li><li>SPEGNI</li><li>SPEGNI 15 MIN</li><li>SPEGNI 60 MIN</li><li>RIACCENDI</li><li>RIAVVIA</li><li>IDENTIFICA</li><li>POTENZA 17 dBm</li><li>POTENZA 14 dBm</li><li>POTENZA 10 dBm</li></ol></div>
+</div>
+<div data-modes="off">
 <h2>MeshCom: avvisi e accordi</h2>
 <p class="hint">Dal menu della scheda (volume lungo, voce MeshCom) la scheda passa per qualche minuto ai 433,175 MHz delle reti di testo, invia un testo a un destinatario (gruppo come 22251 o 222, nominativo-SSID come N0CALL-9, * per tutti), ascolta le risposte e torna da sola al profilo voce. Un posto vuoto non si usa.</p>
 <label for="mcfreq">Frequenza della rete (MHz)</label><input id="mcfreq" inputmode="decimal">
@@ -108,25 +138,6 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <label for="text4">Testo 4</label><input id="text4" maxlength="150">
 <label for="text5">Testo 5</label><input id="text5" maxlength="150">
 </div>
-</div>
-<div data-modes="off rptrx node">
-<h2>Sysop del ripetitore e del nodo</h2>
-<p class="hint" data-modes="node">Il nodo si comanda via radio come un ripetitore (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA): nominativo del sysop (chi trasmette i comandi) e chiave, uguali sulla scheda del sysop. La chiave non si rilegge mai.</p>
-<div data-modes="node rptrx">
-<h2>Il nodo sulla mappa APRS</h2>
-<p class="hint">Con un SSID da 1 a 15 e la posizione, il reflector pubblica il nodo sulla mappa APRS come NOMINATIVO-SSID, con frequenza e testo. 0 = il nodo non compare (la posizione è un dato personale). Vale dal riavvio.</p>
-<label for="nodessid">SSID del nodo su APRS (0-15)</label><input id="nodessid" type="number" min="0" max="15">
-<label for="nodeqth">Posizione del nodo (latitudine,longitudine)</label><input id="nodeqth" placeholder="43.7696,11.2558">
-<label for="nodetext">Testo del sysop (fino a 40 caratteri)</label><input id="nodetext" maxlength="40">
-</div>
-<p class="hint" data-modes="rptrx">La RX verifica i comandi firmati del sysop (nominativo e chiave) e li gira alla TX; la chiave arriva alla TX dalla RX insieme al resto della configurazione. Il <strong>modo Sysop</strong> (menu &quot;Comandi Sysop&quot;) si accende solo sulla scheda del sysop. Il nominativo e la chiave vanno uguali sulla RX e sulla scheda del sysop; la chiave non si rilegge mai.</p>
-<p class="hint" data-modes="off">Per chi gestisce un ripetitore. Con il <strong>modo Sysop</strong> acceso il menu della scheda (volume lungo) mostra <strong>Comandi Sysop</strong> al posto di Invia testo: scegli il comando (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA) e la scheda lo trasmette firmato al ripetitore. Resta acceso finché non lo spegni. Il nominativo e la chiave vanno impostati uguali sul ripetitore (schede RX e TX) e sulla scheda del sysop; la chiave non si rilegge mai.</p>
-<div data-modes="off"><label for="sysopmode">Modo Sysop</label><select id="sysopmode"><option value="off">Spento</option><option value="on">Acceso</option></select></div>
-<label for="sysop">Nominativo del sysop</label><input id="sysop" maxlength="8" placeholder="IU5HJU">
-<label for="sysopkey">Chiave (32 cifre esadecimali)</label><input id="sysopkey" maxlength="32" autocomplete="off" spellcheck="false">
-<p class="hint" id="sysopkeyhint">Chiave non impostata.</p>
-<button type="button" class="sec" id="genkey">Genera una chiave nuova</button>
-<div id="sysopbox" data-modes="off" hidden><h2>Comandi Sysop</h2><p class="hint">L'elenco che compare sulla scheda al posto dei testi predefiniti.</p><ol id="sysoplist"><li>STATO</li><li>SPEGNI</li><li>SPEGNI 15 MIN</li><li>SPEGNI 60 MIN</li><li>RIACCENDI</li><li>RIAVVIA</li><li>IDENTIFICA</li><li>POTENZA 17 dBm</li><li>POTENZA 14 dBm</li><li>POTENZA 10 dBm</li></ol></div>
 </div>
 <button type="submit" id="save">Salva</button>
 <button type="button" class="sec" id="reboot">Riavvia la scheda</button>
