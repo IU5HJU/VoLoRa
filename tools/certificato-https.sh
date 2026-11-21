@@ -10,6 +10,14 @@
 #                                                          cat certificato.crt catena.crt > FILE.pem
 #   sudo tools/certificato-https.sh --controlla            quanto dura il certificato installato
 #
+# Oppure, gratis e con rinnovo automatico, con Let's Encrypt (serve certbot: sudo apt install certbot):
+#   sudo tools/certificato-https.sh --letsencrypt [--porta-http 8088] [--email INDIRIZZO]
+#                                                          chiede il certificato con certbot (il programma ascolta sulla porta locale 8088 solo mentre verifica:
+#                                                          sul router la porta ESTERNA 80 deve andare a quella porta di questa macchina), lo mette dove lo legge
+#                                                          il reflector e prepara il passaggio che, dopo ogni rinnovo (circa ogni 60 giorni, da solo), lo
+#                                                          ricopia e ricarica il reflector
+#   sudo tools/certificato-https.sh --rinnovo-prova        prova il rinnovo senza cambiare niente (certbot renew --dry-run)
+#
 # I file stanno in /var/lib/vlreflector/ssl (NOME.key, NOME.csr, NOME.pem) e appartengono all'utente del servizio del reflector (di base "vlreflector"):
 # e' lui che deve poterli leggere. Altre cartelle e utenti con --ssl-dir e --utente. La chiave privata non si copia ne' si pubblica.
 #
@@ -20,18 +28,24 @@ SSL_DIR="/var/lib/vlreflector/ssl"
 UTENTE="vlreflector"
 MODO=""
 PEM_DA_INSTALLARE=""
+PORTA_HTTP=8088
+EMAIL=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --csr) MODO=csr ;;
     --installa) MODO=installa; PEM_DA_INSTALLARE="${2:?manca il file PEM}"; shift ;;
     --controlla) MODO=controlla ;;
+    --letsencrypt) MODO=letsencrypt ;;
+    --rinnovo-prova) MODO=rinnovoprova ;;
+    --porta-http) PORTA_HTTP="${2:?manca la porta}"; shift ;;
+    --email) EMAIL="${2:?manca l indirizzo email}"; shift ;;
     --ssl-dir) SSL_DIR="${2:?manca la cartella}"; shift ;;
     --utente) UTENTE="${2:?manca il nome utente}"; shift ;;
     *) echo "parametro sconosciuto: $1"; exit 1 ;;
   esac
   shift
 done
-[[ -n "$MODO" ]] || { sed -n 2,14p "$0" | sed 's/^# \{0,1\}//'; exit 1; }
+[[ -n "$MODO" ]] || { sed -n '2,/^set -euo/{/^set -euo/!p}' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
 
 chiedi() {  # chiedi VARIABILE "domanda" [predefinito]: usa la variabile d'ambiente se c'e', altrimenti chiede
   local var="$1" domanda="$2" pred="${3:-}" valore
@@ -118,6 +132,60 @@ if [[ "$MODO" == installa ]]; then
   echo
   echo "Nel servizio del reflector (docs/reflector.md): --public-web 8443 --public-tls-cert $CERT --public-tls-key $CHIAVE"
   echo "Con il reflector gia' in funzione basta:  sudo systemctl reload vlreflector"
+  exit 0
+fi
+
+HOOK="/etc/letsencrypt/renewal-hooks/deploy/volora-reflector.sh"
+LIVE="/etc/letsencrypt/live/${HOSTNAME_}"
+
+if [[ "$MODO" == letsencrypt ]]; then
+  command -v certbot >/dev/null 2>&1 || { echo "ERRORE: manca certbot:  sudo apt install certbot"; exit 1; }
+  [[ "$PORTA_HTTP" =~ ^[0-9]+$ && "$PORTA_HTTP" -ge 1 && "$PORTA_HTTP" -le 65535 ]] || { echo "ERRORE: porta non valida"; exit 1; }
+  [[ -z "$EMAIL" || "$EMAIL" =~ ^[^[:space:]@]+@[^[:space:]@]+$ ]] || { echo "ERRORE: indirizzo email non valido"; exit 1; }
+  if (exec 3<>"/dev/tcp/127.0.0.1/${PORTA_HTTP}") 2>/dev/null; then echo "ERRORE: la porta locale $PORTA_HTTP e' gia' usata da un altro programma: scegline un'altra con --porta-http"; exit 1; fi
+  echo "Prima di continuare, sul router la porta ESTERNA 80 (TCP) deve andare a questa macchina, porta $PORTA_HTTP,"
+  echo "e il nome $HOSTNAME_ deve gia' puntare al tuo IP (CNAME verso il nome dinamico)."
+  echo
+  prepara_cartella
+  # il passaggio dopo ogni rinnovo: copia certificato e chiave dove li legge il reflector e lo ricarica
+  mkdir -p "$(dirname "$HOOK")"
+  cat > "$HOOK" <<HOOKEOF
+#!/bin/sh
+# Creato da tools/certificato-https.sh --letsencrypt. Dopo ogni emissione o rinnovo di Let's Encrypt copia certificato e chiave dove li legge
+# il reflector VoLoRa e lo ricarica (senza fermarlo). Non fa niente per altri nomi.
+NOME="${HOSTNAME_}"
+CARTELLA="${SSL_DIR}"
+UTENTE="${PROPRIETARIO:-root}"
+case " \$RENEWED_DOMAINS " in *" \$NOME "*) ;; *) exit 0 ;; esac
+install -d -m 700 -o "\$UTENTE" -g "\$UTENTE" "\$CARTELLA"
+install -m 644 -o "\$UTENTE" -g "\$UTENTE" "\$RENEWED_LINEAGE/fullchain.pem" "\$CARTELLA/\$NOME.pem"
+install -m 600 -o "\$UTENTE" -g "\$UTENTE" "\$RENEWED_LINEAGE/privkey.pem" "\$CARTELLA/\$NOME.key"
+if systemctl is-active --quiet vlreflector 2>/dev/null; then systemctl reload vlreflector; fi
+HOOKEOF
+  chmod 755 "$HOOK"
+  echo "Preparato: $HOOK"
+  # la chiave fatta con --csr non serve piu': si tiene da parte invece di sovrascriverla
+  if [[ -f "$CHIAVE" && ! -f "${CHIAVE}.prima-di-letsencrypt" ]]; then cp -p "$CHIAVE" "${CHIAVE}.prima-di-letsencrypt"; fi
+  EMAIL_OPT=()
+  [[ -n "$EMAIL" ]] && EMAIL_OPT=(-m "$EMAIL")
+  echo "Chiedo il certificato a Let's Encrypt (certbot ti chiede di accettare le condizioni del servizio)..."
+  certbot certonly --standalone --preferred-challenges http --http-01-port "$PORTA_HTTP" -d "$HOSTNAME_" "${EMAIL_OPT[@]}"
+  [[ -f "$LIVE/fullchain.pem" && -f "$LIVE/privkey.pem" ]] || { echo "ERRORE: certbot non ha prodotto il certificato (vedi i messaggi sopra)."; exit 1; }
+  RENEWED_DOMAINS="$HOSTNAME_" RENEWED_LINEAGE="$LIVE" "$HOOK"
+  echo
+  echo "[OK] certificato installato: $CERT"
+  openssl x509 -in "$CERT" -noout -enddate
+  echo "Il rinnovo e' automatico (certbot controlla due volte al giorno e rinnova a circa 30 giorni dalla scadenza)."
+  echo "Per provarlo senza cambiare niente:  sudo $0 --rinnovo-prova"
+  echo "Nel servizio del reflector (docs/reflector.md): --public-web 8443 --public-tls-cert $CERT --public-tls-key $CHIAVE"
+  exit 0
+fi
+
+if [[ "$MODO" == rinnovoprova ]]; then
+  command -v certbot >/dev/null 2>&1 || { echo "ERRORE: manca certbot"; exit 1; }
+  [[ -f "$HOOK" ]] || { echo "ERRORE: non c'e' $HOOK: prima  sudo $0 --letsencrypt"; exit 1; }
+  certbot renew --dry-run --cert-name "$HOSTNAME_"
+  systemctl list-timers 2>/dev/null | grep -i certbot || echo "Attenzione: non vedo il timer di certbot (systemctl list-timers): il rinnovo automatico potrebbe non partire."
   exit 0
 fi
 
