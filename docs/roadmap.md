@@ -20,7 +20,7 @@ Firmware `b465287` (Build #391) e successivi. **Nessuna delle prove rimaste bloc
 
 ## Stato al 14/11/2026: verso la prima release candidate
 
-**Fatto dalla beta.2** (nell'ordine in cui è arrivato; dettagli e prove in [prove.md](prove.md)): testi brevi e casella dei messaggi, MeshCom, ripetitore con due T3 (identificativo anche in Morse FM, comandi firmati del sysop), profili Standard (3200) / Range (1200) / Messaggio, shift libero da 0 a 10 MHz, nodo Internet su Wi-Fi, reflector (pagina di amministrazione con password, pagina pubblica, IP del nodo), prova di potenza, aggiornamento dalla pagina che conserva le impostazioni, firmware per la T-Beam con radio SX1262.
+**Fatto dalla beta.2** (nell'ordine in cui è arrivato; dettagli e prove in [prove.md](prove.md)): testi brevi e casella dei messaggi, MeshCom, ripetitore con due T3 (identificativo anche in Morse FM, comandi firmati del sysop), profili Standard (3200) / Range (1200) / Messaggio, shift libero da 0 a 10 MHz, nodo Internet su Wi-Fi, reflector (pagina di amministrazione con password, pagina pubblica anche in HTTPS con Let's Encrypt, IP del nodo, qualità dei collegamenti radio/rete, posizione di stazioni e nodi su APRS), prova di potenza, aggiornamento dalla pagina che conserva le impostazioni, firmware per la T-Beam con radio SX1262.
 
 **Prima della release candidate, da fare o da confermare su schede** (nessuna di queste cose blocca la rc, ma le note di rilascio devono dire che non sono provate):
 
