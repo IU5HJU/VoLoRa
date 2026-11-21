@@ -13,6 +13,7 @@
 #include "interfaces.h"
 #include "radio_test.h"
 #include "node_link.h"
+#include "node_info.h"
 #include "quality_report.h"
 #include "repeater.h"
 #include "repeater_link.h"
@@ -48,6 +49,7 @@ class NodeCore {
     uint32_t sysopReplies = 0;    // risposte firmate trasmesse
     uint32_t droppedOff = 0;      // pacchetti ricevuti in radio e non mandati in rete perche' il nodo e' spento dal sysop
     uint32_t qualityReports = 0;  // rapporti di ricezione mandati al reflector (una trasmissione ciascuno)
+    uint32_t infoSent = 0;        // presentazioni del nodo mandate al reflector (mappa APRS)
   };
 
   // L'ultima stazione che e' transitata dal nodo (ricevuta in radio e mandata all'altro nodo): nominativo (nei pacchetti START e END), RSSI e SNR
@@ -104,6 +106,8 @@ class NodeCore {
 
   // L'SF della radio del nodo (per il margine del segnale nel rapporto di ricezione che il nodo manda al reflector a fine trasmissione, quality_report.h).
   void setRadioInfo(uint8_t sf) { quality_.setInfo(sf); }
+  // La presentazione del nodo per il reflector (posizione, frequenza, testo; node_info.h): parte da sola quando il collegamento e' attivo e poi ogni 10 minuti.
+  void setNodeInfo(const NodeInfo& i) { info_.set(i); }
   // L'ultimo rapporto mandato (nullptr se nessuno).
   const QualityReport* lastReport() const { return haveLastReport_ ? &lastReport_ : nullptr; }
   uint32_t lastReportAtMs() const { return lastReportMs_; }  // quando e' partito
@@ -136,6 +140,7 @@ class NodeCore {
   Stats stats_;
   Heard heard_;
   QualityTracker quality_;
+  NodeInfoTimer info_;
   QualityReport lastReport_;
   bool haveLastReport_ = false;
   uint32_t lastReportMs_ = 0;

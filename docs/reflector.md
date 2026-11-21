@@ -102,6 +102,20 @@ Attenzione:
 - Chi gestisce un reflector **si fida dei nodi registrati**: un nodo registrato può scrivere un nominativo qualsiasi nel pacchetto (la firma dice chi ha mandato il pacchetto al reflector, non chi era davanti alla radio), quindi può far comparire su APRS una posizione con un nominativo non suo. È lo stesso limite di tutta la rete (vedi "Limiti noti").
 - Il formato della riga e l'accesso con una password APRS-IS vera sono stati provati il 20/11/2026 su un vero server APRS-IS ([prove.md](prove.md)); resta da provare solo **più di una stazione** e un'altra scheda oltre alla T-Beam/T3 del sysop. Sul PC la prova usa un server finto: `make reflector-smoke`, `tests/fake_aprs_server.py`. Per controllare soltanto che il server si raggiunga, senza pubblicare niente, usa la password `-1`.
 
+## Il nodo sulla mappa APRS (21/11/2026, provato sul PC, non ancora con le schede)
+
+Il reflector pubblica sulla mappa APRS anche **i nodi**, non solo le stazioni che trasmettono: così chi guarda la mappa vede dov'è il nodo, su che frequenza ascoltarlo e se è in copertura. Il nodo compare come **NOMINATIVO-SSID** (per esempio `IU5HJU-10`) con una stella con la V (il simbolo dei digipeater con la V sovrapposta, `V#`), diverso dal cerchio blu delle stazioni.
+
+Chi manda cosa: è **il nodo** (o la RX del ripetitore) che dice al reflector posizione, frequenza, modo e il testo del sysop, con un messaggio firmato come gli altri (tipo 7, `lib/voicecore/node_info.h`). Il reflector lo pubblica sul server APRS solo se l'invio APRS è acceso.
+
+- **Sulla scheda del nodo** (pagina di configurazione o console): `CFG SET NODESSID 10` (da 1 a 15; **0 = il nodo non compare**, ed è il valore di base: la posizione è un dato personale), `CFG SET QTH 43.7696,10.8807` (la posizione fissa) e, se vuoi, `CFG SET NODETEXT Antenna 5/8, 2 dBi` (fino a 40 caratteri, `NONE` lo toglie). Vale dal riavvio. Senza SSID o senza QTH il nodo non si presenta e la posizione non esce.
+- **Quando**: appena il collegamento al reflector è attivo (dopo tre secondi) e poi ogni 10 minuti, **solo finché il nodo è collegato**; se si scollega, il reflector smette di pubblicarlo.
+- **Commento sulla mappa**: `433.900MHz VoLoRa Standard rete NOME-DEL-REFLECTOR testo-del-sysop http://pagina-pubblica`, al massimo 100 caratteri: se non ci sta, si accorcia il testo (l'indirizzo resta). La frequenza è quella del profilo del nodo; il modo è Standard o Range.
+- **Sul reflector**, nella pagina di amministrazione, campo "Pagina pubblica del reflector" (facoltativo, chiave `url` in `aprs.conf`): l'indirizzo della pagina pubblica per il commento dei nodi, per esempio `http://iu5hju.ddns.net:8081` (http:// o https://, al massimo 40 caratteri).
+- Il nome del nodo sul reflector deve essere un nominativo valido per APRS (da 1 a 6 lettere o cifre maiuscole): con un nome diverso (per esempio `nodoA`) il registro scrive `[aprs] nodo nodoA: nominativo non valido per APRS` e il nodo non si pubblica. Più nodi con lo stesso nominativo (etichette diverse) devono avere SSID diversi.
+- Il reflector non ripete un nodo prima dell'intervallo impostato (meno 60 secondi di margine, perché il nodo si ripresenta ogni 10 minuti).
+- Un reflector vecchio ignora il messaggio (lo tratta come un controllo valido); un nodo vecchio non lo manda.
+
 ## Qualità dei collegamenti: radio o rete? (20/11/2026, provata sul PC, non ancora con le schede)
 
 Su un reflector di un altro sistema (per esempio il C4FM) si vede con che qualità l'utente entra nel nodo: un segnale debole in radio si riconosce a orecchio, e lo stesso vale per i buchi dovuti alla rete, ma solo con i numeri (SNR, perdite) si capisce **quale dei due** è la causa. Qui è lo stesso: per ogni trasmissione la pagina di amministrazione mostra il **modo**, il **segnale con cui il nodo ha ricevuto l'utente**, i pacchetti **persi in radio**, quelli **persi in rete** e un **giudizio**.

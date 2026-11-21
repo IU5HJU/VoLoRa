@@ -271,6 +271,17 @@ void NodeCore::tick(uint32_t nowMs, bool mayTransmit0) {
     }
   }
 
+  // la presentazione del nodo per il mappa APRS del reflector
+  if (info_.due(nowMs, link_.linkUp(nowMs))) {
+    uint8_t ib[kNodeInfoMaxBytes];
+    const size_t in = encodeNodeInfo(info_.info(), ib, sizeof(ib));
+    const size_t ik = in ? link_.makeInfo(ib, in, dg, sizeof(dg)) : 0;
+    if (ik) {
+      net_.sendDatagram(dg, ik);
+      stats_.infoSent++;
+    }
+  }
+
   // IDENTIFICA del sysop: il nominativo subito (testo e Morse)
   if (identifyNow_) {
     identifyNow_ = false;

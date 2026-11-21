@@ -118,6 +118,29 @@ static void testMeshcomSettings() {
   CHECK(isValidSettings(bad));
 }
 
+static void testNodeOnMap() {
+  Fixture f;
+  // di base il nodo non compare sulla mappa e non si presenta
+  CHECK(f.st.data.nodeSsid == 0 && f.st.data.nodeText[0] == 0);
+  CHECK(!nodeInfoFromSettings(f.st.data).valid);
+  CHECK(f.run("CFG GET NODEINFO") == ConsoleResult::Ok && strcmp(f.reply, "CFG NODEINFO ssid=0 text=") == 0);
+  CHECK(f.run("CFG SET NODESSID 10") == ConsoleResult::Ok && strcmp(f.reply, "CFG OK nodessid=10") == 0 && f.st.data.nodeSsid == 10);
+  CHECK(!nodeInfoFromSettings(f.st.data).valid);  // senza QTH la posizione non c'e': non si presenta
+  CHECK(f.run("CFG SET QTH 43.7696,10.8807") == ConsoleResult::Ok);
+  CHECK(f.run("CFG SET NODETEXT Antenna 5/8, 2 dBi") == ConsoleResult::Ok && strcmp(f.reply, "CFG OK nodetext=Antenna 5/8, 2 dBi") == 0);
+  CHECK(f.run("CFG GET NODEINFO") == ConsoleResult::Ok && strcmp(f.reply, "CFG NODEINFO ssid=10 text=Antenna 5/8, 2 dBi") == 0);
+  const NodeInfo i = nodeInfoFromSettings(f.st.data);
+  CHECK(i.valid && i.ssid == 10 && i.latE7 == 437696000 && i.lonE7 == 108807000 && i.freqKhz == f.st.data.profileFreqKhz() && strcmp(i.text, "Antenna 5/8, 2 dBi") == 0);
+  // valori fuori campo
+  CHECK(f.run("CFG SET NODESSID 16") == ConsoleResult::Error && f.run("CFG SET NODESSID -1") == ConsoleResult::Error && f.run("CFG SET NODESSID x") == ConsoleResult::Error && f.st.data.nodeSsid == 10);
+  CHECK(f.run("CFG SET NODETEXT 0123456789012345678901234567890123456789X") == ConsoleResult::Error);
+  CHECK(f.run("CFG SET NODETEXT a{b}") == ConsoleResult::Error && strcmp(f.st.data.nodeText, "Antenna 5/8, 2 dBi") == 0);
+  CHECK(f.run("CFG SET NODETEXT 0123456789012345678901234567890123456789") == ConsoleResult::Ok);  // 40 caratteri: il massimo
+  CHECK(f.run("CFG SET NODETEXT NONE") == ConsoleResult::Ok && f.st.data.nodeText[0] == 0);
+  // 0 = il nodo non compare piu'
+  CHECK(f.run("CFG SET NODESSID 0") == ConsoleResult::Ok && !nodeInfoFromSettings(f.st.data).valid);
+}
+
 static void testMonitor() {
   Fixture f;
   CHECK(f.run("CFG GET MONITOR") == ConsoleResult::Ok && strcmp(f.reply, "CFG MONITOR=off") == 0);
@@ -841,6 +864,7 @@ static void testShiftIgnoredByOtherRoles() {
 }
 
 int main() {
+  testNodeOnMap();
   testVolumeMigration();
   testRepeaterRole();
   testShiftIgnoredByOtherRoles();

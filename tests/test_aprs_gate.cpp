@@ -1,5 +1,6 @@
 // Invio delle posizioni al server APRS-IS (lib/voicecore/aprs_gate.h): formato dei pacchetti, valori della configurazione e regole di invio.
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -274,7 +275,80 @@ static void testQueueLimitAndConfigChange() {
   CHECK(std::string(aprsStateText(AprsGate::State::Verified)) == "collegato e verificato");
 }
 
+static NodeInfo nodeInfo(uint8_t ssid = 10) {
+  NodeInfo i;
+  i.valid = true;
+  i.latE7 = 437696000;
+  i.lonE7 = 108807000;
+  i.freqKhz = 433900;
+  i.mode = 4;
+  i.ssid = ssid;
+  strcpy(i.text, "Antenna 5/8");
+  return i;
+}
+
+static void testNodeOnMap() {
+  // il commento: frequenza, modo, rete, testo del sysop e indirizzo della pagina
+  CHECK(aprsNodeComment(nodeInfo(), "iu5hju.net:5400", "") == "433.900MHz VoLoRa Standard rete iu5hju.net:5400 Antenna 5/8");
+  CHECK(aprsNodeComment(nodeInfo(), "iu5hju.net:5400", "http://iu5hju.ddns.net:8081") == "433.900MHz VoLoRa Standard rete iu5hju.net:5400 Antenna 5/8 http://iu5hju.ddns.net:8081");
+  NodeInfo r = nodeInfo();
+  r.mode = 1;
+  r.text[0] = 0;
+  CHECK(aprsNodeComment(r, "", "") == "433.900MHz VoLoRa Range");
+  // un testo con caratteri che APRS non ammette si ripulisce; un testo che non ci sta con l'indirizzo si accorcia (l'indirizzo resta)
+  NodeInfo t = nodeInfo();
+  strcpy(t.text, "a|b~c");
+  CHECK(aprsNodeComment(t, "", "") == "433.900MHz VoLoRa Standard a b c");
+  memset(t.text, 'x', kNodeInfoMaxText);
+  t.text[kNodeInfoMaxText] = 0;
+  const std::string longc = aprsNodeComment(t, "reflector-con-un-nome-molto-lungo.example.org:5400", "http://iu5hju.ddns.net:8081");
+  CHECK(longc.size() <= kAprsMaxNodeComment && longc.size() > 60 && longc.rfind("http://iu5hju.ddns.net:8081") == longc.size() - 27);
+  // indirizzo della pagina
+  CHECK(isValidAprsUrl("") && isValidAprsUrl("http://a.b") && isValidAprsUrl("https://a.b:8081/x"));
+  CHECK(!isValidAprsUrl("ftp://a.b") && !isValidAprsUrl("http://a b") && !isValidAprsUrl("http://a|b") && !isValidAprsUrl("http://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
+  AprsConfig c = goodConfig();
+  c.url = "http://iu5hju.ddns.net:8081";
+  std::string err;
+  CHECK(validateAprsConfig(c, err));
+  c.url = "iu5hju.ddns.net";
+  CHECK(!validateAprsConfig(c, err));
+  // il file lo salva e lo rilegge
+  c.url = "http://iu5hju.ddns.net:8081";
+  AprsConfig back;
+  CHECK(parseAprsConfig(formatAprsConfig(c), back, err) && back.url == c.url);
+  // la riga: sorgente con SSID, simbolo dei nodi (V sul digipeater), commento
+  Position p;
+  p.valid = true;
+  p.latE7 = 437696000;
+  p.lonE7 = 108807000;
+  CHECK(aprsPositionLine("IU5HJU-10", p, "N0CALL-10", kAprsNodeSymbol, "433.900MHz VoLoRa Standard") == "IU5HJU-10>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E#433.900MHz VoLoRa Standard");
+  // la regola: spento non accoda; acceso accoda una riga e non ripete prima del tempo
+  AprsGate g;
+  g.onNodeInfo("IU5HJU", nodeInfo(), "rete", 1000);
+  CHECK(g.pending() == 0);
+  AprsConfig on = goodConfig();
+  on.url = "http://iu5hju.ddns.net:8081";
+  g.setConfig(on);
+  g.setState(AprsGate::State::Verified);
+  g.onNodeInfo("IU5HJU", nodeInfo(), "rete", 1000);
+  CHECK(g.pending() == 1);
+  std::string line;
+  CHECK(g.pop(line) && line == "IU5HJU-10>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E#433.900MHz VoLoRa Standard rete rete Antenna 5/8 http://iu5hju.ddns.net:8081");
+  g.onNodeInfo("IU5HJU", nodeInfo(), "rete", 1000 + 400000);  // troppo presto
+  CHECK(g.pending() == 0 && g.stats().tooSoon == 1);
+  g.onNodeInfo("IU5HJU", nodeInfo(), "rete", 1000 + 600000);  // il nodo si ripresenta ogni 10 minuti: passa (intervallo 600 s meno 60 di margine)
+  CHECK(g.pending() == 1 && g.stats().nodesSent == 2);
+  g.pop(line);
+  // un altro SSID e' un'altra stazione; un nominativo segnaposto o non valido no
+  g.onNodeInfo("IU5HJU", nodeInfo(11), "rete", 1000 + 600000);
+  CHECK(g.pending() == 1);
+  g.pop(line);
+  g.onNodeInfo("nodoA", nodeInfo(), "rete", 5000000);
+  CHECK(g.pending() == 0 && g.stats().invalid == 1);
+}
+
 int main() {
+  testNodeOnMap();
   testCoordinates();
   testLine();
   testValidators();

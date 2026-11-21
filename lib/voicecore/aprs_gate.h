@@ -18,6 +18,7 @@
 #include <mutex>
 #include <string>
 
+#include "node_info.h"
 #include "position.h"
 
 namespace lcr {
@@ -30,10 +31,11 @@ struct AprsConfig {
   std::string pass;              // password APRS-IS di quel nominativo (-1 = solo ascolto, non pubblica)
   uint32_t minIntervalS = 600;   // una stazione si ripete al massimo ogni tanti secondi (APRS: non piu' spesso di ogni 10 minuti)
   std::string symbol = "V_";    // simbolo APRS: tabella (o lettera di sovrapposizione) e codice; "V_" = cerchio blu con la V (docs/reflector.md)
+  std::string url;              // facoltativo: la pagina pubblica del reflector, nel commento APRS dei nodi (per esempio http://iu5hju.ddns.net:8081)
 
   bool complete() const { return !host.empty() && !login.empty() && !pass.empty(); }
   bool operator==(const AprsConfig& o) const {
-    return enabled == o.enabled && host == o.host && port == o.port && login == o.login && pass == o.pass && minIntervalS == o.minIntervalS && symbol == o.symbol;
+    return enabled == o.enabled && host == o.host && port == o.port && login == o.login && pass == o.pass && minIntervalS == o.minIntervalS && symbol == o.symbol && url == o.url;
   }
 };
 
@@ -47,6 +49,9 @@ bool isValidAprsHost(const std::string& s);
 bool isValidAprsLogin(const std::string& s);
 // Password: da 1 a 32 caratteri visibili, senza spazi ("-1" e' valida).
 bool isValidAprsPass(const std::string& s);
+// Indirizzo della pagina pubblica: vuoto, oppure http:// o https:// con caratteri visibili senza spazi, al massimo kAprsMaxUrl.
+bool isValidAprsUrl(const std::string& s);
+constexpr size_t kAprsMaxUrl = 40;
 // Simbolo: due caratteri. Il primo e' la tabella ('/' principale, '\\' alternativa) oppure una lettera maiuscola o una cifra (sovrapposizione sulla tabella alternativa);
 // il secondo e' il codice del simbolo (carattere visibile, tranne '|' e '~' che le TNC usano per altro).
 bool isValidAprsSymbol(const std::string& s);
@@ -64,7 +69,12 @@ bool validateAprsConfig(const AprsConfig& c, std::string& err);
 std::string aprsLatitude(int32_t latE7);
 std::string aprsLongitude(int32_t lonE7);
 // La riga da mandare al server (senza il fine riga): vuota se il nominativo, la posizione o il simbolo non sono validi.
-std::string aprsPositionLine(const std::string& callsign, const Position& pos, const std::string& login, const std::string& symbol = "V_");
+std::string aprsPositionLine(const std::string& callsign, const Position& pos, const std::string& login, const std::string& symbol = "V_", const std::string& comment = "VoLoRa");
+// Il simbolo dei nodi sulla mappa: la V sovrapposta al simbolo dei digipeater (una stella con la V), diverso dal cerchio blu delle stazioni.
+constexpr const char* kAprsNodeSymbol = "V#";
+// Il commento APRS di un nodo: "433.900MHz VoLoRa Standard rete NOME testo-del-sysop indirizzo", al massimo kAprsMaxNodeComment caratteri: se non ci sta, si accorcia il testo.
+constexpr size_t kAprsMaxNodeComment = 100;
+std::string aprsNodeComment(const NodeInfo& info, const std::string& netName, const std::string& url);
 // La riga di accesso al server (senza il fine riga). Contiene la password: non va scritta nei registri.
 std::string aprsLoginLine(const AprsConfig& c);
 
@@ -78,6 +88,7 @@ class AprsGate {
     uint32_t tooSoon = 0;       // una stazione che si ripeteva prima del tempo
     uint32_t invalid = 0;       // nominativo segnaposto o non APRS, posizione non valida
     uint32_t dropped = 0;       // righe perse perche' il collegamento non c'era (coda piena o senza verifica)
+    uint32_t nodesSent = 0;     // presentazioni di nodi accodate
   };
 
   // Facoltativo: una riga di registro per ogni trasmissione che NON genera un invio, con il motivo (nessuna posizione, nominativo non valido, troppo presto...).
@@ -88,6 +99,9 @@ class AprsGate {
 
   // Una stazione ha trasmesso (pos.valid = false se non manda la posizione). Accoda la riga se e' il caso, altrimenti scrive nel registro perche' no.
   void onPosition(const std::string& callsign, const Position& pos, uint32_t nowMs);
+  // Un nodo collegato si presenta (node_info.h): lo pubblica come NOMINATIVO-SSID con il simbolo dei nodi, la frequenza, il modo e il testo del sysop. 'baseCall' e'
+  // il nominativo del nodo senza SSID, 'netName' il nome pubblico del reflector. Al massimo ogni (intervallo - 60 s) per nodo.
+  void onNodeInfo(const std::string& baseCall, const NodeInfo& info, const std::string& netName, uint32_t nowMs);
 
   // Per chi tiene il collegamento.
   void setState(State s, const std::string& detail = std::string());
@@ -103,6 +117,7 @@ class AprsGate {
 
  private:
   std::string decide(const std::string& callsign, const Position& pos, uint32_t nowMs);
+  std::string decideNode(const std::string& baseCall, const NodeInfo& info, const std::string& netName, uint32_t nowMs);
   mutable std::mutex m_;
   AprsConfig cfg_;
   uint32_t gen_ = 1;

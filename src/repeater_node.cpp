@@ -287,6 +287,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
     memcpy(lc.key, settings.nodeKey, sizeof(lc.key));
     uplink = new lcr::RepeaterUplink(net, lc, esp_random(), []() -> uint32_t { return esp_random(); }, prof.codecMode);
     uplink->setRadioInfo(prof.sf);  // per il margine del segnale nel rapporto di ricezione che va al reflector
+    uplink->setNodeInfo(lcr::nodeInfoFromSettings(settings));  // posizione, frequenza e testo per la mappa APRS del reflector (se il sysop ha impostato NODESSID e QTH)
     Serial.printf("[ripetitore] RX: in rete con \"%s\", reflector %s:%u (id %lu), il mio id %lu\n", settings.wifiSsid, settings.peerIp, static_cast<unsigned>(settings.peerPort),
                   static_cast<unsigned long>(settings.peerId), static_cast<unsigned long>(settings.nodeId));
   }
@@ -800,6 +801,7 @@ static void formatNodeStat(char* out, size_t cap, const lcr::NodeCore& core, uin
   static lcr::NodeCore core(radio, net, lc, esp_random(), []() -> uint32_t { return esp_random(); }, lcr::profileFor(settings.profile).codecMode);
   core.setIdentification(settings.callsign, static_cast<uint32_t>(settings.idIntervalMin) * 60000u, settings.profileFreqKhz());  // IDINT, come il ripetitore
   core.setRadioInfo(lcr::profileFor(settings.profile).sf);  // per il margine del segnale nel rapporto di ricezione che va al reflector
+  core.setNodeInfo(lcr::nodeInfoFromSettings(settings));  // posizione, frequenza e testo per la mappa APRS del reflector (se il sysop ha impostato NODESSID e QTH)
   core.setMorseId(settings.idMorse);  // IDMORSE: dopo il testo, il nominativo in Morse a tono in FM (15 wpm, 700 Hz, +-2,5 kHz)
   // Comandi del sysop via radio, come il ripetitore: servono nominativo e chiave del sysop (CFG SET SYSOP, SYSOPKEY)
   if (settings.sysopKeySet && settings.sysopCall[0]) {

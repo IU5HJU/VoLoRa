@@ -12,6 +12,7 @@ PUB=$((PORT + 2))
 cat > "$D/ref.conf" <<EOF
 2 000102030405060708090a0b0c0d0e0f nodoA
 3 101112131415161718191a1b1c1d1e1f nodoB
+12 202122232425262728292a2b2c2d2e2f IU5HJU
 EOF
 fail=0
 ok() { echo "ok    $1"; }
@@ -101,6 +102,16 @@ sleep 0.5
 check "$D/aprs.rows" "^IZ5IOF>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E_VoLoRa$" "APRS: la posizione della stazione che trasmette e' arrivata al server"
 [ "$(grep -c '^IZ5IOF>' "$D/aprs.rows")" = "1" ] && ok "APRS: una sola posizione per quella trasmissione" || ko "APRS: posizioni ripetute"
 check "$D/ref.out" "\[aprs\] inviato: IZ5IOF>APZVLR" "APRS: il registro scrive la posizione inviata"
+# il nodo sulla mappa APRS: il nodo (con un nominativo valido) manda posizione, frequenza e testo e il reflector lo pubblica come NOMINATIVO-SSID
+api -X POST -d "enabled=1&host=127.0.0.1&port=$APRS&login=N0CALL-10&pass=12345&interval=60&url=ftp://x" "http://127.0.0.1:$WEB/api/aprs" | grep -q '"ok":false' && ok "APRS: indirizzo della pagina pubblica non valido rifiutato" || ko "APRS: url non valido accettato"
+build/vlnode --id 12 --peer-id 1000 --key 202122232425262728292a2b2c2d2e2f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 "Antenna 5/8" --duration 8 > "$D/n1.out" 2>&1
+sleep 0.5
+check "$D/aprs.rows" "^IU5HJU-10>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E#433.900MHz VoLoRa Standard rete prova.example:$PORT Antenna 5/8$" "APRS: il nodo e' sulla mappa (SSID, simbolo dei nodi, frequenza, modo, rete e testo del sysop)"
+# un nodo con un nome che non e' un nominativo valido non si pubblica, e il registro dice perche'
+build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 --duration 6 > "$D/n2.out" 2>&1
+sleep 0.5
+check "$D/ref.out" "\\[aprs\\] nodo nodoA: nominativo non valido per APRS" "APRS: un nodo senza nominativo valido non si pubblica e il registro dice perche'"
+grep -q "^nodoA-10" "$D/aprs.rows" && ko "APRS: pubblicato un nodo con nome non valido" || ok "APRS: il nodo con nome non valido non e' nel server"
 # una trasmissione senza posizione: il registro dice perche' non si manda (e la pagina la conta)
 build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 20 --duration 9 > "$D/a3.out" 2>&1
 sleep 0.5

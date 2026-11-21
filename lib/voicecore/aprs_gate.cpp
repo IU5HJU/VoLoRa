@@ -60,6 +60,17 @@ bool isValidAprsSymbol(const std::string& s) {
   return u > ' ' && u < 127 && c != '|' && c != '~';
 }
 
+bool isValidAprsUrl(const std::string& s) {
+  if (s.empty()) return true;
+  if (s.size() > kAprsMaxUrl) return false;
+  if (s.compare(0, 7, "http://") != 0 && s.compare(0, 8, "https://") != 0) return false;
+  for (char ch : s) {
+    const unsigned char u = static_cast<unsigned char>(ch);
+    if (u <= ' ' || u >= 127 || ch == '|' || ch == '~') return false;
+  }
+  return true;
+}
+
 bool validateAprsConfig(const AprsConfig& c, std::string& err) {
   if (!c.host.empty() && !isValidAprsHost(c.host)) {
     err = "l'indirizzo del server puo' avere lettere, cifre, punto, - e _ (massimo 253 caratteri)";
@@ -83,6 +94,10 @@ bool validateAprsConfig(const AprsConfig& c, std::string& err) {
   }
   if (!isValidAprsSymbol(c.symbol)) {
     err = "il simbolo sono due caratteri: la tabella (/ oppure \\ oppure una lettera maiuscola o una cifra per la sovrapposizione) e il codice del simbolo";
+    return false;
+  }
+  if (!isValidAprsUrl(c.url)) {
+    err = "l'indirizzo della pagina pubblica comincia con http:// o https://, senza spazi, al massimo 40 caratteri (oppure vuoto)";
     return false;
   }
   if (c.enabled && !c.complete()) {
@@ -139,8 +154,10 @@ bool parseAprsConfig(const std::string& text, AprsConfig& out, std::string& err)
       c.pass = val;
     } else if (key == "symbol") {
       c.symbol = val;
+    } else if (key == "url") {
+      c.url = val;
     } else {
-      snprintf(msg, sizeof(msg), "riga %d: chiave sconosciuta (enabled, host, port, login, pass, interval, symbol)", lineNo);
+      snprintf(msg, sizeof(msg), "riga %d: chiave sconosciuta (enabled, host, port, login, pass, interval, symbol, url)", lineNo);
       err = msg;
       return false;
     }
@@ -165,6 +182,7 @@ std::string formatAprsConfig(const AprsConfig& c) {
   s += "pass=" + c.pass + "\n";
   s += "interval=" + std::to_string(c.minIntervalS) + "\n";
   s += "symbol=" + c.symbol + "\n";
+  s += "url=" + c.url + "\n";
   return s;
 }
 
@@ -188,9 +206,30 @@ std::string aprsLongitude(int32_t lonE7) {
   return b;
 }
 
-std::string aprsPositionLine(const std::string& callsign, const Position& pos, const std::string& login, const std::string& symbol) {
+std::string aprsPositionLine(const std::string& callsign, const Position& pos, const std::string& login, const std::string& symbol, const std::string& comment) {
   if (!pos.valid || !isValidCoordinate(pos.latE7, pos.lonE7) || !isValidAprsSource(callsign) || !isValidAprsLogin(login) || !isValidAprsSymbol(symbol)) return std::string();
-  return callsign + ">APZVLR,qAR," + login + ":!" + aprsLatitude(pos.latE7) + symbol[0] + aprsLongitude(pos.lonE7) + symbol[1] + "VoLoRa";
+  return callsign + ">APZVLR,qAR," + login + ":!" + aprsLatitude(pos.latE7) + symbol[0] + aprsLongitude(pos.lonE7) + symbol[1] + comment;
+}
+
+std::string aprsNodeComment(const NodeInfo& info, const std::string& netName, const std::string& url) {
+  auto clean = [](std::string s) {
+    for (char& ch : s) {
+      const unsigned char u = static_cast<unsigned char>(ch);
+      if (u < ' ' || u >= 127 || ch == '|' || ch == '~') ch = ' ';
+    }
+    return s;
+  };
+  char head[80];
+  snprintf(head, sizeof(head), "%u.%03uMHz VoLoRa %s", static_cast<unsigned>(info.freqKhz / 1000), static_cast<unsigned>(info.freqKhz % 1000), info.mode == 4 ? "Standard" : "Range");
+  std::string s = head;
+  const std::string net = clean(netName).substr(0, 30);  // un nome lungo non deve far perdere il testo e l'indirizzo
+  if (!net.empty()) s += " rete " + net;
+  const std::string text = clean(info.text);
+  const std::string link = isValidAprsUrl(url) ? url : std::string();
+  const size_t reserve = link.empty() ? 0 : link.size() + 1;
+  if (!text.empty() && s.size() + 1 < kAprsMaxNodeComment - reserve) s += " " + text.substr(0, kAprsMaxNodeComment - reserve - s.size() - 1);
+  if (!link.empty() && s.size() + reserve <= kAprsMaxNodeComment) s += " " + link;
+  return s;
 }
 
 std::string aprsLoginLine(const AprsConfig& c) { return "user " + c.login + " pass " + c.pass + " vers VoLoRa-reflector 0.1"; }
@@ -282,6 +321,54 @@ std::string AprsGate::decide(const std::string& callsign, const Position& pos, u
   }
   queue_.push_back(line);
   if (state_ != State::Verified) return "in coda: il collegamento con il server APRS non e' ancora attivo (" + std::string(aprsStateText(state_)) + ")";
+  return std::string();
+}
+
+void AprsGate::onNodeInfo(const std::string& baseCall, const NodeInfo& info, const std::string& netName, uint32_t nowMs) {
+  std::string why;
+  std::function<void(const std::string&)> log;
+  {
+    std::lock_guard<std::mutex> l(m_);
+    log = log_;
+    why = decideNode(baseCall, info, netName, nowMs);
+  }
+  if (!why.empty() && log) log("[aprs] nodo " + baseCall + ": " + why);
+}
+
+std::string AprsGate::decideNode(const std::string& baseCall, const NodeInfo& info, const std::string& netName, uint32_t nowMs) {
+  if (!cfg_.enabled || !cfg_.complete()) return std::string();
+  const std::string source = baseCall + "-" + std::to_string(static_cast<unsigned>(info.ssid));
+  if (!info.valid || isPlaceholderCallsign(baseCall.c_str()) || !isValidAprsSource(source)) {
+    stats_.invalid++;
+    return "nominativo non valido per APRS (" + source + "): non lo pubblico";
+  }
+  Position pos;
+  pos.valid = true;
+  pos.latE7 = info.latE7;
+  pos.lonE7 = info.lonE7;
+  const std::string line = aprsPositionLine(source, pos, cfg_.login, kAprsNodeSymbol, aprsNodeComment(info, netName, cfg_.url));
+  if (line.empty()) {
+    stats_.invalid++;
+    return "posizione del nodo non valida: non la pubblico";
+  }
+  if (state_ == State::Unverified) {
+    stats_.dropped++;
+    return "il server APRS non accetta la password: non lo pubblico";
+  }
+  const uint32_t every = (cfg_.minIntervalS > 120 ? cfg_.minIntervalS - 60 : cfg_.minIntervalS) * 1000u;  // il nodo si ripresenta ogni 10 minuti: un po' di margine
+  auto it = lastSent_.find("N:" + source);
+  if (it != lastSent_.end() && static_cast<uint32_t>(nowMs - it->second) < every) {
+    stats_.tooSoon++;
+    return std::string();
+  }
+  if (lastSent_.size() > 2000) lastSent_.clear();
+  lastSent_["N:" + source] = nowMs;
+  if (queue_.size() >= kAprsMaxQueue) {
+    queue_.pop_front();
+    stats_.dropped++;
+  }
+  queue_.push_back(line);
+  stats_.nodesSent++;
   return std::string();
 }
 

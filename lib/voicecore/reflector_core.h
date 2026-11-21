@@ -18,6 +18,7 @@
 
 #include "node_link.h"
 #include "position.h"
+#include "node_info.h"
 #include "quality_report.h"
 
 namespace lcr {
@@ -58,6 +59,7 @@ class ReflectorCore {
     uint32_t badPacket = 0;       // non e' un pacchetto radio valido
     uint32_t talks = 0;           // trasmissioni iniziate
     uint32_t qualityReports = 0;  // rapporti di ricezione dei nodi attaccati a una trasmissione
+    uint32_t nodeInfos = 0;       // presentazioni dei nodi (posizione, frequenza, testo) per la mappa APRS
     uint32_t qualityOrphans = 0;  // rapporti di una trasmissione che il reflector non ha (troppo vecchia, o di un altro client)
   };
 
@@ -133,6 +135,8 @@ class ReflectorCore {
   // non la manda). Serve a mandare la posizione al server APRS e a dire perche' non si manda (aprs_gate.h). Non si chiama per la voce scartata
   // perche' un altro sta parlando.
   void setPositionHandler(std::function<void(const std::string& callsign, const Position& pos, uint32_t nowMs)> f) { onPosition_ = f; }
+  // Facoltativo: chiamato quando un nodo collegato manda la sua presentazione (node_info.h); serve a pubblicarlo sulla mappa APRS. L'id e' quello del client.
+  void setNodeInfoHandler(std::function<void(uint32_t clientId, const NodeInfo& info, uint32_t nowMs)> f) { onNodeInfo_ = f; }
 
  private:
   struct Client {
@@ -168,6 +172,7 @@ class ReflectorCore {
   std::vector<Talk> recent_;
   std::function<void(const std::string&)> log_;
   std::function<void(const std::string&, const Position&, uint32_t)> onPosition_;
+  std::function<void(uint32_t, const NodeInfo&, uint32_t)> onNodeInfo_;
   bool posReported_ = false;  // il gestore e' gia' stato chiamato per la trasmissione in corso
 };
 

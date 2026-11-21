@@ -106,6 +106,8 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
       <input id="aprsInterval" type="number" min="1" max="1440" value="10">
       <label for="aprsSymbol">Simbolo sulla mappa (due caratteri: tabella e codice)</label>
       <input id="aprsSymbol" maxlength="2" autocomplete="off" spellcheck="false" placeholder="V_" value="V_">
+      <label for="aprsUrl">Pagina pubblica del reflector, per il commento dei nodi sulla mappa (facoltativa)</label>
+      <input id="aprsUrl" maxlength="40" autocomplete="off" spellcheck="false" placeholder="http://iu5hju.ddns.net:8081">
       <p class="muted">Di base <code>V_</code>: un cerchio blu con la V. La prima lettera è la tabella (<code>/</code> principale, <code>\</code> alternativa, oppure una lettera maiuscola o una cifra da sovrapporre al simbolo della tabella alternativa); la seconda è il codice del simbolo.</p>
       <div>
         <button id="aprsSave" type="button">Salva</button>
@@ -213,6 +215,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     $('aprsPassHint').textContent = a.passSet ? 'La password è salvata e non viene mai mostrata. Lasciala vuota per tenerla, oppure scrivine una nuova.' : 'Non è ancora stata scritta nessuna password.';
     $('aprsInterval').value = Math.round(a.intervalS / 60);
     $('aprsSymbol').value = a.symbol;
+    $('aprsUrl').value = a.url || '';
   }
   function aprsStatus(a) {
     const el = $('aprsState');
@@ -231,7 +234,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     const minutes = parseInt($('aprsInterval').value, 10);
     if (!(minutes >= 1 && minutes <= 1440)) { show($('aprsMsg'), 'L\'intervallo va da 1 minuto a 1440 (un giorno).', 'err'); return; }
     const body = 'enabled=' + ($('aprsOn').checked ? '1' : '0') + '&host=' + encodeURIComponent($('aprsHost').value.trim()) + '&port=' + encodeURIComponent($('aprsPort').value.trim()) +
-      '&login=' + encodeURIComponent($('aprsLogin').value.trim()) + '&symbol=' + encodeURIComponent($('aprsSymbol').value) + '&pass=' + encodeURIComponent($('aprsPass').value) + '&interval=' + (minutes * 60);
+      '&login=' + encodeURIComponent($('aprsLogin').value.trim()) + '&symbol=' + encodeURIComponent($('aprsSymbol').value) + '&url=' + encodeURIComponent($('aprsUrl').value.trim()) + '&pass=' + encodeURIComponent($('aprsPass').value) + '&interval=' + (minutes * 60);
     let r;
     try { r = await api('/api/aprs', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body }); } catch (e) { return; }
     if (r.ok === false) { show($('aprsMsg'), r.error || 'Errore.', 'err'); return; }

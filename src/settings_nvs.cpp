@@ -59,6 +59,9 @@ bool NvsSettingsStorage::load(lcr::Settings& out) {
       }
     }
     out.mcSsid = static_cast<uint8_t>(p.getUChar("mcs", 99));
+    out.nodeSsid = static_cast<uint8_t>(p.getUChar("nss", 0));  // assente nelle versioni precedenti
+    memset(out.nodeText, 0, sizeof(out.nodeText));
+    if (p.isKey("ntx")) p.getString("ntx", out.nodeText, sizeof(out.nodeText));
     out.rxMonitor = p.getBool("mon", false);  // assente nelle versioni precedenti
     memset(out.sysopCall, 0, sizeof(out.sysopCall));
     if (p.isKey("sop")) p.getString("sop", out.sysopCall, sizeof(out.sysopCall));
@@ -114,6 +117,8 @@ bool NvsSettingsStorage::save(const lcr::Settings& s) {
   p.putInt("shf", s.shiftKhz);
   p.remove("fqua");  // vecchio formato (prima del 12/11/2026)
   p.putString("sop", s.sysopCall);
+  p.putUChar("nss", s.nodeSsid);
+  p.putString("ntx", s.nodeText);
   p.putBool("som", s.sysopMode);
   p.putUChar("idi", s.idIntervalMin);
   p.putBool("idm", s.idMorse);

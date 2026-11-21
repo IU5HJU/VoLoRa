@@ -47,7 +47,8 @@ constexpr uint32_t kNodeChallengeLifeMs = 10000;  // la risposta alla nostra sfi
 
 // kNodeQuality (6, 20/11/2026): il rapporto di ricezione del nodo per il reflector (quality_report.h). Un'implementazione che non lo conosce lo tratta come un
 // controllo valido e lo ignora: un reflector vecchio non si rompe con un nodo nuovo.
-enum NodeMsg : uint8_t { kNodeHello = 1, kNodeChallenge = 2, kNodeResponse = 3, kNodePacket = 4, kNodeKeepalive = 5, kNodeQuality = 6 };
+// kNodeInfo (7, 21/11/2026): la presentazione del nodo per il reflector, per la mappa APRS (node_info.h). Anche questo, se non e' noto, e' un controllo ignorato.
+enum NodeMsg : uint8_t { kNodeHello = 1, kNodeChallenge = 2, kNodeResponse = 3, kNodePacket = 4, kNodeKeepalive = 5, kNodeQuality = 6, kNodeInfo = 7 };
 
 class NodeLink {
  public:
@@ -101,6 +102,7 @@ class NodeLink {
   size_t makeKeepalive(uint8_t* out, size_t cap);
   size_t makePacket(const uint8_t* wire, size_t len, uint8_t* out, size_t cap);  // 0 se len e' troppo lungo
   size_t makeQuality(const uint8_t* report, size_t len, uint8_t* out, size_t cap) { return build(kNodeQuality, report, len, out, cap); }
+  size_t makeInfo(const uint8_t* info, size_t len, uint8_t* out, size_t cap) { return build(kNodeInfo, info, len, out, cap); }
 
   Rx& onDatagram(const uint8_t* d, size_t n, uint32_t nowMs);
 

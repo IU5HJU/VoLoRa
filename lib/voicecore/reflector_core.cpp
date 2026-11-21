@@ -218,6 +218,14 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
     onQuality(*c, rx.payload, rx.payloadLen, nowMs);
     return;
   }
+  if (rx.kind == NodeLink::Kind::Control && rx.type == kNodeInfo) {  // la presentazione del nodo: non si inoltra, va alla mappa APRS
+    NodeInfo info;
+    if (up && decodeNodeInfo(rx.payload, rx.payloadLen, info)) {
+      stats_.nodeInfos++;
+      if (onNodeInfo_) onNodeInfo_(c->id, info, nowMs);
+    }
+    return;
+  }
   if (rx.kind != NodeLink::Kind::Packet) return;
   c->packetsIn++;
   Packet p;

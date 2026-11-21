@@ -12,6 +12,7 @@
 #include "node_core.h"
 #include "node_link.h"
 #include "packet.h"
+#include "node_info.h"
 #include "quality_report.h"
 
 namespace lcr {
@@ -28,6 +29,7 @@ class RepeaterUplink {
     uint32_t droppedLinkDown = 0;  // da mandare al reflector ma collegamento non attivo
     uint32_t netBad = 0;         // pacchetti dalla rete non validi o di un modo non ripetuto
     uint32_t qualityReports = 0; // rapporti di ricezione mandati al reflector (una trasmissione ciascuno)
+    uint32_t infoSent = 0;       // presentazioni mandate al reflector (mappa APRS)
   };
 
   RepeaterUplink(INodeNet& net, const NodeLink::Config& link, uint32_t bootId, uint32_t (*rng)(), uint8_t voiceMode);
@@ -38,6 +40,7 @@ class RepeaterUplink {
   // reflector a fine trasmissione (quality_report.h).
   bool fromRadio(const Packet& p, uint32_t nowMs, int rssiDbm = 0, bool snrValid = false, float snrDb = 0.0f, uint32_t crcTotal = 0);
   void setRadioInfo(uint8_t sf) { quality_.setInfo(sf); }
+  void setNodeInfo(const NodeInfo& i) { info_.set(i); }  // come NodeCore::setNodeInfo
   const QualityReport* lastReport() const { return haveLastReport_ ? &lastReport_ : nullptr; }
   // Un datagramma dalla rete: risposte della sfida spedite da qui; se c'e' un pacchetto da trasmettere ritorna true e lo mette in wire/len.
   bool onDatagram(const uint8_t* d, size_t n, uint32_t nowMs, uint8_t* wire, size_t cap, size_t& len);
@@ -61,6 +64,7 @@ class RepeaterUplink {
   uint32_t ownerMs_ = 0;
   Stats stats_;
   QualityTracker quality_;
+  NodeInfoTimer info_;
   QualityReport lastReport_;
   bool haveLastReport_ = false;
 };

@@ -21,6 +21,9 @@
 //   CFG SET ROLE RPTRX           -> CFG OK role=rptrx          (OFF = scheda normale, RPTRX/RPTTX = scheda RX/TX del ripetitore; vale dal riavvio)
 //   CFG SET FREQOUT 434.400      -> CFG OK freqout=434.400     (frequenza di uscita del ripetitore, usata dalla scheda TX)
 //   CFG SET PROFILE MSG          -> CFG OK profile=msg         (STD = Standard 3200 SF7, RNG = Range 1200 SF8, MSG = Messaggio SF12/BW125; QUA vale come STD; vale dal riavvio)
+//   CFG SET NODESSID 10          -> CFG OK nodessid=10         (nodo: compare sulla mappa APRS come NOMINATIVO-10, con QTH, frequenza e testo; 1-15, 0 = non compare; di base 0; vale dal riavvio)
+//   CFG SET NODETEXT Antenna 5/8 -> CFG OK nodetext=Antenna 5/8   (testo libero del sysop nel commento APRS del nodo, fino a 40 caratteri ASCII senza { e }; NONE lo toglie)
+//   CFG GET NODEINFO             -> CFG NODEINFO ssid=10 text=Antenna 5/8   (ssid=0: il nodo non compare in mappa)
 //   CFG SET POS ON               -> CFG OK pos=on             (trasmette la posizione nel pacchetto START; di default OFF; serve il QTH o un GPS)
 //   CFG SET QTH 43.7696,11.2558  -> CFG OK qth=43.76960,11.25580   (posizione fissa in gradi decimali, lat,lon; NONE la cancella)
 //   CFG SET TEXT1 Arrivo tra 10 minuti -> CFG OK text1=Arrivo tra 10 minuti   (testi predefiniti da inviare, TEXT1..TEXT5; ASCII senza '{' e '}', 1-150
@@ -65,6 +68,7 @@
 #include <cstdio>
 #include <cstring>
 
+#include "node_info.h"
 #include "position.h"
 #include "profile.h"
 #include "radio_test.h"
@@ -77,6 +81,7 @@ constexpr uint32_t kMaxFreqKhz = 440000;
 // Shift per operare via ripetitore (solo stazione normale): la stazione ascolta su FREQ (l'uscita del ripetitore) e trasmette su FREQ + shift
 // (l'ingresso). Valori ammessi: 0 (di base: simplex), +10000 e -10000 kHz (+-10 MHz). La frequenza spostata deve restare in 430-440 MHz.
 constexpr int32_t kMaxShiftKhz = 10000;  // lo shift e' libero da -10000 a +10000 kHz (da 0 a 10 MHz, in avanti o indietro), a passi di 1 kHz
+constexpr size_t kMaxNodeText = 40;  // testo libero del sysop nel commento APRS del nodo
 constexpr size_t kMaxPeerHost = 63;  // lunghezza massima del nome o indirizzo dell'altro nodo / del reflector
 constexpr int kMinIdIntervalMin = 1;
 constexpr int kMaxIdIntervalMin = 10;
@@ -169,6 +174,10 @@ struct Settings {
   bool qthSet = false;      // posizione fissa (QTH) impostata
   int32_t qthLatE7 = 0;     // posizione fissa, decimilionesimi di grado
   int32_t qthLonE7 = 0;
+  // Il nodo sulla mappa APRS (docs/reflector.md, "Il nodo sulla mappa APRS"): con nodeSsid da 1 a 15 e un QTH il nodo manda al reflector posizione, frequenza e
+  // testo del sysop, e il reflector lo pubblica come NOMINATIVO-SSID. 0 = non compare (di base: la posizione e' un dato personale). Vale dal riavvio.
+  uint8_t nodeSsid = 0;
+  char nodeText[kMaxNodeText + 1] = {0};
 
   // Posizione fissa dell'operatore (non valida se non impostata). Serve anche per calcolare la distanza dalle stazioni
   // ricevute, indipendentemente da posTx.
@@ -227,6 +236,8 @@ bool isValidPeerHost(const char* s);
 
 // true se nominativo, frequenza, potenza e volume sono nei limiti.
 bool isValidSettings(const Settings& s);
+// La presentazione del nodo per il reflector (node_info.h): valida solo con un SSID da 1 a 15 e il QTH impostato; altrimenti il nodo non si presenta e la posizione non esce.
+NodeInfo nodeInfoFromSettings(const Settings& s);
 
 // Memoria delle impostazioni (NVS sulla scheda, finta nei test).
 class ISettingsStorage {

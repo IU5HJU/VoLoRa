@@ -24,6 +24,7 @@ const st = {
   noShift: false,   // firmware senza shift (piu' vecchio)
   shift: 0,
   drop: null,   // chiave che la scheda "dimentica" di salvare
+  nodeinfo: { ssid: '0', text: '' },
   node: { ssid: 'none', pass: '', ip: 'none', port: 5400, listen: 5400, id: 0, peerid: 0, key: '' },
 };
 const KEYS = ['callsign', 'freq', 'freqmsg', 'freqrange', 'freqdir', 'power', 'volume', 'micfloor', 'profile', 'pos', 'qth', 'gps', 'role', 'freqout'];
@@ -84,6 +85,11 @@ function handle(line) {
   if (nm) { st.node[nm[1] === 'NODEID' ? 'id' : 'peerid'] = +nm[2]; return 'CFG OK ' + nm[1].toLowerCase() + '=' + nm[2]; }
   nm = /^CFG SET NODEKEY ([0-9a-fA-F]{32})$/.exec(line);
   if (nm) { st.node.key = nm[1]; return 'CFG OK nodekey=set'; }
+  if (line === 'CFG GET NODEINFO') return 'CFG NODEINFO ssid=' + st.nodeinfo.ssid + ' text=' + st.nodeinfo.text;
+  let ni = /^CFG SET NODESSID (\d+)$/.exec(line);
+  if (ni) { if (+ni[1] > 15) return 'CFG ERR nodessid da 1 a 15'; st.nodeinfo.ssid = ni[1]; return 'CFG OK nodessid=' + ni[1]; }
+  ni = /^CFG SET NODETEXT (.+)$/.exec(line);
+  if (ni) { st.nodeinfo.text = ni[1] === 'NONE' ? '' : ni[1]; return 'CFG OK nodetext=' + st.nodeinfo.text; }
   const t = line.split(' ');
   if (t[1] === 'GET') return 'CFG ' + KEYS.map((k) => k + '=' + st.cfg[k]).join(' ') + ' board=' + st.board + ' reboot=0 test=0';
   if (t[1] === 'SET') {
@@ -138,7 +144,7 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   check('comandi inviati', st.cmds.includes('CFG SET PROFILE rng') && st.cmds.includes('CFG SET FREQRANGE 434.250') && st.cmds.includes('CFG SET QTH 43.7696,11.2558'), st.cmds.join('|'));
   check('testi salvati (con spazi) e posto vuoto con NONE', st.cmds.includes('CFG SET TEXT2 Sono QRV su 433.775, chiamami') && st.cmds.includes('CFG SET TEXT4 NONE') && st.texts[1] === 'Sono QRV su 433.775, chiamami' && st.texts[3] === '', JSON.stringify(st.texts));
   check('MeshCom salvato (destinatario in maiuscolo, vuoto = NONE)', st.mc.dests[3] === 'IU5ABC-9' && st.mc.dests[4] === '' && st.mc.ssid === '12' && st.mc.window === '90' && st.cmds.includes('CFG SET MCDEST4 IU5ABC-9') && st.cmds.includes('CFG SET MCDEST5 NONE'), JSON.stringify(st.mc));
-  check('rilettura dopo il salvataggio', st.cmds[st.cmds.length - 6] === 'CFG GET' && st.cmds[st.cmds.length - 5] === 'CFG GET SYSOP' && st.cmds[st.cmds.length - 4] === 'CFG GET IDINT' && st.cmds[st.cmds.length - 3] === 'CFG GET IDMORSE' && st.cmds[st.cmds.length - 2] === 'CFG GET NODE' && st.cmds[st.cmds.length - 1] === 'CFG GET MONITOR');
+  check('rilettura dopo il salvataggio', st.cmds[st.cmds.length - 7] === 'CFG GET' && st.cmds[st.cmds.length - 6] === 'CFG GET SYSOP' && st.cmds[st.cmds.length - 5] === 'CFG GET IDINT' && st.cmds[st.cmds.length - 4] === 'CFG GET IDMORSE' && st.cmds[st.cmds.length - 3] === 'CFG GET NODE' && st.cmds[st.cmds.length - 2] === 'CFG GET NODEINFO' && st.cmds[st.cmds.length - 1] === 'CFG GET MONITOR');
   check('nominativo maiuscolo', st.cfg.callsign === 'IU5HJU/P');
 
   // Modo Sysop: di partenza spento (testi visibili, elenco comandi nascosto), chiave non impostata
@@ -244,8 +250,14 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   check('chiave generata: 32 cifre e riga per il sysop', /^[0-9a-f]{32}$/.test(newKey) && (await p.isVisible('#regline')) && (await p.textContent('#regline')).includes(newKey) && (await p.textContent('#regline')).includes('IU5HJU'));
   st.shift = -5000;   // lo shift della stazione normale resta salvato: il nodo non lo tocca
   const n0 = st.cmds.length;
+  check('nodo: i campi della mappa APRS (SSID, posizione, testo) sono visibili, di base SSID 0', (await p.isVisible('#nodessid')) && (await p.isVisible('#nodeqth')) && (await p.isVisible('#nodetext')) && (await p.inputValue('#nodessid')) === '0');
+  await p.fill('#nodessid', '10'); await p.fill('#nodeqth', ''); await p.click('#save');
+  await p.waitForTimeout(400);
+  check('nodo: SSID APRS senza posizione bloccato', /bisogno della posizione/.test(await p.textContent('#st')) && st.nodeinfo.ssid === '0');
+  await p.fill('#nodeqth', '43.7696,10.8807'); await p.fill('#nodetext', 'Antenna 5/8, 2 dBi');
   await p.fill('#nodeid', '7'); await p.click('#save');
   await p.waitForFunction(() => /Salvato/.test(document.getElementById('st').textContent));
+  check('nodo: SSID, testo e posizione salvati (la posizione con il comando QTH di sempre)', st.nodeinfo.ssid === '10' && st.nodeinfo.text === 'Antenna 5/8, 2 dBi' && st.cfg.qth === '43.7696,10.8807' && st.cmds.includes('CFG SET NODESSID 10') && st.cmds.includes('CFG SET NODETEXT Antenna 5/8, 2 dBi'));
   { const c = st.cmds.slice(n0);
     check('nodo: nessun comando SHIFT e il ruolo prima delle frequenze', !c.some((x) => x.startsWith('CFG SET SHIFT')) && c.indexOf('CFG SET ROLE node') > 0 && c.indexOf('CFG SET ROLE node') < c.findIndex((x) => x.startsWith('CFG SET FREQ '))); }
   st.shift = 0;

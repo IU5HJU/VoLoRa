@@ -301,9 +301,9 @@ struct Admin {
                        : st == AprsGate::State::Unverified ? "unverified" : "down";
     std::ostringstream o;
     o << "{\"enabled\":" << (c.enabled ? "true" : "false") << ",\"host\":\"" << jsonEscape(c.host) << "\",\"port\":" << c.port << ",\"login\":\"" << jsonEscape(c.login)
-      << "\",\"passSet\":" << (c.pass.empty() ? "false" : "true") << ",\"intervalS\":" << c.minIntervalS << ",\"symbol\":\"" << jsonEscape(c.symbol) << "\",\"state\":\"" << code << "\",\"stateText\":\"" << aprsStateText(st)
+      << "\",\"passSet\":" << (c.pass.empty() ? "false" : "true") << ",\"intervalS\":" << c.minIntervalS << ",\"symbol\":\"" << jsonEscape(c.symbol) << "\",\"url\":\"" << jsonEscape(c.url) << "\",\"state\":\"" << code << "\",\"stateText\":\"" << aprsStateText(st)
       << "\",\"detail\":\"" << jsonEscape(aprs->detail()) << "\",\"queued\":" << aprs->pending() << ",\"seen\":" << s.seen << ",\"noPosition\":" << s.noPosition << ",\"sent\":" << s.sent
-      << ",\"tooSoon\":" << s.tooSoon << ",\"invalid\":" << s.invalid << ",\"dropped\":" << s.dropped << "}";
+      << ",\"tooSoon\":" << s.tooSoon << ",\"invalid\":" << s.invalid << ",\"dropped\":" << s.dropped << ",\"nodesSent\":" << s.nodesSent << "}";
     return o.str();
   }
   // Applica una configurazione nuova: la scrive (permessi 0600) e la passa al collegamento, che si ricollega da solo.
@@ -495,6 +495,7 @@ struct Admin {
       c.minIntervalS = static_cast<uint32_t>(interval > 10000000 ? 10000000 : interval);
       const std::string symbol = formParam(req.body, "symbol");
       if (!symbol.empty()) c.symbol = symbol;  // senza il campo resta quello di prima
+      c.url = formParam(req.body, "url");
       const std::string pass = formParam(req.body, "pass");
       if (!pass.empty()) c.pass = pass;  // vuota = resta quella di prima (la password non torna mai alla pagina)
       std::string err;
@@ -687,6 +688,11 @@ int main(int argc, char** argv) {
     std::string aerr;
     if (!adm.reloadAprs(aerr)) logLine("[aprs] " + adm.aprsPath + ": " + aerr + " (il collegamento resta spento finche' non lo correggi dalla pagina di amministrazione)");
   }
+  core.setNodeInfoHandler([&aprsGate, &adm](uint32_t clientId, const NodeInfo& info, uint32_t now) {
+    const int ei = findEntryById(adm.entries, clientId);
+    if (ei < 0) return;
+    aprsGate.onNodeInfo(adm.entries[static_cast<size_t>(ei)].name, info, adm.publicName, now);
+  });
   core.setPositionHandler([&aprsGate](const std::string& callsign, const Position& pos, uint32_t now) { aprsGate.onPosition(callsign, pos, now); });
   AprsClient aprsClient(aprsGate, logLine);
   {

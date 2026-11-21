@@ -19,7 +19,7 @@ bool operator==(const Settings& a, const Settings& b) {
          a.nodeKeySet == b.nodeKeySet && (!a.nodeKeySet || memcmp(a.nodeKey, b.nodeKey, sizeof(a.nodeKey)) == 0) && a.idMorse == b.idMorse &&
          (!a.sysopKeySet || memcmp(a.sysopKey, b.sysopKey, sizeof(a.sysopKey)) == 0) &&
          a.profile == b.profile && a.rxMonitor == b.rxMonitor && a.gpsOn == b.gpsOn && a.posTx == b.posTx && a.qthSet == b.qthSet &&
-         (!a.qthSet || (a.qthLatE7 == b.qthLatE7 && a.qthLonE7 == b.qthLonE7));
+         (!a.qthSet || (a.qthLatE7 == b.qthLatE7 && a.qthLonE7 == b.qthLonE7)) && a.nodeSsid == b.nodeSsid && strncmp(a.nodeText, b.nodeText, sizeof(a.nodeText)) == 0;
 }
 
 // Ogni posto dei testi e' vuoto oppure un testo valido, terminato.
@@ -29,6 +29,20 @@ static bool validTexts(const Settings& s) {
     if (n > kMaxTextChars || (n > 0 && !isValidText(s.texts[i], n))) return false;
   }
   return true;
+}
+
+NodeInfo nodeInfoFromSettings(const Settings& s) {
+  NodeInfo i;
+  if (s.nodeSsid < 1 || s.nodeSsid > 15 || !s.qthSet) return i;
+  i.valid = true;
+  i.latE7 = s.qthLatE7;
+  i.lonE7 = s.qthLonE7;
+  i.freqKhz = s.profileFreqKhz();
+  i.mode = profileFor(s.profile).codecMode;
+  i.ssid = s.nodeSsid;
+  strncpy(i.text, s.nodeText, kNodeInfoMaxText);
+  i.text[kNodeInfoMaxText] = 0;
+  return i;
 }
 
 bool isValidMcDest(const char* d) {
@@ -131,7 +145,8 @@ bool isValidSettings(const Settings& s) {
          s.powerDbm >= kMinPowerDbm && s.powerDbm <= kMaxPowerDbm && s.volume >= kMinVolume &&
          s.volume <= kMaxVolume &&
          s.micFloorDb >= kMinMicFloorDb && s.micFloorDb <= kMaxMicFloorDb && s.profile < kProfileCount &&
-         (!s.qthSet || isValidCoordinate(s.qthLatE7, s.qthLonE7)) && validTexts(s);
+         (!s.qthSet || isValidCoordinate(s.qthLatE7, s.qthLonE7)) && validTexts(s) && s.nodeSsid <= 15 &&
+         (strnlen(s.nodeText, kMaxNodeText + 1) <= kMaxNodeText && (s.nodeText[0] == 0 || isValidText(s.nodeText, strlen(s.nodeText))));
 }
 
 Settings loadSettings(ISettingsStorage& storage, const Settings& defaults, LoadStatus* status) {
@@ -338,6 +353,28 @@ ConsoleResult SettingsConsole::handleLine(const char* line, char* reply, size_t 
     return ConsoleResult::Ok;
   }
 
+  // CFG SET NODETEXT <testo>: il resto della riga (puo' avere spazi), fino a kMaxNodeText caratteri; NONE lo toglie.
+  if (n >= 4 && equalsIgnoreCase(tok[1], "SET") && equalsIgnoreCase(tok[2], "NODETEXT")) {
+    const char* rest = line + (tok[3] - buf);
+    size_t len = strlen(rest);
+    while (len > 0 && (rest[len - 1] == ' ' || rest[len - 1] == '\t' || rest[len - 1] == '\r' || rest[len - 1] == '\n')) len--;
+    Settings next = stored_;
+    memset(next.nodeText, 0, sizeof(next.nodeText));
+    if (!(len == 4 && strncasecmp(rest, "NONE", 4) == 0)) {
+      if (len < 1 || len > kMaxNodeText || !isValidText(rest, len)) {
+        say(reply, cap, "CFG ERR nodetext %s", "testo ASCII da 1 a 40 caratteri, senza { e } (NONE lo toglie)");
+        return ConsoleResult::Error;
+      }
+      memcpy(next.nodeText, rest, len);
+    }
+    if (!storage_.save(next)) {
+      say(reply, cap, "CFG ERR nodetext salvataggio non riuscito");
+      return ConsoleResult::Error;
+    }
+    stored_ = next;
+    say(reply, cap, "CFG OK nodetext=%s", next.nodeText);
+    return ConsoleResult::Ok;
+  }
   // CFG SET TEXTn <testo>: il testo e' il resto della riga (puo' avere spazi).
   if (n >= 4 && equalsIgnoreCase(tok[1], "SET") && strlen(tok[2]) == 5 && strncasecmp(tok[2], "TEXT", 4) == 0 &&
       tok[2][4] >= '1' && tok[2][4] < '1' + static_cast<int>(kTextSlots)) {
@@ -369,6 +406,10 @@ ConsoleResult SettingsConsole::handleLine(const char* line, char* reply, size_t 
                static_cast<unsigned>(stored_.nodePort), static_cast<unsigned long>(stored_.nodeId), static_cast<unsigned long>(stored_.peerId),
                stored_.nodeKeySet ? "set" : "none");
     }
+    return ConsoleResult::Ok;
+  }
+  if (n == 3 && equalsIgnoreCase(tok[1], "GET") && equalsIgnoreCase(tok[2], "NODEINFO")) {
+    if (reply && cap > 0) snprintf(reply, cap, "CFG NODEINFO ssid=%u text=%s", static_cast<unsigned>(stored_.nodeSsid), stored_.nodeText);
     return ConsoleResult::Ok;
   }
   if (n == 3 && equalsIgnoreCase(tok[1], "GET") && equalsIgnoreCase(tok[2], "IDMORSE")) {
@@ -545,6 +586,14 @@ ConsoleResult SettingsConsole::set(const char* key, const char* value, char* rep
     }
     next.mcWindowS = static_cast<uint16_t>(w);
     snprintf(shown, sizeof(shown), "mcwindow=%d", w);
+  } else if (equalsIgnoreCase(key, "NODESSID")) {
+    int ssid = 0;
+    if (!parseInt(value, ssid) || ssid < 0 || ssid > 15) {
+      say(reply, cap, "CFG ERR nodessid %s", "da 1 a 15 (0 = il nodo non compare sulla mappa APRS)");
+      return ConsoleResult::Error;
+    }
+    next.nodeSsid = static_cast<uint8_t>(ssid);
+    snprintf(shown, sizeof(shown), "nodessid=%d", ssid);
   } else if (equalsIgnoreCase(key, "MCSSID")) {
     int ssid = 0;
     if (!parseInt(value, ssid) || ssid < 0 || ssid > 99) {

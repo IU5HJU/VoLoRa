@@ -4,7 +4,7 @@
 //
 //   make vlnode
 //   build/vlnode --id 2 --peer-id 1 --key 000102030405060708090a0b0c0d0e0f --listen 5400 --peer 192.168.1.50:5400   (--peer puo' essere anche un nome; --listen 0 sceglie una porta)
-//                [--send-text IU5HJU "Prova del nodo" [--every 10]] [--send-voice IU5HJU [--frames 100] [--position LAT,LON] [--quality RSSI SNR [MANCANTI [CRC]]] [--drop N]] [--duration 60] [--public-addr A.B.C.D]
+//                [--send-text IU5HJU "Prova del nodo" [--every 10]] [--send-voice IU5HJU [--frames 100] [--position LAT,LON] [--quality RSSI SNR [MANCANTI [CRC]]] [--drop N]] [--info SSID LAT,LON FREQ_KHZ MODO ["testo"]] [--duration 60] [--public-addr A.B.C.D]
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
@@ -21,6 +21,7 @@
 
 #include "node_link.h"
 #include "packet.h"
+#include "node_info.h"
 #include "quality_report.h"
 #include "tx_session.h"
 
@@ -53,6 +54,8 @@ int main(int argc, char** argv) {
   int qRssi = -95, qMissing = 0, qCrc = 0, dropEvery = 0;
   float qSnr = 5.0f;
   bool qualitySent = false;
+  NodeInfo nodeInfo;  // --info: la presentazione del nodo per la mappa APRS del reflector (node_info.h)
+  bool infoSent = false;
   Position position;  // --position LAT,LON: la voce finta porta una posizione nel pacchetto di inizio
   bool haveKey = false;
   uint32_t publicAddr = 0;  // l'indirizzo pubblico che il nodo dichiara al reflector (per provare)
@@ -88,7 +91,17 @@ int main(int argc, char** argv) {
         position.lonE7 = static_cast<int32_t>(lo * 1e7);
       }
     }
-    else if (a == "--every") every = atoi(next());
+    else if (a == "--info") {  // SSID, posizione, frequenza in kHz, modo (4 Standard, 1 Range) e, facoltativo, il testo del sysop
+      nodeInfo.valid = true;
+      nodeInfo.ssid = static_cast<uint8_t>(atoi(next()));
+      double la = 0, lo = 0;
+      if (sscanf(next(), "%lf,%lf", &la, &lo) != 2) nodeInfo.valid = false;
+      nodeInfo.latE7 = static_cast<int32_t>(la * 1e7);
+      nodeInfo.lonE7 = static_cast<int32_t>(lo * 1e7);
+      nodeInfo.freqKhz = static_cast<uint32_t>(atol(next()));
+      nodeInfo.mode = static_cast<uint8_t>(atoi(next()));
+      if (i + 1 < argc && argv[i + 1][0] != '-') strncpy(nodeInfo.text, next(), kNodeInfoMaxText);
+    } else if (a == "--every") every = atoi(next());
     else if (a == "--duration") duration = atoi(next());
     else if (a == "--public-addr") { unsigned a1, a2, a3, a4; if (sscanf(next(), "%u.%u.%u.%u", &a1, &a2, &a3, &a4) == 4 && a1 < 256 && a2 < 256 && a3 < 256 && a4 < 256) publicAddr = (a1 << 24) | (a2 << 16) | (a3 << 8) | a4; }
     else {
@@ -227,6 +240,14 @@ int main(int argc, char** argv) {
       voiceIdx++;
       nextVoiceMs = t + 400;
       if (voiceIdx == voice.size()) printf("[vlnode] mandati %zu pacchetti di voce finta\n", voice.size());
+    }
+    if (up && nodeInfo.valid && !infoSent) {
+      uint8_t ib[kNodeInfoMaxBytes];
+      const size_t in = encodeNodeInfo(nodeInfo, ib, sizeof(ib));
+      const size_t ik = in ? link.makeInfo(ib, in, out, sizeof(out)) : 0;
+      if (ik) sendTo(out, ik);
+      infoSent = true;
+      printf("[vlnode] mandata la presentazione del nodo: SSID %u, %u kHz, \"%s\"\n", static_cast<unsigned>(nodeInfo.ssid), static_cast<unsigned>(nodeInfo.freqKhz), nodeInfo.text);
     }
     if (up && qualityOn && !qualitySent && !voice.empty() && voiceIdx == voice.size() && t >= nextVoiceMs + 1500) {  // il rapporto del nodo arriva dopo la fine della trasmissione
       QualityReport q;
