@@ -35,6 +35,7 @@
 #include <ctime>
 #include <fstream>
 #include <sstream>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -688,12 +689,17 @@ int main(int argc, char** argv) {
     std::string aerr;
     if (!adm.reloadAprs(aerr)) logLine("[aprs] " + adm.aprsPath + ": " + aerr + " (il collegamento resta spento finche' non lo correggi dalla pagina di amministrazione)");
   }
-  core.setNodeInfoHandler([&aprsGate, &adm](uint32_t clientId, const NodeInfo& info, uint32_t now) {
+  std::map<uint32_t, uint32_t> nodeFreqKhz;  // client -> frequenza che il nodo ha dichiarato (per il commento APRS delle stazioni che passano da lui)
+  core.setNodeInfoHandler([&aprsGate, &adm, &nodeFreqKhz](uint32_t clientId, const NodeInfo& info, uint32_t now) {
+    nodeFreqKhz[clientId] = info.freqKhz;
     const int ei = findEntryById(adm.entries, clientId);
     if (ei < 0) return;
     aprsGate.onNodeInfo(adm.entries[static_cast<size_t>(ei)].name, info, adm.publicName, now);
   });
-  core.setPositionHandler([&aprsGate](const std::string& callsign, const Position& pos, uint32_t now) { aprsGate.onPosition(callsign, pos, now); });
+  core.setPositionHandler([&aprsGate, &nodeFreqKhz](const std::string& callsign, const Position& pos, uint32_t now, uint32_t clientId, uint8_t mode) {
+    const auto f = nodeFreqKhz.find(clientId);
+    aprsGate.onPosition(callsign, pos, now, aprsStationComment(f == nodeFreqKhz.end() ? 0 : f->second, mode));
+  });
   AprsClient aprsClient(aprsGate, logLine);
   {
     std::string text, err;

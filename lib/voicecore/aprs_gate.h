@@ -30,7 +30,7 @@ struct AprsConfig {
   std::string login;             // nominativo (con SSID) con cui il reflector si presenta al server, per esempio N0CALL-10
   std::string pass;              // password APRS-IS di quel nominativo (-1 = solo ascolto, non pubblica)
   uint32_t minIntervalS = 600;   // una stazione si ripete al massimo ogni tanti secondi (APRS: non piu' spesso di ogni 10 minuti)
-  std::string symbol = "V_";    // simbolo APRS: tabella (o lettera di sovrapposizione) e codice; "V_" = cerchio blu con la V (docs/reflector.md)
+  std::string symbol = "V&";    // simbolo APRS: tabella (o lettera di sovrapposizione) e codice; "V&" = rombo con la V (docs/reflector.md). Non "_": e' il simbolo delle stazioni meteo
   std::string url;              // facoltativo: la pagina pubblica del reflector, nel commento APRS dei nodi (per esempio http://iu5hju.ddns.net:8081)
 
   bool complete() const { return !host.empty() && !login.empty() && !pass.empty(); }
@@ -69,7 +69,9 @@ bool validateAprsConfig(const AprsConfig& c, std::string& err);
 std::string aprsLatitude(int32_t latE7);
 std::string aprsLongitude(int32_t lonE7);
 // La riga da mandare al server (senza il fine riga): vuota se il nominativo, la posizione o il simbolo non sono validi.
-std::string aprsPositionLine(const std::string& callsign, const Position& pos, const std::string& login, const std::string& symbol = "V_", const std::string& comment = "VoLoRa");
+std::string aprsPositionLine(const std::string& callsign, const Position& pos, const std::string& login, const std::string& symbol = "V&", const std::string& comment = "VoLoRa");
+// Il commento APRS di una stazione che trasmette in VoLoRa: "433.900MHz VoLoRa Standard" (la frequenza e' quella del nodo da cui passa, 0 = non nota: senza frequenza).
+std::string aprsStationComment(uint32_t freqKhz, uint8_t mode);
 // Il simbolo dei nodi sulla mappa: la V sovrapposta al simbolo dei digipeater (una stella con la V), diverso dal cerchio blu delle stazioni.
 constexpr const char* kAprsNodeSymbol = "V#";
 // Il commento APRS di un nodo: "433.900MHz VoLoRa Standard rete NOME testo-del-sysop indirizzo", al massimo kAprsMaxNodeComment caratteri: se non ci sta, si accorcia il testo.
@@ -98,7 +100,7 @@ class AprsGate {
   uint32_t generation() const;  // cresce a ogni cambio di configurazione: chi tiene il socket si ricollega
 
   // Una stazione ha trasmesso (pos.valid = false se non manda la posizione). Accoda la riga se e' il caso, altrimenti scrive nel registro perche' no.
-  void onPosition(const std::string& callsign, const Position& pos, uint32_t nowMs);
+  void onPosition(const std::string& callsign, const Position& pos, uint32_t nowMs, const std::string& comment = "VoLoRa");
   // Un nodo collegato si presenta (node_info.h): lo pubblica come NOMINATIVO-SSID con il simbolo dei nodi, la frequenza, il modo e il testo del sysop. 'baseCall' e'
   // il nominativo del nodo senza SSID, 'netName' il nome pubblico del reflector. Al massimo ogni (intervallo - 60 s) per nodo.
   void onNodeInfo(const std::string& baseCall, const NodeInfo& info, const std::string& netName, uint32_t nowMs);
@@ -116,7 +118,7 @@ class AprsGate {
   Stats stats() const;
 
  private:
-  std::string decide(const std::string& callsign, const Position& pos, uint32_t nowMs);
+  std::string decide(const std::string& callsign, const Position& pos, uint32_t nowMs, const std::string& comment);
   std::string decideNode(const std::string& baseCall, const NodeInfo& info, const std::string& netName, uint32_t nowMs);
   mutable std::mutex m_;
   AprsConfig cfg_;

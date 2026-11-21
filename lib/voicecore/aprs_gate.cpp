@@ -211,6 +211,13 @@ std::string aprsPositionLine(const std::string& callsign, const Position& pos, c
   return callsign + ">APZVLR,qAR," + login + ":!" + aprsLatitude(pos.latE7) + symbol[0] + aprsLongitude(pos.lonE7) + symbol[1] + comment;
 }
 
+std::string aprsStationComment(uint32_t freqKhz, uint8_t mode) {
+  char b[64];
+  if (freqKhz) snprintf(b, sizeof(b), "%u.%03uMHz VoLoRa %s", static_cast<unsigned>(freqKhz / 1000), static_cast<unsigned>(freqKhz % 1000), mode == 4 ? "Standard" : "Range");
+  else snprintf(b, sizeof(b), "VoLoRa %s", mode == 4 ? "Standard" : "Range");
+  return b;
+}
+
 std::string aprsNodeComment(const NodeInfo& info, const std::string& netName, const std::string& url) {
   auto clean = [](std::string s) {
     for (char& ch : s) {
@@ -272,19 +279,19 @@ void AprsGate::setLog(std::function<void(const std::string&)> f) {
   log_ = f;
 }
 
-void AprsGate::onPosition(const std::string& callsign, const Position& pos, uint32_t nowMs) {
+void AprsGate::onPosition(const std::string& callsign, const Position& pos, uint32_t nowMs, const std::string& comment) {
   std::string why;  // il motivo per cui non si manda, da scrivere nel registro (fuori dal blocco)
   std::function<void(const std::string&)> log;
   {
     std::lock_guard<std::mutex> l(m_);
     log = log_;
-    why = decide(callsign, pos, nowMs);
+    why = decide(callsign, pos, nowMs, comment);
   }
   if (!why.empty() && log) log("[aprs] " + callsign + ": " + why);
 }
 
 // Dentro il blocco. Ritorna il motivo se non si manda, vuota se la riga e' stata accodata (o se l'invio e' spento).
-std::string AprsGate::decide(const std::string& callsign, const Position& pos, uint32_t nowMs) {
+std::string AprsGate::decide(const std::string& callsign, const Position& pos, uint32_t nowMs, const std::string& comment) {
   if (!cfg_.enabled || !cfg_.complete()) return std::string();
   if (!pos.valid) {
     stats_.noPosition++;
@@ -299,7 +306,7 @@ std::string AprsGate::decide(const std::string& callsign, const Position& pos, u
     stats_.invalid++;
     return "nominativo non valido per APRS (AX.25 non ammette la barra ne' piu' di 6 caratteri): non lo mando";
   }
-  const std::string line = aprsPositionLine(callsign, pos, cfg_.login, cfg_.symbol);
+  const std::string line = aprsPositionLine(callsign, pos, cfg_.login, cfg_.symbol, comment);
   if (line.empty()) {
     stats_.invalid++;
     return "posizione non valida: non la mando";

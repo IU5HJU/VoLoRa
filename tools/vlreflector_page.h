@@ -105,10 +105,10 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
       <label for="aprsInterval">Una stazione si ripete al massimo ogni (minuti)</label>
       <input id="aprsInterval" type="number" min="1" max="1440" value="10">
       <label for="aprsSymbol">Simbolo sulla mappa (due caratteri: tabella e codice)</label>
-      <input id="aprsSymbol" maxlength="2" autocomplete="off" spellcheck="false" placeholder="V_" value="V_">
+      <input id="aprsSymbol" maxlength="2" autocomplete="off" spellcheck="false" placeholder="V&amp;" value="V&amp;">
       <label for="aprsUrl">Pagina pubblica del reflector, per il commento dei nodi sulla mappa (facoltativa)</label>
       <input id="aprsUrl" maxlength="40" autocomplete="off" spellcheck="false" placeholder="http://iu5hju.ddns.net:8081">
-      <p class="muted">Di base <code>V_</code>: un cerchio blu con la V. La prima lettera è la tabella (<code>/</code> principale, <code>\</code> alternativa, oppure una lettera maiuscola o una cifra da sovrapporre al simbolo della tabella alternativa); la seconda è il codice del simbolo.</p>
+      <p class="muted">Di base <code>V&amp;</code>: un rombo con la V (non <code>_</code>: &egrave; il simbolo delle stazioni meteo). La prima lettera è la tabella (<code>/</code> principale, <code>\</code> alternativa, oppure una lettera maiuscola o una cifra da sovrapporre al simbolo della tabella alternativa); la seconda è il codice del simbolo.</p>
       <div>
         <button id="aprsSave" type="button">Salva</button>
       </div>

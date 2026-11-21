@@ -273,7 +273,7 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
       // Una volta per trasmissione, al primo pacchetto che porta il nominativo (la posizione, se c'e', viaggia insieme a lui)
       if (onPosition_ && !posReported_ && p.hasCallsign()) {
         posReported_ = true;
-        onPosition_(p.callsign, p.position, nowMs);
+        onPosition_(p.callsign, p.position, nowMs, c->id, p.mode);
       }
     } else if (hanging) {
       talkLastMs_ = nowMs;

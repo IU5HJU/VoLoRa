@@ -99,7 +99,7 @@ grep -q "12345" "$D/ref.out" && ko "APRS: la password e' nel registro del reflec
 # una trasmissione con posizione arriva al server APRS
 build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --position 43.7696,10.8807 --frames 30 --duration 12 > "$D/a2.out" 2>&1
 sleep 0.5
-check "$D/aprs.rows" "^IZ5IOF>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E_VoLoRa$" "APRS: la posizione della stazione che trasmette e' arrivata al server"
+check "$D/aprs.rows" "^IZ5IOF>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E&VoLoRa Range$" "APRS: la posizione della stazione che trasmette e' arrivata al server"
 [ "$(grep -c '^IZ5IOF>' "$D/aprs.rows")" = "1" ] && ok "APRS: una sola posizione per quella trasmissione" || ko "APRS: posizioni ripetute"
 check "$D/ref.out" "\[aprs\] inviato: IZ5IOF>APZVLR" "APRS: il registro scrive la posizione inviata"
 # il nodo sulla mappa APRS: il nodo (con un nominativo valido) manda posizione, frequenza e testo e il reflector lo pubblica come NOMINATIVO-SSID
@@ -107,6 +107,10 @@ api -X POST -d "enabled=1&host=127.0.0.1&port=$APRS&login=N0CALL-10&pass=12345&i
 build/vlnode --id 12 --peer-id 1000 --key 202122232425262728292a2b2c2d2e2f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 "Antenna 5/8" --duration 8 > "$D/n1.out" 2>&1
 sleep 0.5
 check "$D/aprs.rows" "^IU5HJU-10>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E#433.900MHz VoLoRa Standard rete prova.example:$PORT Antenna 5/8$" "APRS: il nodo e' sulla mappa (SSID, simbolo dei nodi, frequenza, modo, rete e testo del sysop)"
+# una stazione che passa da un nodo che ha dichiarato la frequenza: il commento ha frequenza e protocollo VoLoRa
+build/vlnode --id 12 --peer-id 1000 --key 202122232425262728292a2b2c2d2e2f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 "Antenna 5/8" --send-voice IK5XXX --position 43.7696,10.8807 --frames 20 --duration 10 > "$D/n3.out" 2>&1
+sleep 0.5
+check "$D/aprs.rows" "^IK5XXX>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E&433.900MHz VoLoRa Range$" "APRS: la stazione ha nel commento la frequenza del nodo e il protocollo VoLoRa"
 # un nodo con un nome che non e' un nominativo valido non si pubblica, e il registro dice perche'
 build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 --duration 6 > "$D/n2.out" 2>&1
 sleep 0.5

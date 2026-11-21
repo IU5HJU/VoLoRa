@@ -45,8 +45,8 @@ static void testCoordinates() {
 
 static void testLine() {
   const Position p = pos(437696000, 108807000);
-  CHECK(aprsPositionLine("IU5HJU", p, "N0CALL-10") == "IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E_VoLoRa");
-  CHECK(aprsPositionLine("IU5HJU-7", p, "N0CALL") == "IU5HJU-7>APZVLR,qAR,N0CALL:!4346.18NV01052.84E_VoLoRa");
+  CHECK(aprsPositionLine("IU5HJU", p, "N0CALL-10") == "IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E&VoLoRa");
+  CHECK(aprsPositionLine("IU5HJU-7", p, "N0CALL") == "IU5HJU-7>APZVLR,qAR,N0CALL:!4346.18NV01052.84E&VoLoRa");
   CHECK(aprsPositionLine("IU5HJU", p, "N0CALL-10", "/-") == "IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18N/01052.84E-VoLoRa");  // la casetta di prima
   CHECK(aprsPositionLine("IU5HJU", p, "N0CALL-10", "\\&") == "IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18N\\01052.84E&VoLoRa");
   CHECK(aprsPositionLine("IU5HJU", p, "N0CALL-10", "V ").empty() && aprsPositionLine("IU5HJU", p, "N0CALL-10", "V").empty());
@@ -74,17 +74,17 @@ static void testSymbol() {
   CHECK(!isValidAprsSymbol("") && !isValidAprsSymbol("V") && !isValidAprsSymbol("V__") && !isValidAprsSymbol("v_") && !isValidAprsSymbol("V ") && !isValidAprsSymbol("V|") &&
         !isValidAprsSymbol("V~") && !isValidAprsSymbol("-_") && !isValidAprsSymbol("*A"));
   AprsConfig c;
-  CHECK(c.symbol == "V_");  // di base un cerchio blu con la V
+  CHECK(c.symbol == "V&");  // di base un rombo con la V (non "_": e' il simbolo meteo)
   c = goodConfig();
   c.symbol = "VV ";
   std::string err;
   CHECK(!validateAprsConfig(c, err) && !err.empty());
   // Nel file: se manca resta quello di base, se c'e' si legge, se e' sbagliato e' un errore con la riga
   AprsConfig back;
-  CHECK(parseAprsConfig("host=h\n", back, err) && back.symbol == "V_");
+  CHECK(parseAprsConfig("host=h\n", back, err) && back.symbol == "V&");
   CHECK(parseAprsConfig("symbol=/-\n", back, err) && back.symbol == "/-");
   CHECK(!parseAprsConfig("symbol=xx\n", back, err));
-  CHECK(formatAprsConfig(goodConfig()).find("symbol=V_\n") != std::string::npos);
+  CHECK(formatAprsConfig(goodConfig()).find("symbol=V&\n") != std::string::npos);
 }
 
 static void testValidateConfig() {
@@ -288,6 +288,23 @@ static NodeInfo nodeInfo(uint8_t ssid = 10) {
 }
 
 static void testNodeOnMap() {
+  // il commento di una stazione: frequenza del nodo (se nota) e protocollo VoLoRa con il modo
+  CHECK(aprsStationComment(433900, 4) == "433.900MHz VoLoRa Standard");
+  CHECK(aprsStationComment(433500, 1) == "433.500MHz VoLoRa Range");
+  CHECK(aprsStationComment(0, 4) == "VoLoRa Standard" && aprsStationComment(0, 1) == "VoLoRa Range");
+  {
+    AprsGate sg;
+    AprsConfig sc = goodConfig();
+    sg.setConfig(sc);
+    sg.setState(AprsGate::State::Verified);
+    Position sp;
+    sp.valid = true;
+    sp.latE7 = 437696000;
+    sp.lonE7 = 108807000;
+    sg.onPosition("IU5HJU", sp, 1000, aprsStationComment(433900, 4));
+    std::string sl;
+    CHECK(sg.pop(sl) && sl == "IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E&433.900MHz VoLoRa Standard");
+  }
   // il commento: frequenza, modo, rete, testo del sysop e indirizzo della pagina
   CHECK(aprsNodeComment(nodeInfo(), "iu5hju.net:5400", "") == "433.900MHz VoLoRa Standard rete iu5hju.net:5400 Antenna 5/8");
   CHECK(aprsNodeComment(nodeInfo(), "iu5hju.net:5400", "http://iu5hju.ddns.net:8081") == "433.900MHz VoLoRa Standard rete iu5hju.net:5400 Antenna 5/8 http://iu5hju.ddns.net:8081");

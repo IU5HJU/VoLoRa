@@ -162,7 +162,7 @@ static void testVerifiedSession() {
   // Una posizione arriva al server come riga APRS
   gate.onPosition("IU5HJU", here(), 1000);
   CHECK(waitUntil([&] { return srv.got().size() >= 2; }));
-  CHECK(srv.got()[1] == "IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E_VoLoRa");
+  CHECK(srv.got()[1] == "IU5HJU>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E&VoLoRa");
   // Un segnale di vita ogni tanto
   CHECK(waitUntil([&] {
     for (const auto& l : srv.got()) {

@@ -471,9 +471,13 @@ static void testPositionHandler() {
   r.run(4000);
   std::vector<std::string> calls;
   std::vector<Position> positions;
-  r.core.setPositionHandler([&](const std::string& cs, const Position& pos, uint32_t) {
+  std::vector<uint32_t> viaIds;
+  std::vector<uint8_t> modes;
+  r.core.setPositionHandler([&](const std::string& cs, const Position& pos, uint32_t, uint32_t clientId, uint8_t mode) {
     calls.push_back(cs);
     positions.push_back(pos);
+    viaIds.push_back(clientId);
+    modes.push_back(mode);
   });
   Position here;
   here.valid = true;
@@ -485,6 +489,7 @@ static void testPositionHandler() {
   r.sendPacket(a, start);
   CHECK(calls.size() == 1u);
   CHECK(calls[0] == "IU5HJU");
+  CHECK(viaIds[0] == 1u && modes[0] == 4);  // il nodo da cui passa e il modo voce, per il commento APRS
   CHECK(positions[0].valid);
   CHECK(std::abs(positions[0].latE7 - here.latE7) < 200);  // il formato arrotonda a circa 1 m
   CHECK(std::abs(positions[0].lonE7 - here.lonE7) < 400);
