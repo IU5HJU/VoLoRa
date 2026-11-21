@@ -102,6 +102,12 @@ sleep 0.5
 check "$D/aprs.rows" "^IZ5IOF>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E&VoLoRa Range$" "APRS: la posizione della stazione che trasmette e' arrivata al server"
 [ "$(grep -c '^IZ5IOF>' "$D/aprs.rows")" = "1" ] && ok "APRS: una sola posizione per quella trasmissione" || ko "APRS: posizioni ripetute"
 check "$D/ref.out" "\[aprs\] inviato: IZ5IOF>APZVLR" "APRS: il registro scrive la posizione inviata"
+# una trasmissione senza posizione: il registro dice perche' non si manda (e la pagina la conta)
+build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 20 --duration 9 > "$D/a3.out" 2>&1
+sleep 0.5
+check "$D/ref.out" "\\[aprs\\] IZ5IOF: nessuna posizione nel pacchetto" "APRS: il registro dice perche' una stazione senza posizione non e' stata mandata"
+A5=$(api "http://127.0.0.1:$WEB/api/aprs")
+echo "$A5" | grep -q '"noPosition":1' && ok "APRS: la pagina conta le trasmissioni senza posizione" || ko "APRS: contatore senza posizione ($A5)"
 # il nodo sulla mappa APRS: il nodo (con un nominativo valido) manda posizione, frequenza e testo e il reflector lo pubblica come NOMINATIVO-SSID
 api -X POST -d "enabled=1&host=127.0.0.1&port=$APRS&login=N0CALL-10&pass=12345&interval=60&url=ftp://x" "http://127.0.0.1:$WEB/api/aprs" | grep -q '"ok":false' && ok "APRS: indirizzo della pagina pubblica non valido rifiutato" || ko "APRS: url non valido accettato"
 build/vlnode --id 12 --peer-id 1000 --key 202122232425262728292a2b2c2d2e2f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 "Antenna 5/8" --duration 8 > "$D/n1.out" 2>&1
@@ -116,12 +122,6 @@ build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --list
 sleep 0.5
 check "$D/ref.out" "\\[aprs\\] nodo nodoA: nominativo non valido per APRS" "APRS: un nodo senza nominativo valido non si pubblica e il registro dice perche'"
 grep -q "^nodoA-10" "$D/aprs.rows" && ko "APRS: pubblicato un nodo con nome non valido" || ok "APRS: il nodo con nome non valido non e' nel server"
-# una trasmissione senza posizione: il registro dice perche' non si manda (e la pagina la conta)
-build/vlnode --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 20 --duration 9 > "$D/a3.out" 2>&1
-sleep 0.5
-check "$D/ref.out" "\\[aprs\\] IZ5IOF: nessuna posizione nel pacchetto" "APRS: il registro dice perche' una stazione senza posizione non e' stata mandata"
-A5=$(api "http://127.0.0.1:$WEB/api/aprs")
-echo "$A5" | grep -q '"noPosition":1' && ok "APRS: la pagina conta le trasmissioni senza posizione" || ko "APRS: contatore senza posizione ($A5)"
 # spento: il collegamento si chiude
 A4=$(api -X POST -d "enabled=0&host=127.0.0.1&port=$APRS&login=N0CALL-10&pass=&interval=60" "http://127.0.0.1:$WEB/api/aprs")
 echo "$A4" | grep -q '"enabled":false' && echo "$A4" | grep -q '"passSet":true' && ok "APRS: spento, la password resta salvata" || ko "APRS: spegnimento ($A4)"
