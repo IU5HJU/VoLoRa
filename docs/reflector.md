@@ -178,7 +178,7 @@ La chiave è un segreto condiviso fra il nodo e il reflector, e nasce **dal coll
 
 Il collegamento si vede subito nella pagina del sysop ("Collegati") e nel registro (`journalctl -u vlreflector -f`).
 
-## Pagina pubblica in HTTPS (21/11/2026, provata sul PC con certificati di prova, non ancora sulla macchina vera)
+## Pagina pubblica in HTTPS (21/11/2026, provata sul PC e sulla macchina di casa di IU5HJU)
 
 Il reflector fa l'HTTPS **da solo**, senza Apache o altri programmi davanti: con `--public-tls-cert` e `--public-tls-key` la pagina pubblica parla HTTPS invece di HTTP sulla stessa porta (`--public-web`). Solo TLS 1.2 o più nuovo, nessuna compressione. Serve solo il certificato.
 
@@ -205,7 +205,7 @@ Il reflector fa l'HTTPS **da solo**, senza Apache o altri programmi davanti: con
 
 **Rinnovo**: con Let's Encrypt è automatico (certbot rinnova da solo e il passaggio dopo il rinnovo ricarica il reflector). Con un certificato fatto a mano, quando sta per scadere, `--installa` col file nuovo (la chiave resta quella del CSR; se l'ente vuole un CSR nuovo, la vecchia chiave si toglie a mano) e poi **`sudo systemctl reload vlreflector`**: il reflector rilegge il certificato senza fermarsi. Se il file nuovo non è valido o non è la coppia della chiave, resta quello di prima e il registro scrive `certificato non riletto, resta quello di prima` con il motivo.
 
-**Provato** sul PC (smoke del reflector, 13 controlli): partenza in HTTPS, pagina e stato in HTTPS, 405 e 404 per quello che non è ammesso, HTTP semplice rifiutato sulla porta HTTPS, TLS 1.1 rifiutato, certificato nuovo attivo dopo un reload senza riavviare, un certificato che non è della chiave non sostituisce quello buono, avvio fermato con il motivo se certificato e chiave non sono una coppia o ne manca una. Certificato e chiave letti dall'utente `vlreflector`. Non provato ancora: la macchina vera, un certificato di un ente vero e un browser vero.
+**Provato** sul PC (smoke del reflector, 13 controlli): partenza in HTTPS, pagina e stato in HTTPS, 405 e 404 per quello che non è ammesso, HTTP semplice rifiutato sulla porta HTTPS, TLS 1.1 rifiutato, certificato nuovo attivo dopo un reload senza riavviare, un certificato che non è della chiave non sostituisce quello buono, avvio fermato con il motivo se certificato e chiave non sono una coppia o ne manca una. Certificato e chiave letti dall'utente `vlreflector`. Sulla macchina di casa (21/11/2026): certificato vero di Let's Encrypt, pagina aperta dal telefono con i dati mobili senza avvisi. **Non ancora visto**: il primo rinnovo automatico (verso il 19/01/2027).
 
 ## Cosa fa
 
