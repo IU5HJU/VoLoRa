@@ -178,6 +178,20 @@ La chiave è un segreto condiviso fra il nodo e il reflector, e nasce **dal coll
 
 Il collegamento si vede subito nella pagina del sysop ("Collegati") e nel registro (`journalctl -u vlreflector -f`).
 
+## Pagina pubblica in HTTPS (21/11/2026, provata con un Apache di prova, non ancora sulla macchina vera)
+
+La pagina pubblica ascolta in HTTP (`--public-web 8081`). Per pubblicarla in HTTPS con un nome proprio (per esempio `volora.iu5hju.it`) si usa l'**Apache che c'è già** (per esempio quello di SVX Guardian), con un sito in più sulla stessa porta HTTPS: Apache sceglie il sito dal nome richiesto, quindi gli altri siti non cambiano. Il reflector può stare su un'altra macchina della rete di casa.
+
+1. **DNS**: nel pannello del dominio crea `volora` come **CNAME verso `iu5hju.ddns.net`** (segue il tuo IP dinamico).
+2. **Chiave e richiesta di certificato** sulla macchina dell'Apache, con lo script di SVX Guardian (`install/ssl/create-csr.sh`), scrivendo come nome `volora.iu5hju.it`: crea `/etc/svxguardian/ssl/volora.iu5hju.it.key` (che non va mai copiata né pubblicata) e il `.csr` da mandare all'ente che emette il certificato.
+3. **Certificato**: quando l'ente lo emette, scarica il certificato e la catena. Se sono in file separati vanno uniti in uno solo, **certificato per primo**: `cat certificato.crt catena.crt > volora.iu5hju.it-catena.pem`.
+4. **Installazione del certificato** con `install/ssl/setup-https.sh`, opzione 2 (nome `volora.iu5hju.it`, file PEM). **Alla domanda "Configure Apache HTTPS now?" rispondi `n`**: quello script scrive sempre `svxguardian.conf` e sovrascriverebbe il sito di SVX Guardian.
+5. **Il sito di Apache** con `tools/https-pagina-pubblica.sh` (sulla macchina dell'Apache, come root): chiede il nome del sito, la porta HTTPS (443), l'indirizzo della macchina del reflector nella rete di casa e la porta della pagina pubblica (8081). Controlla il certificato e la chiave, che la pagina del reflector risponda, scrive **solo** `/etc/apache2/sites-available/volora-public.conf` (con copia di sicurezza se c'era già), prova la configurazione (se non va, la toglie e gli altri siti restano come prima), ricarica Apache e prova l'indirizzo. `--stampa` fa vedere il file di configurazione senza cambiare niente.
+6. **Sicurezza**: il sito accetta solo GET e HEAD (le altre richieste: 403) e inoltra solo la pagina pubblica; la pagina di amministrazione del reflector non è raggiungibile da lì. Il reflector deve ascoltare sulla rete di casa (`--public-bind 0.0.0.0`) e la macchina dell'Apache deve poterlo raggiungere. La porta 443 è quella che SVX Guardian ha già aperta sul router: non serve aprirne altre, e il port forward della 8081 verso Internet non serve più.
+7. **Rinnovo**: alla scadenza del certificato si ripetono i passi 2-4 (senza rigenerare la chiave se l'ente la accetta di nuovo) e basta un `sudo systemctl reload apache2`.
+
+Provato con un Apache 2.4 di prova, un certificato autofirmato e un sito "esistente" sulla stessa porta: la pagina del reflector si apre dal nuovo nome, il sito esistente risponde come prima, un POST dà 403, `/api/status` dà 404, un secondo lancio dello script fa la copia di sicurezza, e con la pagina del reflector spenta o senza certificato lo script si ferma prima di toccare Apache.
+
 ## Cosa fa
 
 - **Collegamento:** per ogni client lo stesso collegamento firmato (HMAC-SHA256) dei nodi: sfida dopo un riavvio, contatore anti-ripetizione, `KEEPALIVE` ogni 20 s (tiene aperto il NAT del router di casa) e collegamento dato per caduto dopo 60 s. L'indirizzo di un client si aggiorna a ogni datagramma firmato valido: se il router cambia la porta, il client resta lo stesso.
