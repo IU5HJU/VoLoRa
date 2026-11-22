@@ -54,6 +54,19 @@ api -X POST -d "enabled=1&qrzuser=sysop&mailcmd=%2Fbin%2Fsh%20-c%20%27rm%20x%27&
 pub $P/ascolto/api/stato | grep -q '"enabled":true' && ok "acceso: lo stato lo dice" || ko "stato con l'ascolto acceso"
 pub $P/status.json | grep -q '"listen":{"enabled":true' && ok "la pagina pubblica dice che l'ascolto c'e'" || ko "stato pubblico con l'ascolto acceso"
 
+# un account rifiutato da QRZ: il reflector non ritenta subito (QRZ blocca chi sbaglia piu' volte), e riprova solo se il sysop cambia la password
+BAD="${CFG/qrzpass=segreta/qrzpass=sbagliata}"
+api -X POST -d "$BAD" http://127.0.0.1:$WEB/api/ascolto > /dev/null
+sleep 1.2
+pub -X POST -d 'call=IU5HJU&email=iu5hju%40example.org' $P/ascolto/api/richiedi > /dev/null
+waitfor "$D/ref.out" "IU5HJU: QRZ non accetta l'account del sysop" 15 && ok "password di QRZ sbagliata: il registro lo dice" || ko "registro: account rifiutato"
+sleep 1.2
+pub -X POST -d 'call=IU5HJU&email=iu5hju%40example.org' $P/ascolto/api/richiedi > /dev/null
+waitfor "$D/ref.out" "IU5HJU: QRZ ha rifiutato da poco l'account" 15 && ok "dopo un rifiuto non si ritenta subito (QRZ blocca chi sbaglia piu' volte)" || ko "registro: ritentato"
+[ "$(grep -c '^login sysop rifiutato' "$D/qrz.req")" = "1" ] && ok "QRZ e' stato chiamato una volta sola con l'account sbagliato" || ko "accessi sbagliati a QRZ: $(grep -c '^login sysop rifiutato' "$D/qrz.req")"
+api -X POST -d "$CFG" http://127.0.0.1:$WEB/api/ascolto > /dev/null   # password giusta: si riprova subito
+sleep 1.2
+
 # la richiesta: nominativo ed email
 [ "$(code -X POST -d 'call=BAD%20CALL&email=a@b.it' $P/ascolto/api/richiedi)" = "400" ] && ok "nominativo non valido: 400" || ko "nominativo non valido"
 [ "$(code -X POST -d 'call=IU5HJU&email=non-una-email' $P/ascolto/api/richiedi)" = "400" ] && ok "email non valida: 400" || ko "email non valida"
@@ -78,7 +91,7 @@ LINK=$(grep -o "http://127.0.0.1:$PUB/ascolto?c=[0-9a-f]\{32\}" "$D/mail.out" | 
 CODE=${LINK##*=}
 grep -q "segreta" "$D/mail.out" && ko "la password di QRZ e' nell'email" || ok "la password di QRZ non e' nell'email"
 grep -q "^login sysop ok" "$D/qrz.req" && grep -q "^lookup IU5HJU" "$D/qrz.req" && ok "QRZ e' stato interrogato con l'account del sysop" || ko "richieste a QRZ"
-[ "$(grep -c '^login' "$D/qrz.req")" = "1" ] && ok "la chiave di sessione di QRZ si riusa (un solo accesso)" || ko "accessi a QRZ: $(grep -c '^login' "$D/qrz.req")"
+[ "$(grep -c '^login sysop ok' "$D/qrz.req")" = "1" ] && ok "la chiave di sessione di QRZ si riusa (un solo accesso riuscito)" || ko "accessi a QRZ: $(grep -c '^login sysop ok' "$D/qrz.req")"
 check "$D/ref.out" "IU5HJU: email con il link di conferma inviata" "il registro dice che l'email e' partita"
 grep -q "@" "$D/ref.out" && ko "indirizzi email nel registro" || ok "il registro non ha indirizzi email"
 

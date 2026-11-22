@@ -2,6 +2,7 @@
 // in un solo thread (il lavoro della verifica) con la chiave di sessione tenuta fra una richiesta e l'altra. La password non va mai nei registri.
 #pragma once
 
+#include <chrono>
 #include <mutex>
 #include <string>
 
@@ -25,6 +26,12 @@ class QrzVerifier {
   // 'detail' dice cosa e' successo (per il registro del sysop; mai la password, mai l'email di QRZ).
   Result check(const ListenConfig& cfg, const std::string& callsign, const std::string& email, std::string& detail, uint32_t timeoutMs = 12000) {
     std::lock_guard<std::mutex> l(m_);
+    // QRZ blocca per un po' chi sbaglia l'accesso piu' volte: dopo un rifiuto, con lo STESSO account non si riprova subito (ogni nuovo tentativo allunga il blocco).
+    // Se il sysop cambia nome utente, password o indirizzo, si riprova subito.
+    if (!badUser_.empty() && badUser_ == cfg.qrzUser && badPass_ == cfg.qrzPass && badUrl_ == cfg.qrzUrl && std::chrono::steady_clock::now() < retryAfter_) {
+      detail = "QRZ ha rifiutato da poco l'account del sysop: non riprovo prima di " + std::to_string(kAuthBackoffMinutes) + " minuti dal rifiuto (ogni tentativo in piu' allunga il blocco di QRZ); per riprovare subito cambia la password nella pagina di amministrazione";
+      return Result::Auth;
+    }
     if (userAtLogin_ != cfg.qrzUser || passAtLogin_ != cfg.qrzPass || urlAtLogin_ != cfg.qrzUrl) key_.clear();  // l'account e' cambiato
     for (int attempt = 0; attempt < 2; attempt++) {
       if (key_.empty()) {
@@ -36,6 +43,10 @@ class QrzVerifier {
         }
         if (r.kind == QrzReply::Kind::AuthError) {
           detail = "QRZ non accetta l'account del sysop: " + r.error;
+          badUser_ = cfg.qrzUser;
+          badPass_ = cfg.qrzPass;
+          badUrl_ = cfg.qrzUrl;
+          retryAfter_ = std::chrono::steady_clock::now() + std::chrono::minutes(kAuthBackoffMinutes);
           return Result::Auth;
         }
         if (r.kind != QrzReply::Kind::Session) {
@@ -60,6 +71,10 @@ class QrzVerifier {
       if (r.kind == QrzReply::Kind::AuthError) {
         key_.clear();
         detail = "QRZ non accetta l'account del sysop: " + r.error;
+        badUser_ = cfg.qrzUser;
+        badPass_ = cfg.qrzPass;
+        badUrl_ = cfg.qrzUrl;
+        retryAfter_ = std::chrono::steady_clock::now() + std::chrono::minutes(kAuthBackoffMinutes);
         return Result::Auth;
       }
       if (r.kind == QrzReply::Kind::NotFound) {
@@ -96,8 +111,11 @@ class QrzVerifier {
     }
     return true;
   }
+  static constexpr int kAuthBackoffMinutes = 15;
   std::mutex m_;
   std::string key_, userAtLogin_, passAtLogin_, urlAtLogin_;
+  std::string badUser_, badPass_, badUrl_;  // l'account che QRZ ha rifiutato per ultimo
+  std::chrono::steady_clock::time_point retryAfter_;
 };
 
 }  // namespace lcr
