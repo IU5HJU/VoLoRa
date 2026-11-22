@@ -31,6 +31,12 @@ ListenerRegistry::Add ListenerRegistry::allowRequest(const std::string& callsign
       return Add::TooSoon;
     }
   }
+  while (!asks_.empty() && static_cast<uint32_t>(nowMs - asks_.front()) > 3600u * 1000u) asks_.pop_front();
+  if (asks_.size() >= cfg_.maxRequestsPerHour) {
+    stats_.busy++;
+    return Add::Busy;
+  }
+  asks_.push_back(nowMs);
   if (lastAsk_.size() > 4000) lastAsk_.clear();
   lastAsk_["C:" + callsign] = nowMs;
   lastAsk_["S:" + source] = nowMs;

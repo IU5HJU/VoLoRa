@@ -225,7 +225,7 @@ Nel registro (`journalctl -u vlreflector`) una riga per ogni richiesta con il su
 
 ### Limiti e sicurezza
 
-- **Richieste limitate:** una richiesta al minuto per lo stesso nominativo e per lo stesso indirizzo di rete (poi 429), al massimo 50 link in attesa e 10 verifiche in coda. Un nominativo che chiede di nuovo annulla il link di prima.
+- **Richieste limitate:** una richiesta al minuto per lo stesso nominativo e per lo stesso indirizzo di rete (poi 429), **60 richieste all'ora in tutto** da chiunque (poi 503: ognuna è una chiamata a QRZ e l'abbonamento del sysop ha un tetto), al massimo 50 link in attesa e 10 verifiche in coda. **Finché non hai finito le prove tieni l'ascolto spento** dalla pagina di amministrazione: il link "Ascolta dal web" compare sulla pagina pubblica solo con l'ascolto acceso. Un nominativo che chiede di nuovo annulla il link di prima.
 - **Se QRZ rifiuta l'account del sysop** (nome utente o password sbagliati) il reflector **non riprova per 15 minuti**, a meno che il sysop non cambi nome utente, password o indirizzo nella pagina di amministrazione: QRZ blocca per un po' chi sbaglia l'accesso più volte (la risposta dice `blocked until ...`) e ogni tentativo in più allungherebbe il blocco. Nel registro: `QRZ ha rifiutato da poco l'account del sysop`.
 - **I biglietti e i codici sono casuali** (128 bit da `/dev/urandom`), stanno solo in memoria (un riavvio del reflector li azzera: si rifà il giro con l'email) e il codice dell'email si consuma alla prima apertura. Il biglietto viaggia in un'intestazione (`X-Ascolto`), mai nell'indirizzo, quindi non finisce nei registri dei server.
 - **Al massimo 2 flussi aperti insieme per nominativo** (telefono e computer); il terzo chiude il più vecchio dello stesso biglietto.

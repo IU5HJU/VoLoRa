@@ -96,7 +96,9 @@ class ListenService {
       const std::string email = normalizeEmail(formParam(req.body, "email"));
       if (!isValidListenerCallsign(call)) return fail(400, "il nominativo non e' valido (lettere maiuscole e cifre, per esempio IU5HJU)");
       if (!isValidEmail(email)) return fail(400, "l'indirizzo email non e' valido");
-      if (reg_.allowRequest(call, peer, now) != ListenerRegistry::Add::Ok) return fail(429, "troppe richieste: riprova fra un minuto");
+      const ListenerRegistry::Add allowed = reg_.allowRequest(call, peer, now);
+      if (allowed == ListenerRegistry::Add::TooSoon) return fail(429, "troppe richieste: riprova fra un minuto");
+      if (allowed != ListenerRegistry::Add::Ok) return fail(503, "il servizio ha troppe richieste in questo momento: riprova piu' tardi");
       {
         std::lock_guard<std::mutex> l(m_);
         if (jobs_.size() >= kMaxQueuedJobs) return fail(503, "il servizio e' occupato: riprova fra poco");

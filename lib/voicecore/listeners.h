@@ -9,6 +9,7 @@
 #pragma once
 
 #include <cstdint>
+#include <deque>
 #include <map>
 #include <mutex>
 #include <string>
@@ -25,6 +26,7 @@ class ListenerRegistry {
     size_t maxPending = 50;                          // richieste in attesa di conferma
     size_t maxSessions = 200;                        // sessioni valide
     size_t maxListening = 20;                        // flussi audio aperti insieme (il sysop lo puo' cambiare)
+    size_t maxRequestsPerHour = 60;                  // richieste accettate in un'ora da tutti insieme (ognuna e' una chiamata a QRZ: l'abbonamento del sysop ha un tetto)
     size_t maxPerCallsign = 2;                       // flussi aperti insieme dallo stesso nominativo (per esempio telefono e computer)
   };
   struct Listening {
@@ -40,7 +42,8 @@ class ListenerRegistry {
   void setConfig(const Config& c);
   Config config() const;
 
-  // Passo 1, prima di chiamare QRZ: per lo stesso nominativo e per la stessa origine (un indirizzo IP come testo) una richiesta ogni cooldownMs. Ok conta la richiesta.
+  // Passo 1, prima di chiamare QRZ: per lo stesso nominativo e per la stessa origine (un indirizzo IP come testo) una richiesta ogni cooldownMs (TooSoon), e in tutto
+  // al massimo maxRequestsPerHour all'ora (Busy: nessuno puo' consumare le chiamate a QRZ del sysop). Ok conta la richiesta.
   Add allowRequest(const std::string& callsign, const std::string& source, uint32_t nowMs);
   // Passo 2, dopo che QRZ ha confermato: Ok = 'code' e' il codice da mandare per email (Busy: troppe richieste in attesa).
   Add addPending(const std::string& callsign, const std::string& email, const std::string& source, uint32_t nowMs, std::string& code);
@@ -90,6 +93,7 @@ class ListenerRegistry {
   std::map<std::string, Pending> pending_;   // codice -> richiesta
   std::map<std::string, Session> sessions_;  // biglietto -> sessione
   std::map<uint32_t, Open> open_;            // numero di ascolto -> flusso aperto
+  std::deque<uint32_t> asks_;                // i momenti delle richieste accettate nell'ultima ora
   std::map<std::string, uint32_t> lastAsk_;  // nominativo o origine -> ultimo momento della richiesta (per il limite)
   uint32_t nextId_ = 1;
   Stats stats_;

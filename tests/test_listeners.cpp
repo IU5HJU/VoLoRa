@@ -44,6 +44,16 @@ int main() {
   CHECK(r.allowRequest("W1AW", "3.3.3.3", 500) == ListenerRegistry::Add::Ok);
   CHECK(r.allowRequest("IU5HJU", "1.1.1.1", 1500) == ListenerRegistry::Add::Ok);  // passato il tempo
   CHECK(r.stats().tooSoon == 2);
+  // il tetto globale: in un'ora al massimo maxRequestsPerHour richieste in tutto, da chiunque
+  {
+    ListenerRegistry::Config gc = cfg;
+    gc.cooldownMs = 0;
+    gc.maxRequestsPerHour = 3;
+    ListenerRegistry g(fakeRng, gc);
+    CHECK(g.allowRequest("A1AA", "a", 0) == ListenerRegistry::Add::Ok && g.allowRequest("B1BB", "b", 10) == ListenerRegistry::Add::Ok && g.allowRequest("C1CC", "c", 20) == ListenerRegistry::Add::Ok);
+    CHECK(g.allowRequest("D1DD", "d", 30) == ListenerRegistry::Add::Busy && g.stats().busy == 1);
+    CHECK(g.allowRequest("D1DD", "d", 3600 * 1000 + 5) == ListenerRegistry::Add::Ok);  // le prime sono uscite dall'ora
+  }
   // una richiesta nuova dello stesso nominativo annulla il codice vecchio
   CHECK(r.addPending("IU5HJU", "a@b.it", "1.1.1.1", 1500, code) == ListenerRegistry::Add::Ok);
   const std::string codeOld = code;
