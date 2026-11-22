@@ -5,9 +5,9 @@
 //
 // Cosa si manda: una posizione APRS "senza timestamp", con la stazione come sorgente e il reflector come iGate, come fa un iGate quando porta
 // su Internet un pacchetto arrivato via radio:
-//   NOMINATIVO>APZVLR,qAR,LOGIN:!DDMM.mmNVDDDMM.mmE_VoLoRa
-// (APZ... e' il prefisso dei programmi sperimentali non registrati; "V" e "_" sono la tabella e il codice del simbolo: di base un cerchio blu con la V,
-// cioe' il simbolo alternativo "_" con la lettera V sovrapposta; il sysop lo puo' cambiare).
+//   NOMINATIVO>APZVLR,qAR,LOGIN:!DDMM.mmNVDDDMM.mmE&433.900MHz VoLoRa Standard
+// (APZ... e' il prefisso dei programmi sperimentali non registrati; "V" e "&" sono la tabella (qui una lettera di sovrapposizione) e il codice del simbolo: di base
+// un rombo con la V, cioe' il simbolo alternativo "&" con la lettera V sovrapposta; il sysop lo puo' cambiare. Non "_": e' il simbolo delle stazioni meteo).
 // Il reflector manda solo le posizioni che le stazioni gia' trasmettono in chiaro via radio (impostazione "pos" della scheda).
 #pragma once
 
@@ -72,7 +72,7 @@ std::string aprsLongitude(int32_t lonE7);
 std::string aprsPositionLine(const std::string& callsign, const Position& pos, const std::string& login, const std::string& symbol = "V&", const std::string& comment = "VoLoRa");
 // Il commento APRS di una stazione che trasmette in VoLoRa: "433.900MHz VoLoRa Standard" (la frequenza e' quella del nodo da cui passa, 0 = non nota: senza frequenza).
 std::string aprsStationComment(uint32_t freqKhz, uint8_t mode);
-// Il simbolo dei nodi sulla mappa: la V sovrapposta al simbolo dei digipeater (una stella con la V), diverso dal cerchio blu delle stazioni.
+// Il simbolo dei nodi sulla mappa: la V sovrapposta al simbolo dei digipeater (una stella con la V), diverso dal rombo delle stazioni.
 constexpr const char* kAprsNodeSymbol = "V#";
 // Il commento APRS di un nodo: "433.900MHz VoLoRa Standard rete NOME testo-del-sysop indirizzo", al massimo kAprsMaxNodeComment caratteri: se non ci sta, si accorcia il testo.
 constexpr size_t kAprsMaxNodeComment = 100;
