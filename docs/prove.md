@@ -923,3 +923,11 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 ### 21/11/2026, T-Beam (alimentazione dell'amplificatore, riferito)
 
 - **Esito (riferito dall'operatore, individuato nel debug con IU5SEK David):** con `VIN` del MAX98357A collegato al pin `5V` del connettore l'amplificatore non riceveva corrente sufficiente a USB scollegata (il pin `5V` c'e' solo con l'USB). Collegando `VIN` **direttamente al polo + della batteria** l'alimentazione basta anche senza USB. Schema (`docs/images/collegamenti-tbeam.*`, generato da `tools/render_wiring.py tbeam`), `docs/pinout.md` e `docs/audio.md` aggiornati. Non ho dati di misura (tensione, corrente, volume) da riportare.
+
+### 22/11/2026, PRAIM (reflector di casa di IU5HJU): ascolto dal web con QRZ.com e un'email vere
+
+- **Prova (riferita, con il registro del reflector):** reflector aggiornato con l'ascolto dal web, account QRZ.com con l'abbonamento XML (valido fino al 05/01/2027, risposta di QRZ con la chiave di sessione), `msmtp` con un account Gmail e la password per le app per le email.
+- **Cosa e' successo:** prime richieste con una password di QRZ sbagliata (nel file ne era salvata un'altra: `QRZ non accetta l'account del sysop: Username/password incorrect`); le richieste ripetute hanno fatto **bloccare l'accesso da QRZ per qualche minuto** (`blocked until ...`). Corretta la password nel file e fatto rileggere (`systemctl reload`), poi un primo errore `non riesco a lanciare il programma della posta` (era rimasto il percorso di partenza `/usr/sbin/sendmail`, che non c'era: messo `/usr/bin/msmtp -C /var/lib/vlreflector/msmtprc -t`). Poi la richiesta e' andata a buon fine: email arrivata, link aperto, **ascolto riuscito**.
+- **Esito (riferito):** «L'ascolto da web funziona»; **la voce e' piacevole e molto simile, o addirittura migliore, di quella della radio.** Browser e telefono non indicati.
+- **Correzioni fatte durante la prova:** dopo un rifiuto di QRZ il reflector non riprova per 15 minuti con lo stesso account (per non allungare il blocco); tetto globale di 60 richieste all'ora; storico di chi ha ascoltato (tabella nella pagina di amministrazione e file `ascolto-storico.log`).
+- **Non ancora verificato:** iPhone e Safari, piu' ascoltatori insieme, il limite dei 2 flussi per nominativo, la scadenza del biglietto, il «Togli» su un ascolto vero.

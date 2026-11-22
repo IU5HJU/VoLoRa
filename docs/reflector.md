@@ -194,7 +194,7 @@ Il server sta dietro un router: le porte esterne vanno **inoltrate** (port forwa
 
 ## Ascolto dal web
 
-**In sviluppo (22/11/2026): provato sul PC con un QRZ.com finto, un programma della posta finto e un nodo finto (`tests/listen_smoke.sh`, 58 controlli); non ancora provato con il QRZ.com vero, con una vera email e con un browser vero.** Permette di **ascoltare il traffico del reflector a chi non ha una radio VoLoRa**, da una pagina web, a una condizione: scrivere il **nominativo** e l'**email** che si hanno su QRZ.com. Chi ascolta compare **con il solo nominativo** sulla pagina pubblica del reflector.
+**Provato il 22/11/2026** sul PC con un QRZ.com finto, un programma della posta finto e un nodo finto (`tests/listen_smoke.sh`) e **sul server di casa con il QRZ.com vero, un'email vera (`msmtp` con Gmail) e un browser vero: la voce è stata ascoltata e, secondo l'operatore, è piacevole e simile, o addirittura migliore, di quella della radio** ([prove.md](prove.md)). Permette di **ascoltare il traffico del reflector a chi non ha una radio VoLoRa**, da una pagina web, a una condizione: scrivere il **nominativo** e l'**email** che si hanno su QRZ.com. Chi ascolta compare **con il solo nominativo** sulla pagina pubblica del reflector.
 
 ### Come funziona, per chi ascolta
 
@@ -238,9 +238,11 @@ Nel registro (`journalctl -u vlreflector`) una riga per ogni richiesta con il su
 - **Con l'ascolto spento** (di base) le pagine `/ascolto` rispondono 503 e il reflector non decodifica niente.
 - **La pagina pubblica** mostra solo il nominativo e da quanto tempo ascolta (`/status.json`, campo `listen`), mai email, biglietti o indirizzi.
 
-### Non ancora provato
+### Provato e non ancora provato
 
-Con il **QRZ.com vero** (formato delle risposte e dell'errore di abbonamento: la lettura segue la specifica pubblica di QRZ, ma finora c'è solo un QRZ finto), con una **vera email** (la consegna dipende dal tuo server di posta; molti provider mettono i messaggi nuovi nella posta indesiderata), e con **browser veri** (la riproduzione con Web Audio, soprattutto su iPhone e Safari, dove il suono parte solo dopo un gesto dell'utente: per questo c'è il pulsante Ascolta). Il decodificatore usa gli stessi sorgenti del Codec2 delle schede e riproduce l'audio che il nodo finto manda (64000 byte per 100 frame, come previsto), ma l'**intelligibilità** della voce vera non è stata ascoltata.
+**Provato dal vivo (22/11/2026):** accesso a QRZ.com con l'account del sysop (la risposta di errore «Username/password incorrect» e la chiave di sessione hanno il formato atteso; è comparso anche un blocco temporaneo di QRZ dopo accessi sbagliati ripetuti, da cui il rinvio di 15 minuti descritto sopra), confronto dell'email, invio dell'email di conferma (`msmtp` con un account Gmail e una password per le app), apertura del link, flusso audio con la voce di un nodo vero.
+
+**Non ancora provato:** i **browser su iPhone e Safari** (il suono parte solo dopo un gesto dell'utente: per questo c'è il pulsante Ascolta), più ascoltatori insieme, il limite dei 2 flussi per nominativo, la scadenza del biglietto dopo le ore previste, il «Togli» del sysop su un ascolto vero e il primo rinnovo della password o dell'abbonamento di QRZ.
 
 ## Server APRS (posizione delle stazioni)
 
