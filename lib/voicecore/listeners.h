@@ -40,7 +40,9 @@ class ListenerRegistry {
   void setConfig(const Config& c);
   Config config() const;
 
-  // Passo 2. 'source' = chi ha fatto la richiesta (un indirizzo IP come testo: serve solo a non farne troppe). Ok: 'code' e' il codice da mandare per email.
+  // Passo 1, prima di chiamare QRZ: per lo stesso nominativo e per la stessa origine (un indirizzo IP come testo) una richiesta ogni cooldownMs. Ok conta la richiesta.
+  Add allowRequest(const std::string& callsign, const std::string& source, uint32_t nowMs);
+  // Passo 2, dopo che QRZ ha confermato: Ok = 'code' e' il codice da mandare per email (Busy: troppe richieste in attesa).
   Add addPending(const std::string& callsign, const std::string& email, const std::string& source, uint32_t nowMs, std::string& code);
   // Passo 3. Il codice vale una volta sola. false se non c'e', e' scaduto o e' gia' stato usato.
   bool confirm(const std::string& code, uint32_t nowMs, std::string& ticket, std::string& callsign);
@@ -53,6 +55,7 @@ class ListenerRegistry {
   std::vector<Listening> listening() const;
   // Il sysop toglie un nominativo: i suoi biglietti non valgono piu' e i suoi flussi vanno chiusi (isKicked). Ritorna quanti ascolti e sessioni ha toccato.
   size_t kick(const std::string& callsign);
+  std::string callsignOf(uint32_t id) const;  // il nominativo di un ascolto aperto (anche se e' stato tolto), "" se non c'e'
   bool isKicked(uint32_t id) const;  // il flusso con questo numero va chiuso (kick, oppure il biglietto e' scaduto)
   // Toglie richieste e sessioni scadute. Si chiama ogni tanto.
   void expire(uint32_t nowMs);

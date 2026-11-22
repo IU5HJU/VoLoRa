@@ -48,6 +48,9 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
   <div class="card" id="now"><div class="call muted">Silenzio</div></div>
   <h2>Stazioni collegate <span id="count"></span></h2>
   <div id="clients"></div>
+  <h2 id="lhead" hidden>In ascolto dal web <span id="lcount"></span></h2>
+  <div id="listeners"></div>
+  <p class="muted small" id="listenlink" hidden><a href="ascolto">Ascolta dal web</a> (per radioamatori senza una radio VoLoRa: serve l'email di QRZ.com)</p>
   <h2>Ultime trasmissioni</h2>
   <div id="recent"></div>
   <p class="muted small" id="legend"></p>
@@ -81,6 +84,11 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
       b.appendChild(el("div", "Ultimo contatto " + x.seenS + " s fa", "muted small row"));
       c.appendChild(b);
     });
+    var lz = (d.listen && d.listen.listeners) || [];
+    $("lhead").hidden = !lz.length; $("lcount").textContent = lz.length ? "(" + lz.length + ")" : "";
+    var lb = $("listeners"); lb.textContent = "";
+    lz.forEach(function (z) { var b = el("div", undefined, "card"); b.appendChild(el("div", z.call, "call")); lb.appendChild(b); });
+    $("listenlink").hidden = !(d.listen && d.listen.enabled);
     var rc = $("recent"); rc.textContent = "";
     if (!d.recent.length) rc.appendChild(el("p", "Ancora nessuna trasmissione.", "muted"));
     else {

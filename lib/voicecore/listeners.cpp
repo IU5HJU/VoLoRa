@@ -22,9 +22,8 @@ ListenerRegistry::Config ListenerRegistry::config() const {
   return cfg_;
 }
 
-ListenerRegistry::Add ListenerRegistry::addPending(const std::string& callsign, const std::string& email, const std::string& source, uint32_t nowMs, std::string& code) {
+ListenerRegistry::Add ListenerRegistry::allowRequest(const std::string& callsign, const std::string& source, uint32_t nowMs) {
   std::lock_guard<std::mutex> l(m_);
-  // il limite: per lo stesso nominativo e per la stessa origine, una richiesta ogni cooldownMs
   for (const std::string& k : {"C:" + callsign, "S:" + source}) {
     auto it = lastAsk_.find(k);
     if (it != lastAsk_.end() && static_cast<uint32_t>(nowMs - it->second) < cfg_.cooldownMs) {
@@ -32,6 +31,14 @@ ListenerRegistry::Add ListenerRegistry::addPending(const std::string& callsign, 
       return Add::TooSoon;
     }
   }
+  if (lastAsk_.size() > 4000) lastAsk_.clear();
+  lastAsk_["C:" + callsign] = nowMs;
+  lastAsk_["S:" + source] = nowMs;
+  return Add::Ok;
+}
+
+ListenerRegistry::Add ListenerRegistry::addPending(const std::string& callsign, const std::string& email, const std::string& source, uint32_t nowMs, std::string& code) {
+  std::lock_guard<std::mutex> l(m_);
   // quelle scadute non contano
   for (auto it = pending_.begin(); it != pending_.end();) {
     if (lastExpired(nowMs, it->second.atMs, cfg_.pendingTtlMs)) it = pending_.erase(it);
@@ -46,9 +53,6 @@ ListenerRegistry::Add ListenerRegistry::addPending(const std::string& callsign, 
     if (it->second.callsign == callsign) it = pending_.erase(it);
     else ++it;
   }
-  if (lastAsk_.size() > 4000) lastAsk_.clear();
-  lastAsk_["C:" + callsign] = nowMs;
-  lastAsk_["S:" + source] = nowMs;
   code = token();
   pending_[code] = Pending{callsign, email, source, nowMs};
   stats_.requested++;
@@ -156,6 +160,12 @@ size_t ListenerRegistry::kick(const std::string& callsign) {
     }
   }
   return n;
+}
+
+std::string ListenerRegistry::callsignOf(uint32_t id) const {
+  std::lock_guard<std::mutex> l(m_);
+  auto it = open_.find(id);
+  return it == open_.end() ? std::string() : it->second.callsign;
 }
 
 bool ListenerRegistry::isKicked(uint32_t id) const {

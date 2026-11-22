@@ -117,6 +117,36 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     </section>
 
     <section>
+      <h2>Ascolto dal web</h2>
+      <p class="muted">Permette di ascoltare il traffico a chi non ha una radio VoLoRa, dalla pagina <code>/ascolto</code> della pagina pubblica. Chi ascolta scrive nominativo ed email: il reflector controlla su QRZ.com che l'email sia quella del nominativo (serve un tuo abbonamento QRZ con l'interfaccia XML) e manda a quell'email un link da aprire, valido una volta sola. Chi ascolta compare con il solo nominativo sulla pagina pubblica. Per le email serve un programma compatibile con sendmail sul server (per esempio <code>msmtp</code> o <code>postfix</code>).</p>
+      <div id="listenOff" class="msg warn" hidden>Questa versione del reflector &egrave; compilata senza OpenSSL: non pu&ograve; chiamare QRZ.com (<code>sudo apt install libssl-dev pkg-config</code> e ricompila).</div>
+      <label><input id="listenOn" type="checkbox" style="width:auto"> Ascolto dal web acceso</label>
+      <label for="listenUser">Nome utente di QRZ.com</label>
+      <input id="listenUser" maxlength="40" autocomplete="off" spellcheck="false">
+      <label for="listenPass">Password di QRZ.com</label>
+      <input id="listenPass" type="password" maxlength="64" autocomplete="new-password" spellcheck="false">
+      <p class="muted" id="listenPassHint">Non viene mai mostrata. Lasciala vuota per tenere quella gi&agrave; salvata.</p>
+      <label for="listenFrom">Indirizzo da cui partono le email di conferma</label>
+      <input id="listenFrom" maxlength="120" autocomplete="off" spellcheck="false" placeholder="reflector@esempio.it">
+      <label for="listenBase">Indirizzo pubblico della pagina (quello del link nell'email, senza barra finale)</label>
+      <input id="listenBase" maxlength="100" autocomplete="off" spellcheck="false" placeholder="https://reflector.example.org">
+      <label for="listenMail">Programma della posta</label>
+      <input id="listenMail" maxlength="200" autocomplete="off" spellcheck="false" placeholder="/usr/sbin/sendmail -t -i">
+      <label for="listenUrl">Indirizzo dell'interfaccia XML di QRZ.com</label>
+      <input id="listenUrl" maxlength="120" autocomplete="off" spellcheck="false" placeholder="https://xmldata.qrz.com/xml/current/">
+      <label for="listenMax">Ascoltatori insieme (da 1 a 100)</label>
+      <input id="listenMax" type="number" min="1" max="100" value="20">
+      <label for="listenHours">Durata dell'accesso dopo la conferma (ore, da 1 a 72)</label>
+      <input id="listenHours" type="number" min="1" max="72" value="12">
+      <div>
+        <button id="listenSave" type="button">Salva</button>
+      </div>
+      <div id="listenMsg" class="msg" hidden></div>
+      <p class="muted" id="listenStats"></p>
+      <div id="listenList"></div>
+    </section>
+
+    <section>
       <h2>Registra un nodo</h2>
       <p class="muted">Il collega genera la chiave dalla pagina di configurazione della sua scheda e te la manda (su un canale privato) con il suo nominativo e, se ne ha più d'uno, il nome del nodo. Scrivili qui: l'id lo assegna il reflector. Un nominativo può avere <strong>più nodi</strong> (casa, mare, hotspot): ognuno ha il suo id e la sua chiave, e una chiave non si può usare due volte.</p>
       <label for="call">Nominativo</label>
@@ -202,6 +232,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     }
     $('recentEmpty').hidden = s.recent.length > 0;
     refreshAprs();
+    refreshListen();
   }
   // Server APRS: i campi si riempiono la prima volta (e dopo un salvataggio); poi si aggiorna solo lo stato, senza toccare quello che stai scrivendo
   let aprsLoaded = false;
@@ -241,6 +272,54 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     show($('aprsMsg'), 'Salvato. ' + (r.enabled ? 'Il reflector si collega al server.' : 'L\'invio è spento.'), 'ok');
     aprsFill(r);
     aprsStatus(r);
+  });
+  // Ascolto dal web: come per APRS, i campi si riempiono la prima volta e dopo un salvataggio; poi si aggiornano solo l'elenco e i conteggi
+  let listenLoaded = false;
+  function listenFill(a) {
+    $('listenOn').checked = !!a.enabled;
+    $('listenUser').value = a.qrzUser;
+    $('listenPass').value = '';
+    $('listenPass').placeholder = a.passSet ? '(salvata)' : '';
+    $('listenPassHint').textContent = a.passSet ? 'La password è salvata e non viene mai mostrata. Lasciala vuota per tenerla, oppure scrivine una nuova.' : 'Non è ancora stata scritta nessuna password.';
+    $('listenFrom').value = a.mailFrom;
+    $('listenBase').value = a.baseUrl;
+    $('listenMail').value = a.mailCmd;
+    $('listenUrl').value = a.qrzUrl;
+    $('listenMax').value = a.max;
+    $('listenHours').value = a.hours;
+  }
+  function listenStatus(a) {
+    $('listenOff').hidden = a.tls;
+    $('listenStats').textContent = (a.enabled ? 'Acceso. ' : 'Spento. ') + 'Richieste ' + a.requested + ', link aperti ' + a.confirmed + ', rifiutate per troppe richieste ' + a.tooSoon + ', ascolti iniziati ' + a.started + ', ascolti rifiutati ' + a.refused + '. In attesa del link ' + a.pending + ', sessioni valide ' + a.sessions + '.' + (a.last ? ' Ultimo esito: ' + a.last + '.' : '');
+    const box = $('listenList'); box.textContent = '';
+    if (!a.listeners.length) { box.appendChild(document.createTextNode('Nessuno in ascolto adesso.')); return; }
+    box.appendChild(document.createTextNode('In ascolto adesso: '));
+    a.listeners.forEach((l) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'secondary'; b.textContent = l.call + ' (' + l.sinceS + ' s) — Togli';
+      b.addEventListener('click', async () => {
+        let r; try { r = await api('/api/ascolto', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'kick=' + encodeURIComponent(l.call) }); } catch (e) { return; }
+        if (r.ok === false) { show($('listenMsg'), r.error || 'Errore.', 'err'); return; }
+        listenStatus(r);
+      });
+      box.appendChild(b);
+    });
+  }
+  async function refreshListen() {
+    let a;
+    try { a = await api('/api/ascolto'); } catch (e) { return; }
+    if (!listenLoaded) { listenFill(a); listenLoaded = true; }
+    listenStatus(a);
+  }
+  $('listenSave').addEventListener('click', async () => {
+    const body = 'enabled=' + ($('listenOn').checked ? '1' : '0') + '&qrzuser=' + encodeURIComponent($('listenUser').value.trim()) + '&qrzpass=' + encodeURIComponent($('listenPass').value) +
+      '&mailfrom=' + encodeURIComponent($('listenFrom').value.trim()) + '&baseurl=' + encodeURIComponent($('listenBase').value.trim()) + '&mailcmd=' + encodeURIComponent($('listenMail').value.trim()) +
+      '&qrzurl=' + encodeURIComponent($('listenUrl').value.trim()) + '&max=' + encodeURIComponent($('listenMax').value.trim()) + '&hours=' + encodeURIComponent($('listenHours').value.trim());
+    let r;
+    try { r = await api('/api/ascolto', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body }); } catch (e) { return; }
+    if (r.ok === false) { show($('listenMsg'), r.error || 'Errore.', 'err'); return; }
+    show($('listenMsg'), 'Salvato. ' + (r.enabled ? 'L\'ascolto dal web è acceso.' : 'L\'ascolto dal web è spento.'), 'ok');
+    listenFill(r);
+    listenStatus(r);
   });
   const normCall = () => $('call').value.trim().toUpperCase();
   async function check() {

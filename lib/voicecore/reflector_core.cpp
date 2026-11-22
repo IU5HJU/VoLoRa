@@ -293,6 +293,7 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
     return;
   }
   forward(*c, wire, m, voice, nowMs);
+  if (voice && onVoice_) onVoice_(wire, m, nowMs);
   if (voice && (p.flags & kFlagEnd) && !p.isParity()) {  // fine della trasmissione: il canale si libera subito
     talking_ = false;
     endTalk();

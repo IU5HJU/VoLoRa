@@ -138,6 +138,9 @@ class ReflectorCore {
   void setPositionHandler(std::function<void(const std::string& callsign, const Position& pos, uint32_t nowMs, uint32_t clientId, uint8_t mode)> f) { onPosition_ = f; }
   // Facoltativo: chiamato quando un nodo collegato manda la sua presentazione (node_info.h); serve a pubblicarlo sulla mappa APRS. L'id e' quello del client.
   void setNodeInfoHandler(std::function<void(uint32_t clientId, const NodeInfo& info, uint32_t nowMs)> f) { onNodeInfo_ = f; }
+  // Facoltativo: chiamato per ogni pacchetto di voce (parita' compresa) che il reflector inoltra, con il pacchetto radio cosi' come parte verso i client. Serve
+  // all'ascolto dal web (tools/listen_audio.h). Non si chiama per la voce scartata perche' un altro sta parlando.
+  void setVoiceTap(std::function<void(const uint8_t* packet, size_t len, uint32_t nowMs)> f) { onVoice_ = f; }
 
  private:
   struct Client {
@@ -174,6 +177,7 @@ class ReflectorCore {
   std::function<void(const std::string&)> log_;
   std::function<void(const std::string&, const Position&, uint32_t, uint32_t, uint8_t)> onPosition_;
   std::function<void(uint32_t, const NodeInfo&, uint32_t)> onNodeInfo_;
+  std::function<void(const uint8_t*, size_t, uint32_t)> onVoice_;
   bool posReported_ = false;  // il gestore e' gia' stato chiamato per la trasmissione in corso
 };
 

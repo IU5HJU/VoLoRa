@@ -11,6 +11,7 @@ Un reflector è un programma su un server che fa da centro-stella: **nodi e ripe
 - [Registrare un nodo e le chiavi](#registrare-un-nodo-e-le-chiavi)
 - [Collegare un nodo](#collegare-un-nodo) e [un ripetitore](#collegare-un-ripetitore)
 - [La pagina pubblica](#la-pagina-pubblica-per-i-colleghi) e [in HTTPS](#pagina-pubblica-in-https)
+- [Ascolto dal web](#ascolto-dal-web): per chi non ha una radio VoLoRa, con nominativo ed email di QRZ.com
 - [Server APRS: posizione delle stazioni](#server-aprs-posizione-delle-stazioni) e [il nodo sulla mappa](#il-nodo-sulla-mappa-aprs)
 - [Qualità dei collegamenti: radio o rete?](#qualità-dei-collegamenti-radio-o-rete)
 - [L'indirizzo IP mostrato per un nodo](#lindirizzo-ip-mostrato-per-un-nodo)
@@ -190,6 +191,53 @@ Il server sta dietro un router: le porte esterne vanno **inoltrate** (port forwa
 **Rinnovo**: con Let's Encrypt è automatico (certbot rinnova da solo e il passaggio dopo il rinnovo ricarica il reflector). Con un certificato fatto a mano, quando sta per scadere, `--installa` col file nuovo (la chiave resta quella del CSR; se l'ente vuole un CSR nuovo, la vecchia chiave si toglie a mano) e poi **`sudo systemctl reload vlreflector`**: il reflector rilegge il certificato senza fermarsi. Se il file nuovo non è valido o non è la coppia della chiave, resta quello di prima e il registro scrive `certificato non riletto, resta quello di prima` con il motivo.
 
 **Provato** sul PC (smoke del reflector, 13 controlli): partenza in HTTPS, pagina e stato in HTTPS, 405 e 404 per quello che non è ammesso, HTTP semplice rifiutato sulla porta HTTPS, TLS 1.1 rifiutato, certificato nuovo attivo dopo un reload senza riavviare, un certificato che non è della chiave non sostituisce quello buono, avvio fermato con il motivo se certificato e chiave non sono una coppia o ne manca una. Certificato e chiave letti dall'utente `vlreflector`. Su un server di casa (21/11/2026): certificato vero di Let's Encrypt, pagina aperta dal telefono con i dati mobili senza avvisi, prova del rinnovo (`--dry-run`) riuscita. **Non ancora visto**: il primo rinnovo automatico (a circa 60 giorni dal rilascio).
+
+## Ascolto dal web
+
+**In sviluppo (22/11/2026): provato sul PC con un QRZ.com finto, un programma della posta finto e un nodo finto (`tests/listen_smoke.sh`, 58 controlli); non ancora provato con il QRZ.com vero, con una vera email e con un browser vero.** Permette di **ascoltare il traffico del reflector a chi non ha una radio VoLoRa**, da una pagina web, a una condizione: scrivere il **nominativo** e l'**email** che si hanno su QRZ.com. Chi ascolta compare **con il solo nominativo** sulla pagina pubblica del reflector.
+
+### Come funziona, per chi ascolta
+
+La pagina si chiama `/ascolto` e sta sulla stessa porta della pagina pubblica (per esempio `https://reflector.example.org/ascolto`, dove compare anche un link "Ascolta dal web").
+
+1. Scrive **nominativo ed email** (quelli di QRZ.com) e preme "Mandami il link".
+2. Il reflector chiede a **QRZ.com** l'email di quel nominativo e la confronta (senza distinguere maiuscole e spazi). Se coincide, scrive **a quell'email** un messaggio con un **link monouso** valido 15 minuti.
+3. Chi apre il link (dallo stesso browser o da un altro) riceve un **biglietto**, che il browser tiene in memoria per qualche ora (12 di base), e preme **Ascolta**. Dal secondo giorno basta riaprire la pagina: il biglietto è ancora lì.
+4. Il browser apre il flusso audio e riproduce la voce in diretta (Web Audio: serve un Chrome, Firefox o Safari recente). Il nominativo compare fra chi ascolta finché il flusso è aperto.
+
+**Perché il link e non solo il confronto con QRZ:** l'email pubblicata su QRZ.com la può leggere chiunque, quindi scriverla non prova di essere il titolare. Con il link monouso mandato a quell'indirizzo, l'ascolto parte solo per chi legge davvero quella posta.
+
+**La risposta alla richiesta è sempre la stessa** (200), sia che nominativo ed email coincidano con QRZ sia che no: la pagina non può servire a scoprire l'email che un operatore ha su QRZ. Chi non riceve l'email controlla che nominativo ed email siano esattamente quelli di QRZ.com; il motivo vero (email diversa, nessuna email pubblicata su QRZ, nominativo non trovato) lo vede **solo il sysop nel registro**.
+
+### Per il sysop: cosa serve
+
+- **Un abbonamento QRZ.com** con l'**interfaccia XML** (QRZ Logbook Data): senza, l'accesso alla ricerca è limitato ai test. Il campo email compare nella risposta di QRZ solo se l'operatore l'ha pubblicato: chi non l'ha pubblicata non può ascoltare. Leggi le condizioni d'uso di QRZ.com: il reflector usa i dati solo per il confronto, **non li salva e non li scrive nel registro** (l'email scritta dall'utente resta in memoria fino alla conferma o alla scadenza del link).
+- **OpenSSL nel reflector** (`libssl-dev`, come per l'HTTPS): QRZ risponde solo in HTTPS. `vlreflector --tls-check` deve dire `TLS: si`.
+- **Un programma compatibile con sendmail** sul server per spedire le email (per esempio `msmtp` o `postfix`: `sudo apt install msmtp-mta`, poi la sua configurazione con il tuo server di posta). Il reflector lo lancia con il messaggio sullo standard input, senza shell. Di base `/usr/sbin/sendmail -t -i`.
+- **Un indirizzo pubblico della pagina in HTTPS** (quello del link nell'email, vedi [Pagina pubblica in HTTPS](#pagina-pubblica-in-https)). Non servono altre porte sul router: l'ascolto usa la stessa porta della pagina pubblica.
+- **La CPU**: il reflector decodifica il Codec2 solo mentre c'è almeno un ascoltatore. Un flusso costa pochissimo (voce a 3200 bit/s) ma il lavoro non è zero; il limite di ascoltatori insieme (20 di base) lo imposti tu.
+
+### Per il sysop: la configurazione
+
+Dalla pagina di amministrazione, riquadro **Ascolto dal web**: nome utente e password di QRZ.com (la password non viene mai mostrata né scritta nel registro), indirizzo del mittente delle email, indirizzo pubblico della pagina (senza barra finale), programma della posta, indirizzo dell'interfaccia XML di QRZ (di base `https://xmldata.qrz.com/xml/current/`), ascoltatori insieme (da 1 a 100, 20 di base) e durata del biglietto (da 1 a 72 ore, 12 di base). La configurazione sta nel file **`ascolto.conf`** accanto al file dei client (o dove dice `--listen-file`), con permessi **0600** perché contiene la password; si rilegge con `systemctl reload`. Sotto, l'elenco di **chi ascolta adesso**, con un pulsante **Togli** per ognuno: toglie il nominativo (sessioni e ascolti aperti) e non può ascoltare di nuovo senza rifare il giro dell'email.
+
+Nel registro (`journalctl -u vlreflector`) una riga per ogni richiesta con il suo esito, senza email: `[ascolto] NOMINATIVO: email con il link di conferma inviata`, oppure il perché non è partita (`l'email scritta non e' quella di QRZ`, `su QRZ questo nominativo non ha un'email pubblicata`, `nominativo non trovato su QRZ`, `QRZ non accetta l'account del sysop`, `email non inviata: ...`), poi `link dell'email aperto`, `in ascolto`, `ascolto finito`, `tolto dal sysop`.
+
+### Limiti e sicurezza
+
+- **Richieste limitate:** una richiesta al minuto per lo stesso nominativo e per lo stesso indirizzo di rete (poi 429), al massimo 50 link in attesa e 10 verifiche in coda. Un nominativo che chiede di nuovo annulla il link di prima.
+- **I biglietti e i codici sono casuali** (128 bit da `/dev/urandom`), stanno solo in memoria (un riavvio del reflector li azzera: si rifà il giro con l'email) e il codice dell'email si consuma alla prima apertura. Il biglietto viaggia in un'intestazione (`X-Ascolto`), mai nell'indirizzo, quindi non finisce nei registri dei server.
+- **Al massimo 2 flussi aperti insieme per nominativo** (telefono e computer); il terzo chiude il più vecchio dello stesso biglietto.
+- **Chi comincia ad ascoltare a trasmissione già iniziata** può sentire solo dalla trasmissione successiva.
+- **Chi non riesce a stare al passo** (rete lenta, più di 4 secondi di audio in coda) o non risponde più viene chiuso: non rallenta mai l'inoltro verso nodi e ripetitori. Ogni 2 secondi senza audio parte un frame di silenzio, che tiene aperta la connessione.
+- **Cosa si ascolta:** la voce nel modo del reflector (Standard, o Range) di chi trasmette; i testi non si mandano. La qualità dell'audio è quella del Codec2 decodificato: i pacchetti persi diventano un frame di silenzio dopo il recupero con la parità.
+- **Il traffico non è cifrato** (come la radio): l'ascolto sul web è pubblico quanto quello con un ricevitore, ma resta riservato a chi si identifica con QRZ.com e con l'email.
+- **Con l'ascolto spento** (di base) le pagine `/ascolto` rispondono 503 e il reflector non decodifica niente.
+- **La pagina pubblica** mostra solo il nominativo e da quanto tempo ascolta (`/status.json`, campo `listen`), mai email, biglietti o indirizzi.
+
+### Non ancora provato
+
+Con il **QRZ.com vero** (formato delle risposte e dell'errore di abbonamento: la lettura segue la specifica pubblica di QRZ, ma finora c'è solo un QRZ finto), con una **vera email** (la consegna dipende dal tuo server di posta; molti provider mettono i messaggi nuovi nella posta indesiderata), e con **browser veri** (la riproduzione con Web Audio, soprattutto su iPhone e Safari, dove il suono parte solo dopo un gesto dell'utente: per questo c'è il pulsante Ascolta). Il decodificatore usa gli stessi sorgenti del Codec2 delle schede e riproduce l'audio che il nodo finto manda (64000 byte per 100 frame, come previsto), ma l'**intelligibilità** della voce vera non è stata ascoltata.
 
 ## Server APRS (posizione delle stazioni)
 

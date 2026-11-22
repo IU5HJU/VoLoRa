@@ -31,21 +31,26 @@ int main() {
   uint32_t id = r.startListening(ticket, 300, call);
   CHECK(id != 0 && call == "IU5HJU");
   CHECK(r.listening().size() == 1 && r.listening()[0].callsign == "IU5HJU" && r.listening()[0].sinceMs == 300);
-  CHECK(!r.isKicked(id));
+  CHECK(!r.isKicked(id) && r.callsignOf(id) == "IU5HJU");
   r.stopListening(id);
+  CHECK(r.callsignOf(id).empty());
   CHECK(r.listening().empty());
   CHECK(r.startListening("sbagliato", 300, call) == 0);
 
-  // il limite: stesso nominativo o stessa origine troppo presto
-  CHECK(r.addPending("IU5HJU", "a@b.it", "2.2.2.2", 500, code) == ListenerRegistry::Add::TooSoon);
-  CHECK(r.addPending("W1AW", "w@b.it", "1.1.1.1", 500, code) == ListenerRegistry::Add::TooSoon);
-  CHECK(r.addPending("W1AW", "w@b.it", "3.3.3.3", 500, code) == ListenerRegistry::Add::Ok);
-  CHECK(r.addPending("IU5HJU", "a@b.it", "1.1.1.1", 1500, code) == ListenerRegistry::Add::Ok);  // passato il tempo
+  // il limite (prima di chiamare QRZ): stesso nominativo o stessa origine troppo presto
+  CHECK(r.allowRequest("IU5HJU", "1.1.1.1", 0) == ListenerRegistry::Add::Ok);
+  CHECK(r.allowRequest("IU5HJU", "2.2.2.2", 500) == ListenerRegistry::Add::TooSoon);
+  CHECK(r.allowRequest("W1AW", "1.1.1.1", 500) == ListenerRegistry::Add::TooSoon);
+  CHECK(r.allowRequest("W1AW", "3.3.3.3", 500) == ListenerRegistry::Add::Ok);
+  CHECK(r.allowRequest("IU5HJU", "1.1.1.1", 1500) == ListenerRegistry::Add::Ok);  // passato il tempo
+  CHECK(r.stats().tooSoon == 2);
   // una richiesta nuova dello stesso nominativo annulla il codice vecchio
-  const std::string codeNew = code;
-  CHECK(r.pending() == 2);
-  CHECK(r.addPending("W1AW", "w@b.it", "3.3.3.3", 3000, code) == ListenerRegistry::Add::Ok && r.pending() == 2);
-  CHECK(r.confirm(codeNew, 3100, ticket, call) && call == "IU5HJU");  // il codice di IU5HJU e' ancora buono
+  CHECK(r.addPending("IU5HJU", "a@b.it", "1.1.1.1", 1500, code) == ListenerRegistry::Add::Ok);
+  const std::string codeOld = code;
+  CHECK(r.addPending("W1AW", "w@b.it", "3.3.3.3", 1600, code) == ListenerRegistry::Add::Ok && r.pending() == 2);
+  CHECK(r.addPending("IU5HJU", "a@b.it", "1.1.1.1", 3000, code) == ListenerRegistry::Add::Ok && r.pending() == 2);
+  CHECK(!r.confirm(codeOld, 3100, ticket, call));  // il codice vecchio non vale piu'
+  CHECK(r.confirm(code, 3100, ticket, call) && call == "IU5HJU");
   // troppe richieste insieme
   std::string c1, c2, c3;
   CHECK(r.addPending("K1AB", "k@b.it", "4.4.4.4", 4000, c1) == ListenerRegistry::Add::Ok);
@@ -59,6 +64,7 @@ int main() {
   ListenerRegistry q(fakeRng, cfg);
   auto login = [&](const std::string& cs, const std::string& ip, uint32_t now) {
     std::string cd, tk, c;
+    q.allowRequest(cs, ip, now);
     q.addPending(cs, "x@y.it", ip, now, cd);
     q.confirm(cd, now + 1, tk, c);
     return tk;

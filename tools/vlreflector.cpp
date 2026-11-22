@@ -36,6 +36,7 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -44,10 +45,14 @@
 #include "tls_server.h"
 #include "aprs_gate.h"
 #include "http_mini.h"
+#include "listen_audio.h"
+#include "listen_service.h"
+#include "listen_stream.h"
 #include "packet.h"
 #include "reflector_config.h"
 #include "reflector_core.h"
 #include "vlreflector_page.h"
+#include "vlreflector_listen.h"
 #include "vlreflector_public.h"
 
 using namespace lcr;
@@ -72,6 +77,16 @@ static bool randomBytes(uint8_t* out, size_t n) {
 static uint32_t rngFn() {
   uint32_t v = 0;
   if (!randomBytes(reinterpret_cast<uint8_t*>(&v), sizeof(v))) v = static_cast<uint32_t>(rand());
+  return v;
+}
+
+// Per i codici e i biglietti dell'ascolto dal web: sempre /dev/urandom (random_device lo usa), mai il rand() di riserva dell'altra funzione.
+static uint32_t strongRng() {
+  uint32_t v = 0;
+  if (!randomBytes(reinterpret_cast<uint8_t*>(&v), sizeof(v))) {
+    std::random_device rd;
+    v = rd();
+  }
   return v;
 }
 
@@ -254,6 +269,8 @@ struct Admin {
   ReflectorCore* core = nullptr;
   AprsGate* aprs = nullptr;
   std::string aprsPath;
+  ListenService* listen = nullptr;  // ascolto dal web (docs/reflector.md)
+  std::string listenPath;
   int authFails = 0;
   uint32_t authWindowMs = 0;
 
@@ -327,6 +344,28 @@ struct Admin {
     AprsConfig c;
     if (!parseAprsConfig(text, c, err)) return false;
     aprs->setConfig(c);
+    return true;
+  }
+
+  // L'ascolto dal web: la configurazione si scrive in ascolto.conf (permessi 0600, c'e' la password di QRZ.com) e si passa al servizio.
+  bool saveListen(const ListenConfig& c, std::string& err) {
+    if (!validateListenConfig(c, err)) return false;
+    if (!writeFileAtomic(listenPath, formatListenConfig(c))) {
+      err = "non riesco a scrivere " + listenPath + " (permessi della cartella?)";
+      return false;
+    }
+    listen->setConfig(c);
+    return true;
+  }
+  bool reloadListen(std::string& err) {
+    std::string text;
+    if (!readFile(listenPath, text)) {  // senza file l'ascolto resta spento
+      listen->setConfig(ListenConfig());
+      return true;
+    }
+    ListenConfig c;
+    if (!parseListenConfig(text, c, err)) return false;
+    listen->setConfig(c);
     return true;
   }
 
@@ -411,7 +450,7 @@ struct Admin {
         << publicQualityJson(r) << "}";
       first = false;
     }
-    o << "]}";
+    o << "]" << (listen ? listen->publicStatusPart(now) : std::string()) << "}";
     return o.str();
   }
   // La qualita' di una trasmissione per la pagina pubblica: solo numeri di radio e un giudizio (niente contatori, indirizzi o id): modo, nodo da cui e' passata (gia'
@@ -440,7 +479,11 @@ struct Admin {
     return o.str();
   }
   // La porta pubblica risponde solo a GET della pagina e di /status.json: nessun altro indirizzo, nessun comando.
-  std::string handlePublic(const HttpRequest& req, uint32_t now) const {
+  std::string handlePublic(const HttpRequest& req, uint32_t now, const std::string& peer) const {
+    if (listen && req.path.compare(0, 8, "/ascolto") == 0 && (req.path.size() == 8 || req.path[8] == '/')) {  // la pagina di ascolto: anche POST (richiesta, conferma)
+      const std::string r = listen->handlePublic(req, now, peer, kListenPage);
+      return r.empty() ? fail(404, "non trovato") : r;
+    }
     if (req.method != "GET") return fail(405, "metodo non ammesso");
     const char* csp = "Content-Security-Policy: default-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; frame-ancestors 'none'\r\nCache-Control: no-store\r\n";
     if (req.path == "/" || req.path == "/index.html") return httpResponse(200, "text/html; charset=utf-8", kPublicPage, csp);
@@ -505,6 +548,40 @@ struct Admin {
       logLine(std::string("[aprs] configurazione salvata: ") + (c.enabled ? "acceso" : "spento") + (c.host.empty() ? "" : ", server " + c.host + ":" + std::to_string(c.port)) +
               (c.login.empty() ? "" : ", nominativo " + c.login));
       return json(aprsJson());
+    }
+    if (req.path == "/api/ascolto") {
+      if (req.method == "GET") return json(listen->adminJson(now));
+      if (req.method != "POST") return fail(405, "metodo non ammesso");
+      const std::string kickCall = formParam(req.body, "kick");
+      if (!kickCall.empty()) {
+        if (listen->kick(kickCall) == 0) return fail(404, "quel nominativo non ha sessioni ne' ascolti");
+        return json(listen->adminJson(now));
+      }
+      ListenConfig c = listen->config();
+      const std::string en = formParam(req.body, "enabled");
+      if (en != "0" && en != "1") return fail(400, "manca se l'ascolto e' acceso o spento");
+      c.enabled = en == "1";
+      c.qrzUser = formParam(req.body, "qrzuser");
+      const std::string qpass = formParam(req.body, "qrzpass");
+      if (!qpass.empty()) c.qrzPass = qpass;  // vuota = resta quella di prima (la password non torna mai alla pagina)
+      const std::string qurl = formParam(req.body, "qrzurl");
+      if (!qurl.empty()) c.qrzUrl = qurl;
+      const std::string mcmd = formParam(req.body, "mailcmd");
+      if (!mcmd.empty()) c.mailCmd = mcmd;
+      c.mailFrom = formParam(req.body, "mailfrom");
+      c.baseUrl = formParam(req.body, "baseurl");
+      char* end = nullptr;
+      const std::string maxText = formParam(req.body, "max"), hoursText = formParam(req.body, "hours");
+      const long mx = strtol(maxText.c_str(), &end, 10);
+      if (maxText.empty() || *end != 0 || mx < 0) return fail(400, "gli ascoltatori insieme sono un numero");
+      c.maxListening = static_cast<uint32_t>(mx > 100000 ? 100000 : mx);
+      const long hrs = strtol(hoursText.c_str(), &end, 10);
+      if (hoursText.empty() || *end != 0 || hrs < 0) return fail(400, "la durata del biglietto e' un numero di ore");
+      c.sessionHours = static_cast<uint32_t>(hrs > 100000 ? 100000 : hrs);
+      std::string err;
+      if (!saveListen(c, err)) return fail(400, err);
+      logLine(std::string("[ascolto] configurazione salvata: ") + (c.enabled ? "acceso" : "spento") + (c.qrzUser.empty() ? "" : ", account QRZ " + c.qrzUser));
+      return json(listen->adminJson(now));
     }
     if (req.path == "/api/lookup") {
       if (req.method != "GET") return fail(405, "metodo non ammesso");
@@ -648,12 +725,38 @@ static void sendAll(int fd, const std::string& data, TlsConn* tls = nullptr) {
   }
 }
 
+// Le scritture dei flussi audio (thread di ListenPump): socket bloccante con un tempo massimo corto, perche' un browser lento non deve trattenere il thread.
+static bool writeStream(int fd, void* tlsp, const std::string& data) {
+  TlsConn* tls = static_cast<TlsConn*>(tlsp);
+  if (tls) return g_tls.writeAll(tls, data);
+  size_t off = 0;
+  while (off < data.size()) {
+    const ssize_t w = send(fd, data.data() + off, data.size() - off, MSG_NOSIGNAL);
+    if (w <= 0) return false;
+    off += static_cast<size_t>(w);
+  }
+  return true;
+}
+static void closeStream(int fd, void* tlsp) {
+  TlsConn* tls = static_cast<TlsConn*>(tlsp);
+  if (tls) g_tls.close(tls);
+  close(fd);
+}
+static std::string peerOf(int fd) {
+  sockaddr_in a;
+  socklen_t l = sizeof(a);
+  if (getpeername(fd, reinterpret_cast<sockaddr*>(&a), &l) != 0) return "?";
+  char b[32];
+  return inet_ntop(AF_INET, &a.sin_addr, b, sizeof(b)) ? std::string(b) : std::string("?");
+}
+
 int main(int argc, char** argv) {
   Admin adm;
   std::string tokenFile;
   int duration = 0, statusEvery = 300, webPort = 0, pubPort = 0;
   std::string webBind = "127.0.0.1", pubBind = "0.0.0.0", tlsCert, tlsKey;
   bool setPassword = false;
+  int listenCooldownS = 60;
   for (int i = 1; i < argc; i++) {
     const std::string a = argv[i];
     auto next = [&]() -> const char* { return i + 1 < argc ? argv[++i] : ""; };
@@ -677,6 +780,8 @@ int main(int argc, char** argv) {
     else if (a == "--set-password") setPassword = true;
     else if (a == "--public-name") adm.publicName = next();
     else if (a == "--aprs-file") adm.aprsPath = next();
+    else if (a == "--listen-file") adm.listenPath = next();
+    else if (a == "--listen-cooldown") listenCooldownS = atoi(next());  // per le prove: secondi fra due richieste dello stesso nominativo o indirizzo (di base 60)
     else {
       fprintf(stderr, "parametro sconosciuto: %s (vedi l'inizio di tools/vlreflector.cpp)\n", a.c_str());
       return 2;
@@ -716,6 +821,29 @@ int main(int argc, char** argv) {
     aprsGate.onPosition(callsign, pos, now, aprsStationComment(f == nodeFreqKhz.end() ? 0 : f->second, mode));
   });
   AprsClient aprsClient(aprsGate, logLine);
+  // Ascolto dal web: registro degli ascoltatori, verifica con QRZ e posta in un thread a parte, flussi audio con il loro thread. L'ordine conta: chi sta dopo
+  // usa quelli di prima.
+  ListenerRegistry listenRegistry(strongRng);
+  {
+    ListenerRegistry::Config rc = listenRegistry.config();
+    rc.cooldownMs = static_cast<uint32_t>(listenCooldownS < 0 ? 0 : listenCooldownS) * 1000u;
+    listenRegistry.setConfig(rc);
+  }
+  ListenService listenSvc(listenRegistry, logLine, nowMs);
+  adm.listen = &listenSvc;
+  if (adm.listenPath.empty()) adm.listenPath = dirOf(adm.configPath) + "/ascolto.conf";
+  {
+    std::string lerr;
+    if (!adm.reloadListen(lerr)) logLine("[ascolto] " + adm.listenPath + ": " + lerr + " (l'ascolto resta spento finche' non lo correggi dalla pagina di amministrazione)");
+  }
+  ListenPump::Hooks pumpHooks;
+  pumpHooks.write = writeStream;
+  pumpHooks.close = closeStream;
+  pumpHooks.kicked = [&listenRegistry](uint32_t id) { return listenRegistry.isKicked(id); };
+  pumpHooks.finished = [&listenSvc](uint32_t id) { listenSvc.streamEnded(id); };
+  ListenPump listenPump(pumpHooks);
+  ListenAudio listenAudio([&listenPump](const std::string& pcm) { listenPump.broadcast(pcm); });
+  core.setVoiceTap([&listenAudio](const uint8_t* p, size_t n, uint32_t now) { listenAudio.onPacket(p, n, now); });
   {
     std::string text, err;
     if (!readFile(adm.configPath, text)) {
@@ -805,7 +933,7 @@ int main(int argc, char** argv) {
   std::vector<Listener> listeners;
   if (webListen >= 0) listeners.push_back({webListen, false, {}});
   if (pubListen >= 0) listeners.push_back({pubListen, true, {}});
-  uint32_t lastStatus = adm.startMs;
+  uint32_t lastStatus = adm.startMs, lastListenExpire = adm.startMs;
   aprsClient.start();
   if (aprsGate.config().enabled) logLine("[aprs] invio delle posizioni acceso verso " + aprsGate.config().host + ":" + std::to_string(aprsGate.config().port));
   while (!g_stop) {
@@ -819,6 +947,9 @@ int main(int argc, char** argv) {
       std::string aerr;
       if (adm.reloadAprs(aerr)) logLine("[aprs] configurazione riletta");
       else logLine("[aprs] configurazione non riletta, resta quella di prima: " + aerr);
+      std::string lerr;
+      if (adm.reloadListen(lerr)) logLine("[ascolto] configurazione riletta");
+      else logLine("[ascolto] configurazione non riletta, resta quella di prima: " + lerr);
       if (g_tls.enabled()) {  // il certificato rinnovato si legge con un reload, senza fermare il reflector
         std::string terr;
         if (g_tls.load(tlsCert, tlsKey, terr)) logLine("certificato della pagina pubblica riletto: " + g_tls.validity());
@@ -884,7 +1015,7 @@ int main(int argc, char** argv) {
       std::vector<Conn> keep;
       for (size_t i = 0; i < l.conns.size(); i++) {
         Conn c = l.conns[i];
-        bool done = false;
+        bool done = false, handedOff = false;
         if (i < before && (mine[i].revents & (POLLIN | POLLHUP | POLLERR))) {
           char buf[16384];
           ssize_t k;
@@ -907,7 +1038,21 @@ int main(int argc, char** argv) {
             HttpRequest req;
             const HttpParse pr = parseHttpRequest(c.in, req);
             if (pr == HttpParse::Ok) {
-              sendAll(c.fd, l.pub ? adm.handlePublic(req, nowMs()) : adm.handle(req, nowMs()), c.tls);
+              if (l.pub && req.path == "/ascolto/audio") {  // il flusso audio: la connessione resta aperta e passa al thread dei flussi
+                std::string head, errResponse;
+                const uint32_t sid = listenSvc.openStream(req, nowMs(), head, errResponse);
+                if (sid) {
+                  timeval tv = {0, 300000};
+                  setsockopt(c.fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+                  fcntl(c.fd, F_SETFL, fcntl(c.fd, F_GETFL, 0) & ~O_NONBLOCK);
+                  listenPump.add(c.fd, c.tls, sid, head);
+                  handedOff = true;
+                } else {
+                  sendAll(c.fd, errResponse, c.tls);
+                }
+              } else {
+                sendAll(c.fd, l.pub ? adm.handlePublic(req, nowMs(), peerOf(c.fd)) : adm.handle(req, nowMs()), c.tls);
+              }
               done = true;
             } else if (pr == HttpParse::Bad) {
               sendAll(c.fd, httpResponse(400, "text/plain", "richiesta non valida"), c.tls);
@@ -920,14 +1065,22 @@ int main(int argc, char** argv) {
         }
         if (!done && nowMs() - c.startMs > 5000) done = true;
         if (done) {
-          if (c.tls) g_tls.close(c.tls);
-          close(c.fd);
+          if (!handedOff) {
+            if (c.tls) g_tls.close(c.tls);
+            close(c.fd);
+          }
         } else keep.push_back(c);
       }
       l.conns = keep;
     }
     const uint32_t t = nowMs();
     core.tick(t);
+    listenAudio.setListeners(listenPump.count());
+    listenAudio.tick(t);
+    if (t - lastListenExpire >= 30000) {
+      lastListenExpire = t;
+      listenRegistry.expire(t);
+    }
     if (statusEvery > 0 && t - lastStatus >= static_cast<uint32_t>(statusEvery) * 1000u) {
       lastStatus = t;
       std::string s = "stato:";

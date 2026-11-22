@@ -5,7 +5,7 @@ CXXFLAGS ?= -std=c++17 -Wall -Wextra -O1 -g -fsanitize=address,undefined -Ilib/v
 
 CORE := $(wildcard lib/voicecore/*.cpp)
 HDRS := $(wildcard lib/voicecore/*.h tests/*.h tools/*.h)
-TESTS := packet stream node button audio output pins battery settings link level tone decode amp profile menu position morse nmea live repeater repeater_link message_store inbox text_picker rx_monitor meshcom_frame text_template choice_picker tx_scheduler sha256 sysop radio_test node_link node_core reflector_core peer_resolve repeater_uplink reflector_config quality_report node_info aprs_gate aprs_client http_mini admin_auth nvs repeater_config repeater_force qrz listeners
+TESTS := packet stream node button audio output pins battery settings link level tone decode amp profile menu position morse nmea live repeater repeater_link message_store inbox text_picker rx_monitor meshcom_frame text_template choice_picker tx_scheduler sha256 sysop radio_test node_link node_core reflector_core peer_resolve repeater_uplink reflector_config quality_report node_info aprs_gate aprs_client http_mini admin_auth nvs repeater_config repeater_force qrz listeners listen_config
 
 .PHONY: test test-page test-py lcr_decode lcr_live codec_compare pdf clean vlnode vlreflector reflector-smoke
 test: $(addprefix build/test_,$(TESTS))
@@ -44,12 +44,14 @@ TLS_FLAGS := $(shell pkg-config --exists openssl 2>/dev/null && echo "-DVL_TLS $
 build/tlsflags: tlsflags-stamp
 	@mkdir -p build
 	@echo '$(TLS_FLAGS)' | cmp -s - $@ || echo '$(TLS_FLAGS)' > $@
-build/vlreflector: tools/vlreflector.cpp $(CORE) $(HDRS) build/tlsflags
+# Il Codec2 serve al reflector per l'ascolto dal web (tools/listen_audio.h): si compila una volta in build/libcodec2.a (solo un compilatore C).
+build/vlreflector: tools/vlreflector.cpp $(CORE) $(HDRS) build/tlsflags build/libcodec2.a
 	@mkdir -p build
-	$(CXX) -std=c++17 -Wall -Wextra -O1 -pthread -Ilib/voicecore -Itools -o $@ $< $(CORE) $(TLS_FLAGS)
+	$(CXX) -std=c++17 -Wall -Wextra -O1 -pthread -Ilib/voicecore -Itools -Ithird_party/esp32_codec2-1.0.7/src -o $@ $< $(CORE) $(TLS_FLAGS) build/libcodec2.a -lm
 
 reflector-smoke: build/vlreflector build/vlnode
 	tests/reflector_smoke.sh
+	tests/listen_smoke.sh
 
 # Rigenera docs/formato-pacchetto.pdf dal codice (serve reportlab: pip install reportlab).
 pdf:
@@ -71,6 +73,13 @@ CODEC2_SRC := codec2.c codec2_fft.c kiss_fft.c kiss_fftr.c lpc.c lsp.c nlp.c pac
   codebooklspmelvq.c codebookmel.c codebooknewamp1.c codebooknewamp1_energy.c codebooknewamp2.c codebooknewamp2_energy.c \
   dump.c mpdecode_core.c phi0.c golay23.c
 codec_compare: build/codec_compare
+
+CODEC2_OBJS := $(patsubst %.c,build/codec2/%.o,$(CODEC2_SRC))
+build/codec2/%.o: $(CODEC2_DIR)/%.c
+	@mkdir -p build/codec2
+	$(CC) -O2 -w -I$(CODEC2_DIR) -c -o $@ $<
+build/libcodec2.a: $(CODEC2_OBJS)
+	ar rcs $@ $^
 
 build/codec_compare: tools/codec_compare.c $(addprefix $(CODEC2_DIR)/,$(CODEC2_SRC))
 	@mkdir -p build
