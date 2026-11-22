@@ -7,6 +7,8 @@
 #pragma once
 
 #include <condition_variable>
+#include <cstdio>
+#include <ctime>
 #include <deque>
 #include <functional>
 #include <mutex>
@@ -142,10 +144,23 @@ class ListenService {
     head = "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\nX-Audio-Format: pcm-s16le-8000-mono\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n";
     return id;
   }
+  // Lo storico degli ascolti finiti: in memoria gli ultimi 100 (per la pagina di amministrazione) e, se c'e' il file, una riga per ascolto
+  // ("2026-11-22 20:31:07;IU5HJU;125 s;chiuso dal browser o dalla rete"). Nessun indirizzo di rete, nessuna email.
+  void setHistoryFile(const std::string& path) {
+    std::lock_guard<std::mutex> l(m_);
+    historyPath_ = path;
+  }
   void streamEnded(uint32_t id) {
-    const std::string call = reg_.callsignOf(id);
+    std::string call;
+    uint32_t since = 0;
+    bool kicked = false;
+    const bool known = reg_.openInfo(id, call, since, kicked);
     reg_.stopListening(id);
-    if (!call.empty()) log("[ascolto] " + call + ": ascolto finito");
+    if (!known) return;
+    const uint32_t secs = (clock_() - since) / 1000;
+    const std::string why = kicked ? "tolto dal sysop o sessione scaduta" : "chiuso dal browser o dalla rete";
+    log("[ascolto] " + call + ": ascolto finito dopo " + std::to_string(secs) + " s (" + why + ")");
+    record(call, secs, why);
   }
 
   // ---- pagina di amministrazione ----
@@ -161,6 +176,15 @@ class ListenService {
     for (const auto& l : reg_.listening()) {
       o << (first ? "" : ",") << "{\"call\":\"" << jsonEscape(l.callsign) << "\",\"sinceS\":" << (now - l.sinceMs) / 1000 << "}";
       first = false;
+    }
+    o << "],\"history\":[";
+    {
+      std::lock_guard<std::mutex> l(m_);
+      first = true;
+      for (const auto& h : history_) {
+        o << (first ? "" : ",") << "{\"at\":\"" << jsonEscape(h.at) << "\",\"call\":\"" << jsonEscape(h.call) << "\",\"durationS\":" << h.durationS << ",\"end\":\"" << jsonEscape(h.why) << "\"}";
+        first = false;
+      }
     }
     o << "],\"pending\":" << reg_.pending() << ",\"sessions\":" << reg_.sessions() << ",\"requested\":" << s.requested << ",\"confirmed\":" << s.confirmed << ",\"tooSoon\":" << s.tooSoon
       << ",\"busy\":" << s.busy << ",\"started\":" << s.started << ",\"refused\":" << s.refused << ",\"last\":\"" << jsonEscape(lastResult()) << "\"}";
@@ -181,6 +205,29 @@ class ListenService {
   struct Job {
     std::string callsign, email, source;
   };
+  struct HistoryItem {
+    std::string at, call, why;
+    uint32_t durationS;
+  };
+  void record(const std::string& call, uint32_t secs, const std::string& why) {
+    const time_t start = time(nullptr) - static_cast<time_t>(secs);
+    char ts[32];
+    strftime(ts, sizeof(ts), "%Y-%m-%d %H:%M:%S", localtime(&start));
+    std::string path;
+    {
+      std::lock_guard<std::mutex> l(m_);
+      history_.push_front(HistoryItem{ts, call, why, secs});
+      while (history_.size() > 100) history_.pop_back();
+      path = historyPath_;
+    }
+    if (!path.empty()) {
+      FILE* f = fopen(path.c_str(), "a");
+      if (f) {
+        fprintf(f, "%s;%s;%u s;%s\n", ts, call.c_str(), static_cast<unsigned>(secs), why.c_str());
+        fclose(f);
+      }
+    }
+  }
   static std::string fail(int status, const std::string& msg) {
     return httpResponse(status, "application/json; charset=utf-8", "{\"ok\":false,\"error\":\"" + jsonEscape(msg) + "\"}", "Cache-Control: no-store\r\n");
   }
@@ -243,6 +290,8 @@ class ListenService {
   mutable std::mutex m_;
   std::condition_variable cv_;
   std::deque<Job> jobs_;
+  std::deque<HistoryItem> history_;
+  std::string historyPath_;
   ListenConfig cfg_;
   std::string last_;
   bool stop_ = false;

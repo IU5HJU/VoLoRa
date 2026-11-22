@@ -168,6 +168,16 @@ size_t ListenerRegistry::kick(const std::string& callsign) {
   return n;
 }
 
+bool ListenerRegistry::openInfo(uint32_t id, std::string& callsign, uint32_t& sinceMs, bool& kicked) const {
+  std::lock_guard<std::mutex> l(m_);
+  auto it = open_.find(id);
+  if (it == open_.end()) return false;
+  callsign = it->second.callsign;
+  sinceMs = it->second.sinceMs;
+  kicked = it->second.kicked || sessions_.find(it->second.ticket) == sessions_.end();
+  return true;
+}
+
 std::string ListenerRegistry::callsignOf(uint32_t id) const {
   std::lock_guard<std::mutex> l(m_);
   auto it = open_.find(id);

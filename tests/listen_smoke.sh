@@ -139,6 +139,9 @@ pub -H "X-Ascolto: $TICKET" $P/ascolto/api/stato | grep -q '"valid":false' && ok
 [ "$(code -H "X-Ascolto: $TICKET" $P/ascolto/audio)" = "403" ] && ok "dopo il kick l'audio e' negato (403)" || ko "kick: audio ancora aperto"
 check "$D/ref.out" "IU5HJU: tolto dal sysop" "il registro dice che e' stato tolto"
 check "$D/ref.out" "IU5HJU: ascolto finito" "il registro dice che l'ascolto e' finito"
+grep -q "^[0-9-]* [0-9:]*;IU5HJU;[0-9]* s;tolto dal sysop" "$D/ascolto-storico.log" && ok "lo storico su file ha la riga con nominativo, durata e motivo" || ko "storico su file"
+api http://127.0.0.1:$WEB/api/ascolto | grep -q '"history":\[{"at":"[0-9-]* [0-9:]*","call":"IU5HJU","durationS":[0-9]*,"end":"tolto dal sysop' && ok "lo storico e' nella pagina di amministrazione" || ko "storico in amministrazione"
+grep -qE '@|[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' "$D/ascolto-storico.log" && ko "lo storico ha indirizzi" || ok "lo storico non ha email ne' indirizzi di rete"
 wait $CURL 2>/dev/null
 wait $NODE 2>/dev/null
 # lo spegnimento dalla pagina di amministrazione

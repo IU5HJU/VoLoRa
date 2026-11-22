@@ -144,6 +144,9 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
       <div id="listenMsg" class="msg" hidden></div>
       <p class="muted" id="listenStats"></p>
       <div id="listenList"></div>
+      <h2>Ultimi ascolti dal web</h2>
+      <p class="muted">Gli ultimi 100 ascolti finiti (nominativo, inizio, durata, come &egrave; finito). Anche nel file <code>ascolto-storico.log</code>, accanto al file dei client; non ci sono indirizzi di rete n&eacute; email.</p>
+      <div id="listenHistory" class="muted">Nessuno ancora.</div>
     </section>
 
     <section>
@@ -291,6 +294,17 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
   function listenStatus(a) {
     $('listenOff').hidden = a.tls;
     $('listenStats').textContent = (a.enabled ? 'Acceso. ' : 'Spento. ') + 'Richieste ' + a.requested + ', link aperti ' + a.confirmed + ', rifiutate per troppe richieste ' + a.tooSoon + ', ascolti iniziati ' + a.started + ', ascolti rifiutati ' + a.refused + '. In attesa del link ' + a.pending + ', sessioni valide ' + a.sessions + '.' + (a.last ? ' Ultimo esito: ' + a.last + '.' : '');
+    const hb = $('listenHistory'); hb.textContent = '';
+    if (!a.history.length) hb.textContent = 'Nessuno ancora.';
+    else {
+      const tbl = document.createElement('table'); tbl.style.width = '100%';
+      a.history.forEach((h) => {
+        const tr = document.createElement('tr');
+        [h.at, h.call, h.durationS + ' s', h.end].forEach((v, i) => { const td = document.createElement('td'); td.textContent = v; if (i === 1) td.style.fontWeight = '700'; tr.appendChild(td); });
+        tbl.appendChild(tr);
+      });
+      hb.appendChild(tbl);
+    }
     const box = $('listenList'); box.textContent = '';
     if (!a.listeners.length) { box.appendChild(document.createTextNode('Nessuno in ascolto adesso.')); return; }
     box.appendChild(document.createTextNode('In ascolto adesso: '));

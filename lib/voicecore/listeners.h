@@ -58,6 +58,8 @@ class ListenerRegistry {
   std::vector<Listening> listening() const;
   // Il sysop toglie un nominativo: i suoi biglietti non valgono piu' e i suoi flussi vanno chiusi (isKicked). Ritorna quanti ascolti e sessioni ha toccato.
   size_t kick(const std::string& callsign);
+  // Un ascolto aperto: nominativo, da quando e se e' stato tolto (o il biglietto e' scaduto). false se non c'e'.
+  bool openInfo(uint32_t id, std::string& callsign, uint32_t& sinceMs, bool& kicked) const;
   std::string callsignOf(uint32_t id) const;  // il nominativo di un ascolto aperto (anche se e' stato tolto), "" se non c'e'
   bool isKicked(uint32_t id) const;  // il flusso con questo numero va chiuso (kick, oppure il biglietto e' scaduto)
   // Toglie richieste e sessioni scadute. Si chiama ogni tanto.

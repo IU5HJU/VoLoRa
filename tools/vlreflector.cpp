@@ -832,6 +832,7 @@ int main(int argc, char** argv) {
   ListenService listenSvc(listenRegistry, logLine, nowMs);
   adm.listen = &listenSvc;
   if (adm.listenPath.empty()) adm.listenPath = dirOf(adm.configPath) + "/ascolto.conf";
+  listenSvc.setHistoryFile(dirOf(adm.listenPath) + "/ascolto-storico.log");
   {
     std::string lerr;
     if (!adm.reloadListen(lerr)) logLine("[ascolto] " + adm.listenPath + ": " + lerr + " (l'ascolto resta spento finche' non lo correggi dalla pagina di amministrazione)");
