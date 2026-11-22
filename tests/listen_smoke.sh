@@ -92,7 +92,7 @@ CODE=${LINK##*=}
 grep -q "segreta" "$D/mail.out" && ko "la password di QRZ e' nell'email" || ok "la password di QRZ non e' nell'email"
 grep -q "^login sysop ok" "$D/qrz.req" && grep -q "^lookup IU5HJU" "$D/qrz.req" && ok "QRZ e' stato interrogato con l'account del sysop" || ko "richieste a QRZ"
 [ "$(grep -c '^login sysop ok' "$D/qrz.req")" = "1" ] && ok "la chiave di sessione di QRZ si riusa (un solo accesso riuscito)" || ko "accessi a QRZ: $(grep -c '^login sysop ok' "$D/qrz.req")"
-check "$D/ref.out" "IU5HJU: email con il link di conferma inviata" "il registro dice che l'email e' partita"
+waitfor "$D/ref.out" "IU5HJU: email con il link di conferma inviata" 15 && ok "il registro dice che l'email e' partita" || ko "il registro dice che l'email e' partita"
 grep -q "@" "$D/ref.out" && ko "indirizzi email nel registro" || ok "il registro non ha indirizzi email"
 
 # la conferma e il biglietto
@@ -137,8 +137,8 @@ sleep 1
 pub $P/status.json | grep -q '"listeners":\[\]' && ok "dopo il kick non compare piu' sulla pagina pubblica" || ko "kick: ancora elencato"
 pub -H "X-Ascolto: $TICKET" $P/ascolto/api/stato | grep -q '"valid":false' && ok "dopo il kick il biglietto non vale piu'" || ko "kick: biglietto ancora valido"
 [ "$(code -H "X-Ascolto: $TICKET" $P/ascolto/audio)" = "403" ] && ok "dopo il kick l'audio e' negato (403)" || ko "kick: audio ancora aperto"
-check "$D/ref.out" "IU5HJU: tolto dal sysop" "il registro dice che e' stato tolto"
-check "$D/ref.out" "IU5HJU: ascolto finito" "il registro dice che l'ascolto e' finito"
+waitfor "$D/ref.out" "IU5HJU: tolto dal sysop" 15 && ok "il registro dice che e' stato tolto" || ko "il registro dice che e' stato tolto"
+waitfor "$D/ref.out" "IU5HJU: ascolto finito" 15 && ok "il registro dice che l'ascolto e' finito" || ko "il registro dice che l'ascolto e' finito"
 grep -q "^[0-9-]* [0-9:]*;IU5HJU;[0-9]* s;tolto dal sysop" "$D/ascolto-storico.log" && ok "lo storico su file ha la riga con nominativo, durata e motivo" || ko "storico su file"
 api http://127.0.0.1:$WEB/api/ascolto | grep -q '"history":\[{"at":"[0-9-]* [0-9:]*","call":"IU5HJU","durationS":[0-9]*,"end":"tolto dal sysop' && ok "lo storico e' nella pagina di amministrazione" || ko "storico in amministrazione"
 grep -qE '@|[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+' "$D/ascolto-storico.log" && ko "lo storico ha indirizzi" || ok "lo storico non ha email ne' indirizzi di rete"
