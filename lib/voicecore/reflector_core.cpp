@@ -211,6 +211,8 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
   const bool up = c->link->linkUp(nowMs);
   if (up != c->wasUp) {
     c->wasUp = up;
+    if (up) c->upSinceMs = nowMs;
+    else c->downs++;
     say(std::string("client ") + c->name + (up ? " collegato" : " non piu' collegato"));
   }
 
@@ -335,6 +337,7 @@ void ReflectorCore::tick(uint32_t nowMs) {
       c->haveEndpoint = false;
       if (c->wasUp) {
         c->wasUp = false;
+        c->downs++;
         say(std::string("client ") + c->name + " non risponde piu'");
       }
       continue;
@@ -345,6 +348,8 @@ void ReflectorCore::tick(uint32_t nowMs) {
     const bool up = c->link->linkUp(nowMs);
     if (up != c->wasUp) {
       c->wasUp = up;
+      if (up) c->upSinceMs = nowMs;
+      else c->downs++;
       say(std::string("client ") + c->name + (up ? " collegato" : " non piu' collegato"));
     }
   }
@@ -389,6 +394,8 @@ std::vector<ReflectorCore::ClientInfo> ReflectorCore::clients(uint32_t nowMs) co
     i.endpoint = c->endpoint;
     i.up = c->link->linkUp(nowMs);
     i.lastSeenMs = c->lastSeenMs;
+    i.upSinceMs = c->upSinceMs;
+    i.downs = c->downs;
     i.packetsIn = c->packetsIn;
     i.packetsOut = c->packetsOut;
     i.lostDatagrams = c->link->stats().lost;

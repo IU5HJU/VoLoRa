@@ -126,6 +126,8 @@ check "$D/ref.out" "distanza IZ5IOF: la stazione non manda la posizione" "il reg
 echo "$PD" | grep -q '"callsign":"IZ5IOF","agoS":[0-9]*,"durationS":[0-9]*,"distanceKm":null,"distanceWhy":"station"' && ok "la pagina pubblica dice cosa manca (la stazione)" || ko "distanceWhy"
 echo "$PD" | grep -q '"callsign":"IK5XXX","agoS":[0-9]*,"durationS":[0-9]*,"distanceKm":0.0,' && ok "una stazione nello stesso punto del nodo: distanza 0,0 km" || ko "distanza zero"
 echo "$PD" | grep -q '"callsign":"IZ5IOF","agoS":[0-9]*,"durationS":[0-9]*,"distanceKm":null,' && ok "una stazione che non trasmette la posizione: nessuna distanza" || ko "distanza senza posizione"
+echo "$PD" | grep -q '"clients":\[{"call":"[A-Za-z0-9 ]*","label":"[^"]*","seenS":[0-9]*,"upS":[0-9]*,"lostDg":[0-9]*,"rxDg":[0-9]*,"downs":[0-9]*}' && ok "la pagina pubblica ha la salute del collegamento dei nodi (da quanto e' su, persi in rete, interruzioni)" || ko "salute dei nodi: $PD"
+echo "$PD" | grep -q '"callsign":"IK5DIS",.*"radioLevel":[0-9],"netTotal":[0-9]*,"gapMaxMs":[0-9]*}' && ok "la pagina pubblica ha il totale dei datagrammi e la pausa piu' lunga fra due pacchetti" || ko "netTotal e gapMaxMs: $PD"
 api "http://127.0.0.1:$WEB/api/status" | grep -q '"callsign":"IK5DIS","agoMs":[0-9]*,"durationMs":[0-9]*,"packets":[0-9]*,"distanceKm":11.1,' && ok "anche la pagina di amministrazione ha la distanza" || ko "distanza in amministrazione"
 # un nodo con un nome che non e' un nominativo valido non si pubblica, e il registro dice perche'
 runvl "$D/ref.out" "\[aprs\] nodo nodoA: nominativo non valido per APRS" "$D/n2.out" --id 2 --peer-id 1000 --key 000102030405060708090a0b0c0d0e0f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4

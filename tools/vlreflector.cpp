@@ -420,7 +420,7 @@ struct Admin {
       const int ei = findEntryById(entries, c.id);
       o << (first ? "" : ",") << "{\"id\":" << c.id << ",\"name\":\"" << jsonEscape(c.name) << "\",\"call\":\"" << jsonEscape(ei >= 0 ? entries[static_cast<size_t>(ei)].name : c.name)
         << "\",\"label\":\"" << jsonEscape(ei >= 0 ? entries[static_cast<size_t>(ei)].label : "") << "\",\"up\":" << (c.up ? "true" : "false") << ",\"seenMs\":" << seen
-        << ",\"in\":" << c.packetsIn << ",\"out\":" << c.packetsOut << ",\"lostDg\":" << c.lostDatagrams << ",\"rxDg\":" << c.rxDatagrams << ",\"endpoint\":\"" << (c.haveEndpoint ? jsonEscape(epText(c.endpoint)) : "") << "\",\"public\":\"" << (c.declaredAddr ? ipText(c.declaredAddr) : "") << "\",\"nodeIp\":\"" << jsonEscape(nodeIpText(c)) << "\"}";
+        << ",\"in\":" << c.packetsIn << ",\"out\":" << c.packetsOut << ",\"lostDg\":" << c.lostDatagrams << ",\"rxDg\":" << c.rxDatagrams << ",\"endpoint\":\"" << (c.haveEndpoint ? jsonEscape(epText(c.endpoint)) : "") << "\",\"public\":\"" << (c.declaredAddr ? ipText(c.declaredAddr) : "") << "\",\"nodeIp\":\"" << jsonEscape(nodeIpText(c)) << "\",\"upS\":" << (c.up ? (now - c.upSinceMs) / 1000 : 0) << ",\"downs\":" << c.downs << "}";
       first = false;
     }
     o << "],\"recent\":[";
@@ -450,7 +450,8 @@ struct Admin {
       if (!c.up) continue;  // chi e' registrato ma non collegato non si pubblica
       const int ei = findEntryById(entries, c.id);
       o << (first ? "" : ",") << "{\"call\":\"" << jsonEscape(ei >= 0 ? entries[static_cast<size_t>(ei)].name : c.name) << "\",\"label\":\""
-        << jsonEscape(ei >= 0 ? entries[static_cast<size_t>(ei)].label : "") << "\",\"seenS\":" << (now - c.lastSeenMs) / 1000 << "}";
+        << jsonEscape(ei >= 0 ? entries[static_cast<size_t>(ei)].label : "") << "\",\"seenS\":" << (now - c.lastSeenMs) / 1000 << ",\"upS\":" << (now - c.upSinceMs) / 1000
+        << ",\"lostDg\":" << c.lostDatagrams << ",\"rxDg\":" << c.rxDatagrams << ",\"downs\":" << c.downs << "}";
       first = false;
     }
     o << "],\"recent\":[";
@@ -488,6 +489,9 @@ struct Admin {
     if (j.radioLoss || (r.haveReport && r.report.snrValid && j.marginAvgDb < 1.5f)) level = 2;
     else if (j.radioWeak) level = 1;
     o << ",\"netLost\":" << (j.haveRadio ? j.netLost : j.netGaps) << ",\"verdict\":\"" << verdictCode(j.verdict) << "\",\"radioLevel\":" << level;
+    // per la rete: su quanti datagrammi si sono persi quelli persi, e la pausa piu' lunga fra due pacchetti (i singhiozzi della rete, anche quando poi arrivano)
+    const unsigned netLost = j.haveRadio ? j.netLost : j.netGaps;
+    o << ",\"netTotal\":" << (r.netPackets + netLost) << ",\"gapMaxMs\":" << r.gapMaxMs;
     return o.str();
   }
   // La porta pubblica risponde solo a GET della pagina e di /status.json: nessun altro indirizzo, nessun comando.

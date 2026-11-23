@@ -84,6 +84,9 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
       var t = el("div", undefined, "call"); t.appendChild(el("span", "", "dot")); t.appendChild(document.createTextNode(x.call)); b.appendChild(t);
       if (x.label) b.appendChild(el("div", x.label, "row"));
       b.appendChild(el("div", "Ultimo contatto " + x.seenS + " s fa", "muted small row"));
+      b.appendChild(el("div", "Collegato da " + dur(x.upS) + (x.downs ? " - interruzioni del collegamento: " + x.downs : ""), "muted small"));
+      var tot = x.rxDg + x.lostDg;
+      if (tot) b.appendChild(el("div", "Persi in rete: " + x.lostDg + " su " + tot + (x.lostDg ? " (" + n1(100 * x.lostDg / tot) + "%)" : ""), "muted small" + (x.lostDg && x.lostDg * 20 > tot ? " v-net" : "")));
       c.appendChild(b);
     });
     var lz = (d.listen && d.listen.listeners) || [];
@@ -110,7 +113,8 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
           b.appendChild(el("div", "RSSI " + q.rssi + " dBm", "dt"));
           b.appendChild(el("div", "Persi in radio: " + q.radioLost + " su " + q.radioTotal, "dt"));
         } else b.appendChild(el("div", "Rapporto del nodo non ricevuto", "dt muted"));
-        b.appendChild(el("div", "Persi in rete: " + x.netLost, "dt"));
+        b.appendChild(el("div", "Persi in rete: " + x.netLost + (x.netTotal ? " su " + x.netTotal + (x.netLost ? " (" + n1(100 * x.netLost / x.netTotal) + "%)" : "") : ""), "dt"));
+        if (x.gapMaxMs) b.appendChild(el("div", "Pausa più lunga fra due pacchetti: " + n1(x.gapMaxMs / 1000) + " s", "dt"));
         b.appendChild(el("div", "Distanza dal nodo", "lab"));
         if (x.distanceKm !== null && x.distanceKm !== undefined) b.appendChild(el("div", km(x.distanceKm), "verdict"));
         else b.appendChild(el("div", x.distanceWhy === "node" ? "Non disponibile: il nodo non ha dichiarato la sua posizione" : "Non disponibile: la stazione non trasmette la posizione", "dt muted"));

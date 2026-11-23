@@ -607,6 +607,32 @@ static void testDistance() {
 }
 
 
+// La salute del collegamento di un nodo: da quando e' su senza interruzioni, e quante volte e' caduto (per vedere chi ha una rete cattiva)
+static ReflectorCore::ClientInfo infoOf(Rig& r, uint32_t id) {
+  for (const auto& i : r.core.clients(r.t))
+    if (i.id == id) return i;
+  return ReflectorCore::ClientInfo();
+}
+static void testLinkHealth() {
+  Rig r;
+  r.add(1, 0xA1, 5001);
+  r.run(4000);
+  ReflectorCore::ClientInfo i = infoOf(r, 1);
+  CHECK(i.up && i.downs == 0 && i.upSinceMs > 0 && i.upSinceMs <= r.t);
+  const uint32_t up1 = i.upSinceMs;
+  r.run(3000);
+  CHECK(infoOf(r, 1).upSinceMs == up1);  // finche' non cade, la data non cambia
+  for (int k = 0; k < 70; k++) {  // il nodo tace per 70 s
+    r.t += 1000;
+    r.core.tick(r.t);
+  }
+  i = infoOf(r, 1);
+  CHECK(!i.up && i.downs == 1);
+  r.run(6000);  // torna
+  i = infoOf(r, 1);
+  CHECK(i.up && i.downs == 1 && i.upSinceMs > up1);
+}
+
 // Datagramma spedito dal client e perso per strada: il contatore avanza ma il reflector non lo vede mai
 static void skipPacket(Client& c, const Packet& p) {
   uint8_t wire[kMaxWireBytes], out[kNodeMaxDatagram];
@@ -766,6 +792,7 @@ int main() {
   testPublicIpv4();
   testPositionHandler();
   testDistance();
+  testLinkHealth();
   testQualityReports();
   testQualityReportWhileActive();
   TEST_MAIN_END();

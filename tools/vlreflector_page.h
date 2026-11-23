@@ -186,6 +186,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     return r.json();
   }
   const fmtAgo = (ms) => ms < 0 ? 'mai' : ms < 60000 ? Math.round(ms / 1000) + ' s fa' : ms < 3600000 ? Math.round(ms / 60000) + ' min fa' : Math.round(ms / 3600000) + ' h fa';
+  const fmtUp = (s) => s < 60 ? s + ' s' : s < 3600 ? Math.floor(s / 60) + ' min' : Math.floor(s / 3600) + ' h ' + Math.floor(s % 3600 / 60) + ' min';
   const fmtDur = (ms) => (ms / 1000).toFixed(1) + ' s';
   const fmtKm = (km) => km === null || km === undefined ? 'n.d.' : km < 0.1 ? '<0,1 km' : km < 100 ? km.toFixed(1).replace('.', ',') + ' km' : Math.round(km) + ' km';
   function cellx(tr, text, cls, title) { const td = cell(tr, text); if (cls) td.className = cls; if (title) td.title = title; return td; }
@@ -209,7 +210,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
       const tr = document.createElement('tr');
       const n = cell(tr, c.name); n.style.fontWeight = '600';
       cell(tr, c.id);
-      const st = document.createElement('td'); const d = document.createElement('span'); d.className = 'dot' + (c.up ? ' up' : ''); st.appendChild(d); st.appendChild(document.createTextNode(c.up ? 'collegato' : 'non collegato')); tr.appendChild(st);
+      const st = document.createElement('td'); const d = document.createElement('span'); d.className = 'dot' + (c.up ? ' up' : ''); st.appendChild(d); st.appendChild(document.createTextNode((c.up ? 'collegato da ' + fmtUp(c.upS) : 'non collegato') + (c.downs ? ' · ' + c.downs + (c.downs === 1 ? ' interruzione' : ' interruzioni') : ''))); tr.appendChild(st);
       cell(tr, fmtAgo(c.seenMs)); cell(tr, fmtLoss(c.lostDg, c.rxDg)); cellx(tr, c.in + ' / ' + c.out, 'hm'); cell(tr, c.nodeIp || '-');
       const act = document.createElement('td'); const del = document.createElement('button'); del.className = 'danger'; del.textContent = 'Togli';
       del.addEventListener('click', async () => { if (!confirm('Togliere ' + c.name + ' (id ' + c.id + ')? Il nodo non potrà più collegarsi.')) return; await api('/api/remove', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'id=' + c.id }); refresh(); });

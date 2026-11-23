@@ -105,6 +105,8 @@ class ReflectorCore {
     uint32_t packetsOut = 0;
     uint32_t lostDatagrams = 0; // datagrammi del nodo persi per strada da quando e' collegato (buchi nel contatore)
     uint32_t rxDatagrams = 0;   // datagrammi del nodo accettati
+    uint32_t upSinceMs = 0;     // da quando il collegamento e' attivo senza interruzioni (valido se up)
+    uint32_t downs = 0;         // quante volte il collegamento e' caduto da quando il reflector e' acceso (nodo che non risponde piu' o collegamento non piu' attivo)
     uint32_t declaredAddr = 0;  // l'indirizzo pubblico che il nodo dice di avere (a<<24|b<<16|c<<8|d), 0 = non lo dice; non verificato
   };
 
@@ -164,6 +166,7 @@ class ReflectorCore {
     uint32_t lastSeenMs = 0;
     bool wasUp = false;
     uint32_t packetsIn = 0, packetsOut = 0;
+    uint32_t upSinceMs = 0, downs = 0;
     NodeInfo info;  // l'ultima presentazione del nodo (posizione fissa, frequenza...); valid = false se non si e' presentato
   };
   Client* find(uint32_t id);
