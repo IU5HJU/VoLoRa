@@ -938,3 +938,14 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Causa probabile:** il nodo chiamava `WiFi.begin()` una volta sola all'avvio e si affidava a `setAutoReconnect(true)`, che con un hotspot che sparisce e torna (canale diverso, stato bloccato dopo molti tentativi senza trovare la rete) puo' non ripartire. Non c'era nessun tentativo da programma.
 - **Correzione scritta (stesso giorno):** il nodo e la RX del ripetitore richiamano `WiFi.begin()` da soli ogni 20 s dopo la perdita (ogni 4 tentativi anche con la radio Wi-Fi spenta e riaccesa), senza mai smettere; la seriale scrive il motivo della disconnessione e i tentativi. Provato **sul PC** (logica in `lib/voicecore/wifi_retry.h`, 419 controlli, compreso il giro dell'orologio a 32 bit); il firmware si compila nel Build.
 - **Non ancora provato su scheda:** da fare con l'hotspot spento per qualche minuto e riacceso (vedi [banco-nodo.md](banco-nodo.md)).
+
+### 23/11/2026, QSO vero con il nodo su rete LTE (qualita' del collegamento sulla pagina pubblica, foto)
+
+- **Prova (riferita, con tre foto della pagina pubblica):** QSO vero fra IU5HJU, con il nodo collegato a Internet da una **rete LTE**, e IK5PWR (nodo su rete fissa).
+- **Cosa mostra la pagina:**
+  - IU5HJU, 29 s: **Problemi di rete**, SNR 10,0 dB (margine +17,5), RSSI -34 dBm, persi in radio 0 su 80, **persi in rete 14**.
+  - IU5HJU, 27 s: **Segnale radio debole e problemi di rete**, SNR 8,2 dB (margine +15,8), RSSI -42 dBm, persi in radio 1 su 74, persi in rete 3.
+  - IU5HJU, 17 s: **Segnale radio debole**, SNR 10,0 dB (margine +17,5), RSSI -32 dBm, persi in radio 1 su 49, persi in rete 0.
+  - IK5PWR, 29 s: **Buono**, SNR 9,8 dB (margine +17,2), RSSI -61 dBm, persi in radio 0 su 80, persi in rete 0.
+- **Cosa dice:** la distinzione radio/rete funziona dal vivo: il nodo su LTE perde pacchetti **in rete** (3 e 14 datagrammi) mentre quello su rete fissa non ne perde, e il segnale radio e' ottimo per tutti (margine oltre +15 dB). E' esattamente il caso per cui e' stata fatta: chi vede «problemi di rete» sa che non e' colpa della radio.
+- **Da rivedere (osservazione):** con RSSI -32/-42 dBm (segnale fortissimo, la stazione e' vicina al nodo) e margine +15,8/+17,5 dB, un solo pacchetto perso in radio su 49-74 fa scrivere «**Segnale radio debole**», che contraddice i numeri sotto: il giudizio «debole» scatta per qualunque pacchetto perso o errore CRC, anche con un margine enorme. Con un segnale cosi' forte la perdita puo' venire da un sovraccarico del ricevitore o dal primo pacchetto della trasmissione, non da un segnale debole. Proposta: con margine buono e pacchetti persi scrivere «Pacchetti persi in radio» (e riservare «Segnale radio debole» al margine basso).
