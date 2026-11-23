@@ -931,3 +931,10 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Esito (riferito):** «L'ascolto da web funziona»; **la voce e' piacevole e molto simile, o addirittura migliore, di quella della radio.** **Telefono Android** (browser non indicato).
 - **Correzioni fatte durante la prova:** dopo un rifiuto di QRZ il reflector non riprova per 15 minuti con lo stesso account (per non allungare il blocco); tetto globale di 60 richieste all'ora; storico di chi ha ascoltato (tabella nella pagina di amministrazione e file `ascolto-storico.log`).
 - **Non ancora verificato:** iPhone e Safari, piu' ascoltatori insieme, il limite dei 2 flussi per nominativo, la scadenza del biglietto, il «Togli» su un ascolto vero.
+
+### 23/11/2026, T-Beam SX1278 in modo Nodo con l'hotspot di un telefono (difetto segnalato: il Wi-Fi non si ristabilisce)
+
+- **Segnalazione (riferita):** con il nodo collegato al Wi-Fi dell'hotspot del telefono, allontanando il telefono la connessione cade; al ritorno in portata la T-Beam **non si riconnette**.
+- **Causa probabile:** il nodo chiamava `WiFi.begin()` una volta sola all'avvio e si affidava a `setAutoReconnect(true)`, che con un hotspot che sparisce e torna (canale diverso, stato bloccato dopo molti tentativi senza trovare la rete) puo' non ripartire. Non c'era nessun tentativo da programma.
+- **Correzione scritta (stesso giorno):** il nodo e la RX del ripetitore richiamano `WiFi.begin()` da soli ogni 20 s dopo la perdita (ogni 4 tentativi anche con la radio Wi-Fi spenta e riaccesa), senza mai smettere; la seriale scrive il motivo della disconnessione e i tentativi. Provato **sul PC** (logica in `lib/voicecore/wifi_retry.h`, 419 controlli, compreso il giro dell'orologio a 32 bit); il firmware si compila nel Build.
+- **Non ancora provato su scheda:** da fare con l'hotspot spento per qualche minuto e riacceso (vedi [banco-nodo.md](banco-nodo.md)).

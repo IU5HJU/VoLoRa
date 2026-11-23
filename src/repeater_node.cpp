@@ -30,6 +30,7 @@
 #include <ESPmDNS.h>
 
 #include "wifi_config.h"
+#include "wifi_retry.h"
 
 // ---- Riconoscimento della RX sul filo seriale (variante C del quinto filo) ----
 namespace {
@@ -187,6 +188,29 @@ class UsbConsole {
   for (;;) delay(1000);
 }
 
+// Il Wi-Fi del nodo e della RX: l'ultimo motivo per cui e' caduto (lo scrive l'evento, che gira in un altro task) e il richiamo di WiFi.begin() quando la
+// riconnessione automatica non basta (23/11/2026: con l'hotspot di un telefono che si allontana e torna in portata la scheda non si ricollegava;
+// logica in lib/voicecore/wifi_retry.h). Con 'hard' si spegne e riaccende anche la radio Wi-Fi.
+volatile uint8_t gWifiLastReason = 0;
+void wifiWatchReasons() {
+  WiFi.onEvent([](WiFiEvent_t ev, WiFiEventInfo_t info) {
+    if (ev == ARDUINO_EVENT_WIFI_STA_DISCONNECTED) gWifiLastReason = info.wifi_sta_disconnected.reason;
+  });
+}
+void wifiRetryNow(const lcr::Settings& s, bool hard) {
+  if (hard) {
+    WiFi.disconnect(true, false);
+    WiFi.mode(WIFI_OFF);
+    delay(100);
+    WiFi.mode(WIFI_STA);
+    WiFi.setSleep(false);
+    WiFi.setAutoReconnect(true);
+  } else {
+    WiFi.disconnect(false, false);
+  }
+  WiFi.begin(s.wifiSsid, s.wifiPass[0] ? s.wifiPass : nullptr);
+}
+
 [[noreturn]] void stopWithError(UiNotifier& ui, const char* what, int code) {
   Serial.printf("[ripetitore] ERRORE: %s (%d)\n", what, code);
   ui.showMessage("ERRORE", what);
@@ -279,6 +303,7 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
     WiFi.mode(WIFI_STA);
     WiFi.setSleep(false);
     WiFi.setAutoReconnect(true);
+    wifiWatchReasons();
     WiFi.begin(settings.wifiSsid, settings.wifiPass[0] ? settings.wifiPass : nullptr);
     net.begin(settings.nodePort, settings.peerIp, settings.peerPort);
     lcr::NodeLink::Config lc;
@@ -297,8 +322,19 @@ void logLink(const char* who, const char* other, bool ok, const lcr::LinkParser&
   char lanIp[20] = {0}, lanPw[16] = {0};  // per il display: indirizzo e password della pagina
   uint32_t lanInfoUntilMs = 0;             // finche' non scade, il display mostra come raggiungere la pagina
 
+  lcr::WifiRetrySchedule wifiRetry;
   for (;;) {
     const uint32_t now = millis();
+
+    // Wi-Fi caduto e non piu' tornato (per esempio l'hotspot di un telefono che si e' allontanato): si richiama WiFi.begin() da programma
+    if (netOn) {
+      const lcr::WifiRetryAction wa = wifiRetry.tick(now, WiFi.status() == WL_CONNECTED);
+      if (wa != lcr::WifiRetryAction::None) {
+        Serial.printf("[ripetitore] RX: Wi-Fi ancora giu' (tentativo %u, ultimo motivo %u): riprovo%s\n", wifiRetry.attempts(), static_cast<unsigned>(gWifiLastReason),
+                      wa == lcr::WifiRetryAction::HardReset ? " dopo aver riavviato la radio Wi-Fi" : "");
+        wifiRetryNow(settings, wa == lcr::WifiRetryAction::HardReset);
+      }
+    }
 
     // 0. rete di casa: appena il Wi-Fi e' connesso parte la pagina di configurazione, con utente e password (la password si legge sulla seriale)
     if (netOn && !lanStarted && WiFi.status() == WL_CONNECTED) {
@@ -790,7 +826,9 @@ static void formatNodeStat(char* out, size_t cap, const lcr::NodeCore& core, uin
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);  // niente risparmio energetico: aggiungerebbe ritardo
   WiFi.setAutoReconnect(true);
+  wifiWatchReasons();
   WiFi.begin(settings.wifiSsid, settings.wifiPass[0] ? settings.wifiPass : nullptr);
+  lcr::WifiRetrySchedule wifiRetry;
 
   static NetUdp net;
   net.begin(settings.nodePort, settings.peerIp, settings.peerPort);  // peerIp: indirizzo o nome (il reflector); un solo socket per ricevere e spedire
@@ -864,7 +902,18 @@ static void formatNodeStat(char* out, size_t cap, const lcr::NodeCore& core, uin
     const bool wifi = WiFi.status() == WL_CONNECTED;
     const bool up = core.linkUp(now);
     net.setLinkUp(up);
-    if (wifi != wasWifi) Serial.printf("[nodo] Wi-Fi %s\n", wifi ? WiFi.localIP().toString().c_str() : "perso");
+    if (wifi != wasWifi) {
+      if (wifi) Serial.printf("[nodo] Wi-Fi %s\n", WiFi.localIP().toString().c_str());
+      else Serial.printf("[nodo] Wi-Fi perso (motivo %u)\n", static_cast<unsigned>(gWifiLastReason));
+    }
+    {  // Wi-Fi caduto e non piu' tornato (per esempio l'hotspot di un telefono che si e' allontanato): si richiama WiFi.begin() da programma
+      const lcr::WifiRetryAction wa = wifiRetry.tick(now, wifi);
+      if (wa != lcr::WifiRetryAction::None) {
+        Serial.printf("[nodo] Wi-Fi ancora giu' (tentativo %u, ultimo motivo %u): riprovo%s\n", wifiRetry.attempts(), static_cast<unsigned>(gWifiLastReason),
+                      wa == lcr::WifiRetryAction::HardReset ? " dopo aver riavviato la radio Wi-Fi" : "");
+        wifiRetryNow(settings, wa == lcr::WifiRetryAction::HardReset);
+      }
+    }
     if (up != wasUp) Serial.printf("[nodo] collegamento con l'altro nodo %s\n", up ? "attivo" : "giu'");
     wasWifi = wifi;
     wasUp = up;
