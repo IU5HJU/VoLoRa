@@ -48,6 +48,7 @@
 #include "listen_audio.h"
 #include "listen_service.h"
 #include "listen_stream.h"
+#include "node_info_cache.h"
 #include "packet.h"
 #include "reflector_config.h"
 #include "reflector_core.h"
@@ -821,8 +822,16 @@ int main(int argc, char** argv) {
     if (!adm.reloadAprs(aerr)) logLine("[aprs] " + adm.aprsPath + ": " + aerr + " (il collegamento resta spento finche' non lo correggi dalla pagina di amministrazione)");
   }
   std::map<uint32_t, uint32_t> nodeFreqKhz;  // client -> frequenza che il nodo ha dichiarato (per il commento APRS delle stazioni che passano da lui)
-  core.setNodeInfoHandler([&aprsGate, &adm, &nodeFreqKhz](uint32_t clientId, const NodeInfo& info, uint32_t now) {
+  // Le presentazioni dei nodi si ricordano in nodi.cache (accanto al file dei client): dopo un riavvio la distanza dal nodo non aspetta fino a 10 minuti
+  std::map<uint32_t, NodeInfo> nodeCache;
+  const std::string nodeCachePath = dirOf(adm.configPath) + "/nodi.cache";
+  core.setNodeInfoHandler([&aprsGate, &adm, &nodeFreqKhz, &nodeCache, nodeCachePath](uint32_t clientId, const NodeInfo& info, uint32_t now) {
     nodeFreqKhz[clientId] = info.freqKhz;
+    auto old = nodeCache.find(clientId);
+    if (old == nodeCache.end() || !sameNodeInfo(old->second, info)) {  // si riscrive solo se qualcosa e' cambiato
+      nodeCache[clientId] = info;
+      if (!writeFileAtomic(nodeCachePath, formatNodeInfoCache(nodeCache))) logLine("non riesco a scrivere " + nodeCachePath + " (permessi della cartella?): dopo un riavvio la distanza dal nodo aspettera' la sua presentazione");
+    }
     const int ei = findEntryById(adm.entries, clientId);
     if (ei < 0) return;
     aprsGate.onNodeInfo(adm.entries[static_cast<size_t>(ei)].name, info, adm.publicName, now);
@@ -868,6 +877,21 @@ int main(int argc, char** argv) {
       return 2;
     }
     adm.apply(list);
+  }
+  {  // le presentazioni ricordate: tornano ai nodi che ci sono ancora, per la distanza dal nodo e per la frequenza nel commento APRS delle stazioni
+    std::string ctext;
+    if (readFile(nodeCachePath, ctext)) {
+      size_t skipped = 0;
+      parseNodeInfoCache(ctext, nodeCache, skipped);
+      size_t restored = 0;
+      for (const auto& e : nodeCache) {
+        if (core.restoreNodeInfo(e.first, e.second)) {
+          nodeFreqKhz[e.first] = e.second.freqKhz;
+          restored++;
+        }
+      }
+      logLine("presentazioni dei nodi ricordate: " + std::to_string(restored) + " (" + nodeCachePath + ")" + (skipped ? ", " + std::to_string(skipped) + " righe non valide saltate" : ""));
+    }
   }
 
   // Pagina di amministrazione

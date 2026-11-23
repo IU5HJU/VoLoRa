@@ -574,6 +574,32 @@ static void testDistance() {
   CHECK(r.core.recentTalks()[0].clientId == 2u && !r.core.distanceKm(r.core.recentTalks()[0], km));
   sendNodeInfo(r, b, 437696000, 108807000);  // B proprio dove sta la stazione: distanza zero
   CHECK(r.core.distanceKm(r.core.recentTalks()[0], km) && km < 0.05);
+  // Dopo un riavvio del reflector le presentazioni si rimettono ai nodi che non si sono ancora presentate (nodi.cache): la distanza c'e' subito
+  {
+    Rig q;
+    Client& n = q.add(1, 0xA1, 5001);
+    q.run(4000);
+    NodeInfo saved;
+    saved.valid = true;
+    saved.latE7 = 438696000;
+    saved.lonE7 = 108807000;
+    saved.freqKhz = 433475;
+    saved.mode = 4;
+    saved.ssid = 11;
+    CHECK(!q.core.restoreNodeInfo(99, saved));  // un nodo che non c'e'
+    NodeInfo none;
+    CHECK(!q.core.restoreNodeInfo(1, none));  // una presentazione non valida
+    CHECK(q.core.restoreNodeInfo(1, saved));
+    Packet sp = voicePacket(4, 0x0500, 0, kFlagStart | kFlagEnd, "IU5HJU");
+    sp.position = here;
+    q.sendPacket(n, sp);
+    double d = -1;
+    CHECK(q.core.distanceKm(q.core.recentTalks()[0], d) && d > 11.0 && d < 11.3);
+    // una presentazione vera, arrivata dopo, vale piu' di quella ricordata
+    sendNodeInfo(q, n, 437696000, 108807000);
+    CHECK(q.core.distanceKm(q.core.recentTalks()[0], d) && d < 0.05);
+    CHECK(!q.core.restoreNodeInfo(1, saved));  // ormai si e' presentato: la ricordata non la sostituisce
+  }
   // Posizioni non valide: nessuna distanza (una trasmissione costruita a mano)
   ReflectorCore::Talk bad = r.core.recentTalks()[0];
   bad.stationLatE7 = 900000001;

@@ -355,6 +355,13 @@ void ReflectorCore::tick(uint32_t nowMs) {
   }
 }
 
+bool ReflectorCore::restoreNodeInfo(uint32_t id, const NodeInfo& info) {
+  Client* c = find(id);
+  if (!c || c->info.valid || !info.valid) return false;
+  c->info = info;
+  return true;
+}
+
 ReflectorCore::DistanceStatus ReflectorCore::distanceStatus(const Talk& t, double& km) const {
   if (!t.haveStationPos) return DistanceStatus::NoStationPosition;
   const Client* c = find(t.clientId);

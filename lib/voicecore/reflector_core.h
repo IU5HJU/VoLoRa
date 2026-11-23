@@ -130,6 +130,9 @@ class ReflectorCore {
   // La distanza in km fra la stazione di una trasmissione (posizione del pacchetto di inizio) e il nodo da cui e' passata (la posizione fissa che il nodo ha
   // dichiarato con la sua presentazione, node_info.h). false se manca una delle due: la stazione non manda la posizione, o il nodo non si e' presentato.
   bool distanceKm(const Talk& t, double& km) const;
+  // Rimette una presentazione ricordata (nodi.cache) a un client che c'e' ma non si e' ancora presentato dopo l'avvio: serve per la distanza dal nodo. Non fa
+  // chiamare il gestore delle presentazioni (la mappa APRS aspetta la presentazione vera). false se il client non c'e' o si e' gia' presentato.
+  bool restoreNodeInfo(uint32_t id, const NodeInfo& info);
   // Come distanceKm, ma dice anche perche' manca: la stazione non ha mandato la posizione, oppure il nodo non ha (ancora) dichiarato la sua.
   enum class DistanceStatus { Ok, NoStationPosition, NodeNotDeclared, Invalid };
   DistanceStatus distanceStatus(const Talk& t, double& km) const;
