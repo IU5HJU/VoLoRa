@@ -81,7 +81,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     <section>
       <h2>Ultime trasmissioni</h2>
       <div class="tw"><table>
-        <thead><tr><th>Quando</th><th>Nominativo</th><th class="hm">Da</th><th class="hm">Modo</th><th class="hm">Durata</th><th class="hm">Pacchetti</th><th title="Con che segnale il nodo ha ricevuto l'utente in radio: SNR (medio e minimo) e RSSI. Lo dice il nodo con il rapporto di ricezione a fine trasmissione (firmware del nodo aggiornato).">Segnale al nodo</th><th title="Pacchetti radio che il nodo non ha ricevuto (buchi nella sequenza) su quelli che dovevano arrivare, e errori CRC visti">Persi in radio</th><th title="Pacchetti che il nodo ha mandato e al reflector non sono arrivati, e datagrammi persi fra nodo e reflector mentre la trasmissione passava">Persi in rete</th><th title="radio: segnale al limite o pacchetti persi in radio; rete: pacchetti persi fra nodo e reflector; buona: niente di rilevante; n.d.: il nodo non manda il rapporto">Giudizio</th></tr></thead>
+        <thead><tr><th>Quando</th><th>Nominativo</th><th title="Distanza fra la stazione e il nodo da cui passa: posizione trasmessa dalla stazione (pos acceso) e posizione fissa dichiarata dal nodo (NODESSID e QTH).">Distanza</th><th class="hm">Da</th><th class="hm">Modo</th><th class="hm">Durata</th><th class="hm">Pacchetti</th><th title="Con che segnale il nodo ha ricevuto l'utente in radio: SNR (medio e minimo) e RSSI. Lo dice il nodo con il rapporto di ricezione a fine trasmissione (firmware del nodo aggiornato).">Segnale al nodo</th><th title="Pacchetti radio che il nodo non ha ricevuto (buchi nella sequenza) su quelli che dovevano arrivare, e errori CRC visti">Persi in radio</th><th title="Pacchetti che il nodo ha mandato e al reflector non sono arrivati, e datagrammi persi fra nodo e reflector mentre la trasmissione passava">Persi in rete</th><th title="radio: segnale al limite o pacchetti persi in radio; rete: pacchetti persi fra nodo e reflector; buona: niente di rilevante; n.d.: il nodo non manda il rapporto">Giudizio</th></tr></thead>
         <tbody id="recent"></tbody>
       </table></div>
       <p class="muted" id="recentEmpty">Ancora nessuna.</p>
@@ -187,6 +187,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
   }
   const fmtAgo = (ms) => ms < 0 ? 'mai' : ms < 60000 ? Math.round(ms / 1000) + ' s fa' : ms < 3600000 ? Math.round(ms / 60000) + ' min fa' : Math.round(ms / 3600000) + ' h fa';
   const fmtDur = (ms) => (ms / 1000).toFixed(1) + ' s';
+  const fmtKm = (km) => km === null || km === undefined ? 'n.d.' : km < 0.1 ? '<0,1 km' : km < 100 ? km.toFixed(1).replace('.', ',') + ' km' : Math.round(km) + ' km';
   function cellx(tr, text, cls, title) { const td = cell(tr, text); if (cls) td.className = cls; if (title) td.title = title; return td; }
   const fmtLoss = (lost, rx) => (rx + lost) ? lost + ' su ' + (rx + lost) + (lost ? ' (' + (100 * lost / (rx + lost)).toFixed(1) + '%)' : '') : '-';
   function cell(tr, text) { const td = document.createElement('td'); td.textContent = esc(text); tr.appendChild(td); return td; }
@@ -201,7 +202,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
       now.className = 'live';
       now.innerHTML = '';
       const b = document.createElement('span'); b.className = 'big'; b.textContent = '● ' + s.talking.callsign; now.appendChild(b);
-      const m = document.createElement('span'); m.className = 'muted'; m.textContent = 'da ' + s.talking.client + ', ' + fmtDur(s.talking.durationMs) + ', ' + s.talking.packets + ' pacchetti'; now.appendChild(m);
+      const m = document.createElement('span'); m.className = 'muted'; m.textContent = 'da ' + s.talking.client + ', ' + fmtDur(s.talking.durationMs) + ', ' + s.talking.packets + ' pacchetti, distanza dal nodo ' + fmtKm(s.talking.distanceKm); now.appendChild(m);
     } else { now.className = ''; now.innerHTML = '<span class="big">Nessuno</span>'; }
     const tb = $('clients'); tb.innerHTML = '';
     for (const c of s.clients) {
@@ -219,7 +220,8 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     const rb = $('recent'); rb.innerHTML = '';
     for (const t of s.recent) {
       const tr = document.createElement('tr');
-      cell(tr, fmtAgo(t.agoMs)); cell(tr, t.callsign); cellx(tr, t.client, 'hm');
+      cell(tr, fmtAgo(t.agoMs)); cell(tr, t.callsign); cellx(tr, fmtKm(t.distanceKm), t.distanceKm === null ? 'v-nd' : '');
+      cellx(tr, t.client, 'hm');
       cellx(tr, t.mode, 'hm'); cellx(tr, fmtDur(t.durationMs), 'hm'); cellx(tr, t.packets, 'hm');
       const r = t.radio, n = t.net;
       if (r) {

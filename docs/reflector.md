@@ -81,7 +81,7 @@ build/vlreflector --tls-check                                                (di
 Con `--web 8080` il reflector serve una pagina (senza librerie esterne) con:
 - **In trasmissione adesso**: il nominativo di chi trasmette e da quale nodo arriva;
 - **Collegati**: ogni nodo in elenco con stato (collegato o no), da quanto non si fa sentire, pacchetti ricevuti e inoltrati, indirizzo visto dal server e **indirizzo pubblico dichiarato dal nodo** (vedi sotto), datagrammi persi in rete, e "Togli";
-- **Ultime trasmissioni**: le ultime 20, con nominativo, nodo di provenienza, **modo**, durata, pacchetti e la **qualità** (segnale al nodo, pacchetti persi in radio e in rete, giudizio: vedi [Qualità dei collegamenti](#qualità-dei-collegamenti-radio-o-rete));
+- **Ultime trasmissioni**: le ultime 20, con nominativo, nodo di provenienza, la **distanza dal nodo**, **modo**, durata, pacchetti e la **qualità** (segnale al nodo, pacchetti persi in radio e in rete, giudizio: vedi [Qualità dei collegamenti](#qualità-dei-collegamenti-radio-o-rete));
 - **Registra un nodo**: vedi [Registrare un nodo e le chiavi](#registrare-un-nodo-e-le-chiavi);
 - **Server APRS**: indirizzo del server, nominativo e password APRS-IS, intervallo, simbolo e, facoltativo, l'**indirizzo della pagina pubblica** (vedi [Server APRS](#server-aprs-posizione-delle-stazioni)), con lo stato del collegamento e i conteggi.
 
@@ -135,11 +135,21 @@ Il collegamento sta sulla **scheda RX**: le stesse impostazioni del nodo (`WIFIS
 ## La pagina pubblica (per i colleghi)
 
 Come per le altre reti, chiunque può guardare chi è collegato e chi trasmette. `--public-web 8081` apre una **seconda porta** (di base su tutti gli indirizzi, `--public-bind` per cambiare) con una pagina ridotta, **di sola lettura**, pensata per il **telefono**: a blocchi, con il nominativo grande in alto a sinistra e le informazioni subito sotto, caratteri grandi, tema chiaro o scuro come il telefono:
-- **In trasmissione adesso** (nominativo e durata), **stazioni collegate** (nominativo, nome del nodo, secondi dall'ultimo contatto) e **ultime 10 trasmissioni**, aggiornate ogni 3 secondi. Ogni trasmissione ha la **qualità del collegamento** (vedi [Qualità dei collegamenti](#qualità-dei-collegamenti-radio-o-rete)): il giudizio (**Buono**; **Segnale radio debole** o **al limite**; **Problemi di rete**; i due insieme; **Non disponibile** se il nodo non manda il rapporto) e sotto, in piccolo, SNR e margine, RSSI, pacchetti persi in radio e persi in rete. «Debole» = pacchetti persi o errori CRC in radio, oppure margine medio sotto 1,5 dB; «al limite» = margine medio sotto 4 dB o minimo sotto 1,5 dB;
+- **In trasmissione adesso** (nominativo, durata e distanza dal nodo), **stazioni collegate** (nominativo, nome del nodo, secondi dall'ultimo contatto) e **ultime 10 trasmissioni**, aggiornate ogni 3 secondi. Ogni trasmissione ha la **qualità del collegamento** (vedi [Qualità dei collegamenti](#qualità-dei-collegamenti-radio-o-rete)): il giudizio (**Buono**; **Segnale radio debole** o **al limite**; **Problemi di rete**; i due insieme; **Non disponibile** se il nodo non manda il rapporto) e sotto, in piccolo, SNR e margine, RSSI, pacchetti persi in radio e persi in rete. «Debole» = pacchetti persi o errori CRC in radio, oppure margine medio sotto 1,5 dB; «al limite» = margine medio sotto 4 dB o minimo sotto 1,5 dB;
 - **non c'è** nessun token, nessuna chiave, nessun indirizzo IP, nessun id dei nodi, nessun contatore, nessun comando: l'unico indirizzo oltre alla pagina è `/status.json` con gli stessi dati, e tutto il resto risponde 404 (anche con il token di amministrazione) e solo GET è accettato (le altre richieste: 405);
 - le stazioni **registrate ma non collegate non compaiono**: si vede solo chi è collegato in questo momento, così un collega controlla se il suo nodo è davvero collegato.
 
 In HTTP semplice si attiva aggiungendo `--public-web 8081` all'`ExecStart` e inoltrando nel router la porta TCP 8081 (la sola porta della pagina pubblica: **mai la 8080 di amministrazione**); l'indirizzo da dare ai colleghi è `http://indirizzo-del-server:8081/`. **Meglio in HTTPS**, come descritto qui sotto: l'indirizzo diventa per esempio `https://reflector.example.org/` e la porta 8081 non serve più.
+
+### La distanza dal nodo
+
+Su ogni trasmissione, sia nella pagina pubblica sia in quella di amministrazione (in trasmissione adesso e fra le ultime), si vede la **distanza in chilometri fra la stazione che trasmette e il nodo da cui passa**, calcolata sulla sfera terrestre (un decimale sotto i 100 km, per esempio `11,1 km`). Nella pagina pubblica sta sotto il nominativo, insieme alla qualità del collegamento.
+
+- **Posizione della stazione:** quella che la stazione manda già nel pacchetto di inizio della voce, solo se sulla scheda ha acceso `pos` e ha una posizione (QTH fisso oppure GPS). Con un GPS vale la posizione **al momento in cui comincia la trasmissione**, quindi per una stazione in movimento la distanza cambia da una trasmissione all'altra.
+- **Posizione del nodo:** quella fissa che il nodo dichiara al reflector con la sua presentazione (la stessa che serve per la mappa APRS): il nodo (o la RX del ripetitore) deve avere `NODESSID` da 1 a 15 e il `QTH` impostato (vedi [Il nodo sulla mappa APRS](#il-nodo-sulla-mappa-aprs)). **Non serve** che l'invio ad APRS sia acceso: la presentazione arriva al reflector comunque.
+- **Se manca una delle due** la pagina dice che la distanza non è disponibile (nella pagina pubblica: la stazione non trasmette la posizione, o il nodo non ha dichiarato la sua; in quella di amministrazione: `n.d.`).
+- **Riservatezza:** la posizione della stazione viaggia già in chiaro via radio, ma il reflector **non la pubblica sulla sua pagina**: mostra solo la distanza da un nodo fisso, la cui posizione è già quella dichiarata dal sysop. Con una distanza e la posizione pubblica del nodo (per esempio sulla mappa APRS) si disegna un cerchio attorno al nodo, non un punto: chi non vuole nemmeno questo spegne `pos` sulla scheda.
+- La distanza è in linea d'aria e dipende dall'esattezza delle due posizioni (un QTH approssimato dà una distanza approssimata); sotto i 100 metri si legge `meno di 0,1 km`.
 
 ## Pagina pubblica in HTTPS
 

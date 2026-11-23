@@ -68,6 +68,9 @@ class ReflectorCore {
     uint32_t clientId = 0;
     std::string client;      // nome del client (il suo nominativo)
     std::string callsign;    // nominativo di chi trasmetteva (dal pacchetto di inizio), "-" se manca
+    // La posizione della stazione dal pacchetto di inizio (se la manda: sulla scheda 'pos' acceso e una posizione, QTH o GPS): serve a mostrare la distanza dal nodo
+    bool haveStationPos = false;
+    int32_t stationLatE7 = 0, stationLonE7 = 0;
     uint32_t startMs = 0;
     uint32_t lastMs = 0;     // ultimo pacchetto
     uint32_t packets = 0;
@@ -124,6 +127,9 @@ class ReflectorCore {
 
   std::vector<ClientInfo> clients(uint32_t nowMs) const;
   const Stats& stats() const { return stats_; }
+  // La distanza in km fra la stazione di una trasmissione (posizione del pacchetto di inizio) e il nodo da cui e' passata (la posizione fissa che il nodo ha
+  // dichiarato con la sua presentazione, node_info.h). false se manca una delle due: la stazione non manda la posizione, o il nodo non si e' presentato.
+  bool distanceKm(const Talk& t, double& km) const;
   // Chi sta parlando adesso (0 = nessuno).
   uint32_t talker(uint32_t nowMs) const { return talking_ && nowMs - talkLastMs_ <= kTalkHangMs ? talkerId_ : 0; }
   // La trasmissione in corso (active) e le ultime finite, la piu' recente per prima, al massimo kRecentTalks.
@@ -152,6 +158,7 @@ class ReflectorCore {
     uint32_t lastSeenMs = 0;
     bool wasUp = false;
     uint32_t packetsIn = 0, packetsOut = 0;
+    NodeInfo info;  // l'ultima presentazione del nodo (posizione fissa, frequenza...); valid = false se non si e' presentato
   };
   Client* find(uint32_t id);
   const Client* find(uint32_t id) const;

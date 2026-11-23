@@ -63,6 +63,7 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
   function ago(s) { return s < 60 ? s + " s fa" : s < 3600 ? Math.floor(s / 60) + " min fa" : Math.floor(s / 3600) + " h fa"; }
   function dur(s) { return s < 60 ? s + " s" : Math.floor(s / 60) + " min " + (s % 60) + " s"; }
   function n1(v) { return v.toFixed(1).replace(".", ","); }
+  function km(v) { return v === null || v === undefined ? "" : v < 0.1 ? "meno di 0,1 km" : v < 100 ? n1(v) + " km" : Math.round(v) + " km"; }
   function show(d) {
     var r = d.reflector;
     $("info").textContent = (r.name ? r.name + " - " : "") + "modo " + (r.mode === "standard" ? "Standard (voce Codec2 3200)" : "Range (voce Codec2 1200)") + " - acceso da " + dur(r.uptimeS);
@@ -73,6 +74,7 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
       now.appendChild(el("div", "In trasmissione", "lab"));
       now.appendChild(el("div", d.talking.callsign, "call"));
       now.appendChild(el("div", dur(d.talking.durationS), "small"));
+      if (d.talking.distanceKm !== null && d.talking.distanceKm !== undefined) now.appendChild(el("div", "Distanza dal nodo: " + km(d.talking.distanceKm), "small"));
     } else { now.className = "card"; now.appendChild(el("div", "Silenzio", "call muted")); }
     $("count").textContent = "(" + d.clients.length + ")";
     var c = $("clients"); c.textContent = "";
@@ -109,6 +111,9 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
           b.appendChild(el("div", "Persi in radio: " + q.radioLost + " su " + q.radioTotal, "dt"));
         } else b.appendChild(el("div", "Rapporto del nodo non ricevuto", "dt muted"));
         b.appendChild(el("div", "Persi in rete: " + x.netLost, "dt"));
+        b.appendChild(el("div", "Distanza dal nodo", "lab"));
+        if (x.distanceKm !== null && x.distanceKm !== undefined) b.appendChild(el("div", km(x.distanceKm), "verdict"));
+        else b.appendChild(el("div", "Non disponibile: la stazione non trasmette la posizione, o il nodo non ha dichiarato la sua", "dt muted"));
         rc.appendChild(b);
       });
       $("legend").textContent = "Margine: SNR sopra il limite del modo. Persi in radio: pacchetti non ricevuti dal nodo; persi in rete: pacchetti non arrivati dal nodo al reflector.";

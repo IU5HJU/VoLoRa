@@ -222,6 +222,7 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
     NodeInfo info;
     if (up && decodeNodeInfo(rx.payload, rx.payloadLen, info)) {
       stats_.nodeInfos++;
+      c->info = info;
       if (onNodeInfo_) onNodeInfo_(c->id, info, nowMs);
     }
     return;
@@ -271,9 +272,14 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
       cur_.lastMs = nowMs;
       cur_.packets++;
       // Una volta per trasmissione, al primo pacchetto che porta il nominativo (la posizione, se c'e', viaggia insieme a lui)
-      if (onPosition_ && !posReported_ && p.hasCallsign()) {
+      if (!posReported_ && p.hasCallsign()) {
         posReported_ = true;
-        onPosition_(p.callsign, p.position, nowMs, c->id, p.mode);
+        if (p.position.valid) {
+          cur_.haveStationPos = true;
+          cur_.stationLatE7 = p.position.latE7;
+          cur_.stationLonE7 = p.position.lonE7;
+        }
+        if (onPosition_) onPosition_(p.callsign, p.position, nowMs, c->id, p.mode);
       }
     } else if (hanging) {
       talkLastMs_ = nowMs;
@@ -339,6 +345,21 @@ void ReflectorCore::tick(uint32_t nowMs) {
     endTalk();
     say("trasmissione finita (nessun pacchetto)");
   }
+}
+
+bool ReflectorCore::distanceKm(const Talk& t, double& km) const {
+  if (!t.haveStationPos) return false;
+  const Client* c = find(t.clientId);
+  if (!c || !c->info.valid) return false;
+  Position a, b;
+  a.valid = b.valid = true;
+  a.latE7 = t.stationLatE7;
+  a.lonE7 = t.stationLonE7;
+  b.latE7 = c->info.latE7;
+  b.lonE7 = c->info.lonE7;
+  if (!isValidCoordinate(a.latE7, a.lonE7) || !isValidCoordinate(b.latE7, b.lonE7)) return false;
+  km = lcr::distanceKm(a, b);
+  return true;
 }
 
 std::vector<ReflectorCore::ClientInfo> ReflectorCore::clients(uint32_t nowMs) const {

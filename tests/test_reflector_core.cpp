@@ -519,6 +519,66 @@ static void testPositionHandler() {
 }
 
 
+// La distanza fra la stazione e il nodo da cui passa: posizione della stazione dal pacchetto di inizio, posizione fissa del nodo dalla sua presentazione
+static void sendNodeInfo(Rig& r, Client& c, int32_t latE7, int32_t lonE7) {
+  NodeInfo i;
+  i.valid = true;
+  i.latE7 = latE7;
+  i.lonE7 = lonE7;
+  i.freqKhz = 433475;
+  i.mode = 4;
+  i.ssid = 11;
+  uint8_t b[kNodeInfoMaxBytes], out[kNodeMaxDatagram];
+  const size_t n = encodeNodeInfo(i, b, sizeof(b));
+  const size_t k = c.link->makeInfo(b, n, out, sizeof(out));
+  r.core.onDatagram(c.ep, out, k, r.t);
+  r.pump();
+}
+
+static void testDistance() {
+  Rig r;
+  Client& a = r.add(1, 0xA1, 5001);
+  Client& b = r.add(2, 0xB2, 5002);
+  r.run(4000);
+  Position here;
+  here.valid = true;
+  here.latE7 = 437696000;  // 43.7696 N 10.8807 E
+  here.lonE7 = 108807000;
+  // Il nodo A non si e' ancora presentato: nessuna distanza, anche se la stazione manda la posizione
+  Packet s1 = voicePacket(4, 0x0300, 0, kFlagStart | kFlagEnd, "IU5HJU");
+  s1.position = here;
+  r.sendPacket(a, s1);
+  double km = -1;
+  CHECK(!r.core.distanceKm(r.core.recentTalks()[0], km));
+  // Il nodo A si presenta con una posizione fissa 0,1 gradi a nord della stazione: circa 11,1 km
+  sendNodeInfo(r, a, 438696000, 108807000);
+  r.run(4000);
+  Packet s2 = voicePacket(4, 0x0301, 0, kFlagStart, "IU5HJU");
+  s2.position = here;
+  r.sendPacket(a, s2);
+  CHECK(r.core.currentTalk(r.t).haveStationPos);
+  CHECK(r.core.distanceKm(r.core.currentTalk(r.t), km) && km > 11.0 && km < 11.3);  // in corso
+  r.sendPacket(a, voicePacket(4, 0x0301, 1, kFlagEnd));
+  CHECK(r.core.recentTalks()[0].callsign == "IU5HJU" && r.core.distanceKm(r.core.recentTalks()[0], km) && km > 11.0 && km < 11.3);  // finita
+  // Una stazione che non manda la posizione: nessuna distanza
+  r.run(4000);
+  r.sendPacket(a, voicePacket(4, 0x0302, 0, kFlagStart | kFlagEnd, "IK5XXX"));
+  CHECK(!r.core.recentTalks()[0].haveStationPos && !r.core.distanceKm(r.core.recentTalks()[0], km));
+  // La distanza e' dal nodo da cui passa la trasmissione: il nodo B, che non si e' presentato, non da' distanza; la presentazione di A non conta per lui
+  r.run(4000);
+  Packet s3 = voicePacket(4, 0x0400, 0, kFlagStart | kFlagEnd, "IW0XYZ");
+  s3.position = here;
+  r.sendPacket(b, s3);
+  CHECK(r.core.recentTalks()[0].clientId == 2u && !r.core.distanceKm(r.core.recentTalks()[0], km));
+  sendNodeInfo(r, b, 437696000, 108807000);  // B proprio dove sta la stazione: distanza zero
+  CHECK(r.core.distanceKm(r.core.recentTalks()[0], km) && km < 0.05);
+  // Posizioni non valide: nessuna distanza (una trasmissione costruita a mano)
+  ReflectorCore::Talk bad = r.core.recentTalks()[0];
+  bad.stationLatE7 = 900000001;
+  CHECK(!r.core.distanceKm(bad, km));
+}
+
+
 // Datagramma spedito dal client e perso per strada: il contatore avanza ma il reflector non lo vede mai
 static void skipPacket(Client& c, const Packet& p) {
   uint8_t wire[kMaxWireBytes], out[kNodeMaxDatagram];
@@ -677,6 +737,7 @@ int main() {
   testDeclaredAddress();
   testPublicIpv4();
   testPositionHandler();
+  testDistance();
   testQualityReports();
   testQualityReportWhileActive();
   TEST_MAIN_END();

@@ -390,6 +390,15 @@ struct Admin {
     return o.str();
   }
 
+  // La distanza fra la stazione e il nodo da cui passa, come pezzo di JSON: ,"distanceKm":12.3 (un decimale) oppure null se non si puo' dire.
+  std::string distanceJson(const ReflectorCore::Talk& t) const {
+    double km = 0;
+    if (!core->distanceKm(t, km)) return ",\"distanceKm\":null";
+    char b[40];
+    snprintf(b, sizeof(b), ",\"distanceKm\":%.1f", km);
+    return b;
+  }
+
   std::string statusJson(uint32_t now) const {
     std::ostringstream o;
     o << "{\"reflector\":{\"id\":" << reflectorId << ",\"voiceMode\":" << voiceMode << ",\"port\":" << port << ",\"uptimeS\":" << (now - startMs) / 1000
@@ -397,7 +406,7 @@ struct Admin {
     const ReflectorCore::Talk t = core->currentTalk(now);
     if (t.active && core->talker(now) != 0) {
       o << "\"talking\":{\"client\":\"" << jsonEscape(t.client) << "\",\"callsign\":\"" << jsonEscape(t.callsign) << "\",\"durationMs\":" << (t.lastMs - t.startMs)
-        << ",\"packets\":" << t.packets << "},";
+        << ",\"packets\":" << t.packets << distanceJson(t) << "},";
     } else {
       o << "\"talking\":null,";
     }
@@ -415,7 +424,7 @@ struct Admin {
     first = true;
     for (const auto& r : core->recentTalks()) {
       o << (first ? "" : ",") << "{\"client\":\"" << jsonEscape(r.client) << "\",\"callsign\":\"" << jsonEscape(r.callsign) << "\",\"agoMs\":" << (now - r.lastMs)
-        << ",\"durationMs\":" << (r.lastMs - r.startMs) << ",\"packets\":" << r.packets << talkQualityJson(r) << "}";
+        << ",\"durationMs\":" << (r.lastMs - r.startMs) << ",\"packets\":" << r.packets << distanceJson(r) << talkQualityJson(r) << "}";
       first = false;
     }
     const ReflectorCore::Stats& s = core->stats();
@@ -430,7 +439,7 @@ struct Admin {
     o << "{\"reflector\":{\"name\":\"" << jsonEscape(publicName) << "\",\"mode\":\"" << (voiceMode == 4 ? "standard" : "range") << "\",\"uptimeS\":" << (now - startMs) / 1000
       << "},";
     const ReflectorCore::Talk t = core->currentTalk(now);
-    if (t.active && core->talker(now) != 0) o << "\"talking\":{\"callsign\":\"" << jsonEscape(t.callsign) << "\",\"durationS\":" << (t.lastMs - t.startMs) / 1000 << "},";
+    if (t.active && core->talker(now) != 0) o << "\"talking\":{\"callsign\":\"" << jsonEscape(t.callsign) << "\",\"durationS\":" << (t.lastMs - t.startMs) / 1000 << distanceJson(t) << "},";
     else o << "\"talking\":null,";
     o << "\"clients\":[";
     bool first = true;
@@ -447,7 +456,7 @@ struct Admin {
     for (const auto& r : core->recentTalks()) {
       if (n++ >= 10) break;
       o << (first ? "" : ",") << "{\"callsign\":\"" << jsonEscape(r.callsign) << "\",\"agoS\":" << (now - r.lastMs) / 1000 << ",\"durationS\":" << (r.lastMs - r.startMs) / 1000
-        << publicQualityJson(r) << "}";
+        << distanceJson(r) << publicQualityJson(r) << "}";
       first = false;
     }
     o << "]" << (listen ? listen->publicStatusPart(now) : std::string()) << "}";
