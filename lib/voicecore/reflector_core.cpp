@@ -280,6 +280,14 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
           cur_.stationLonE7 = p.position.lonE7;
         }
         if (onPosition_) onPosition_(p.callsign, p.position, nowMs, c->id, p.mode);
+        // Una riga per trasmissione: la distanza dal nodo, o perche' non si puo' dire (la stazione non manda la posizione, o il nodo non si e' presentato)
+        double km = 0;
+        const DistanceStatus ds = distanceStatus(cur_, km);
+        char db[320];
+        if (ds == DistanceStatus::Ok) snprintf(db, sizeof(db), "distanza %s dal nodo %s: %.1f km", p.callsign, c->name.c_str(), km);
+        else if (ds == DistanceStatus::NoStationPosition) snprintf(db, sizeof(db), "distanza %s: la stazione non manda la posizione (sulla scheda servono pos acceso e QTH o GPS)", p.callsign);
+        else snprintf(db, sizeof(db), "distanza %s: il nodo %s non ha dichiarato la sua posizione (servono NODESSID e QTH sul nodo; la presentazione arriva dopo il collegamento e poi ogni 10 minuti)", p.callsign, c->name.c_str());
+        say(db);
       }
     } else if (hanging) {
       talkLastMs_ = nowMs;
@@ -347,20 +355,22 @@ void ReflectorCore::tick(uint32_t nowMs) {
   }
 }
 
-bool ReflectorCore::distanceKm(const Talk& t, double& km) const {
-  if (!t.haveStationPos) return false;
+ReflectorCore::DistanceStatus ReflectorCore::distanceStatus(const Talk& t, double& km) const {
+  if (!t.haveStationPos) return DistanceStatus::NoStationPosition;
   const Client* c = find(t.clientId);
-  if (!c || !c->info.valid) return false;
+  if (!c || !c->info.valid) return DistanceStatus::NodeNotDeclared;
   Position a, b;
   a.valid = b.valid = true;
   a.latE7 = t.stationLatE7;
   a.lonE7 = t.stationLonE7;
   b.latE7 = c->info.latE7;
   b.lonE7 = c->info.lonE7;
-  if (!isValidCoordinate(a.latE7, a.lonE7) || !isValidCoordinate(b.latE7, b.lonE7)) return false;
+  if (!isValidCoordinate(a.latE7, a.lonE7) || !isValidCoordinate(b.latE7, b.lonE7)) return DistanceStatus::Invalid;
   km = lcr::distanceKm(a, b);
-  return true;
+  return DistanceStatus::Ok;
 }
+
+bool ReflectorCore::distanceKm(const Talk& t, double& km) const { return distanceStatus(t, km) == DistanceStatus::Ok; }
 
 std::vector<ReflectorCore::ClientInfo> ReflectorCore::clients(uint32_t nowMs) const {
   std::vector<ClientInfo> v;

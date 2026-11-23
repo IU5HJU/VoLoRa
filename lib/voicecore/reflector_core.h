@@ -130,6 +130,9 @@ class ReflectorCore {
   // La distanza in km fra la stazione di una trasmissione (posizione del pacchetto di inizio) e il nodo da cui e' passata (la posizione fissa che il nodo ha
   // dichiarato con la sua presentazione, node_info.h). false se manca una delle due: la stazione non manda la posizione, o il nodo non si e' presentato.
   bool distanceKm(const Talk& t, double& km) const;
+  // Come distanceKm, ma dice anche perche' manca: la stazione non ha mandato la posizione, oppure il nodo non ha (ancora) dichiarato la sua.
+  enum class DistanceStatus { Ok, NoStationPosition, NodeNotDeclared, Invalid };
+  DistanceStatus distanceStatus(const Talk& t, double& km) const;
   // Chi sta parlando adesso (0 = nessuno).
   uint32_t talker(uint32_t nowMs) const { return talking_ && nowMs - talkLastMs_ <= kTalkHangMs ? talkerId_ : 0; }
   // La trasmissione in corso (active) e le ultime finite, la piu' recente per prima, al massimo kRecentTalks.

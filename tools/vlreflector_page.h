@@ -220,7 +220,7 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     const rb = $('recent'); rb.innerHTML = '';
     for (const t of s.recent) {
       const tr = document.createElement('tr');
-      cell(tr, fmtAgo(t.agoMs)); cell(tr, t.callsign); cellx(tr, fmtKm(t.distanceKm), t.distanceKm === null ? 'v-nd' : '');
+      cell(tr, fmtAgo(t.agoMs)); cell(tr, t.callsign); cellx(tr, fmtKm(t.distanceKm), t.distanceKm === null ? 'v-nd' : '', t.distanceKm === null ? (t.distanceWhy === 'station' ? 'La stazione non ha mandato la posizione (sulla scheda servono pos acceso e QTH o GPS).' : 'Il nodo non ha dichiarato la sua posizione (servono NODESSID e QTH sul nodo).') : '');
       cellx(tr, t.client, 'hm');
       cellx(tr, t.mode, 'hm'); cellx(tr, fmtDur(t.durationMs), 'hm'); cellx(tr, t.packets, 'hm');
       const r = t.radio, n = t.net;

@@ -113,7 +113,7 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
         b.appendChild(el("div", "Persi in rete: " + x.netLost, "dt"));
         b.appendChild(el("div", "Distanza dal nodo", "lab"));
         if (x.distanceKm !== null && x.distanceKm !== undefined) b.appendChild(el("div", km(x.distanceKm), "verdict"));
-        else b.appendChild(el("div", "Non disponibile: la stazione non trasmette la posizione, o il nodo non ha dichiarato la sua", "dt muted"));
+        else b.appendChild(el("div", x.distanceWhy === "node" ? "Non disponibile: il nodo non ha dichiarato la sua posizione" : "Non disponibile: la stazione non trasmette la posizione", "dt muted"));
         rc.appendChild(b);
       });
       $("legend").textContent = "Margine: SNR sopra il limite del modo. Persi in radio: pacchetti non ricevuti dal nodo; persi in rete: pacchetti non arrivati dal nodo al reflector.";

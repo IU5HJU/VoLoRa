@@ -393,7 +393,9 @@ struct Admin {
   // La distanza fra la stazione e il nodo da cui passa, come pezzo di JSON: ,"distanceKm":12.3 (un decimale) oppure null se non si puo' dire.
   std::string distanceJson(const ReflectorCore::Talk& t) const {
     double km = 0;
-    if (!core->distanceKm(t, km)) return ",\"distanceKm\":null";
+    const ReflectorCore::DistanceStatus ds = core->distanceStatus(t, km);
+    if (ds != ReflectorCore::DistanceStatus::Ok)  // dice anche cosa manca: la stazione o il nodo
+      return std::string(",\"distanceKm\":null,\"distanceWhy\":\"") + (ds == ReflectorCore::DistanceStatus::NoStationPosition ? "station" : "node") + "\"";
     char b[40];
     snprintf(b, sizeof(b), ",\"distanceKm\":%.1f", km);
     return b;

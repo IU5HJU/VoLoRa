@@ -121,6 +121,9 @@ check "$D/aprs.rows" "^IK5XXX>APZVLR,qAR,N0CALL-10:!4346.18NV01052.84E&433.900MH
 runvl "$D/aprs.rows" "^IK5DIS>APZVLR" "$D/n4.out" --id 12 --peer-id 1000 --key 202122232425262728292a2b2c2d2e2f --listen 0 --peer 127.0.0.1:$PORT --info 10 43.7696,10.8807 433900 4 "Antenna 5/8" --send-voice IK5DIS --position 43.8696,10.8807 --frames 20
 PD=$(curl -s -m 5 "http://127.0.0.1:$PUB/status.json")
 echo "$PD" | grep -q '"callsign":"IK5DIS","agoS":[0-9]*,"durationS":[0-9]*,"distanceKm":11.1,' && ok "la pagina pubblica ha la distanza dal nodo (0,1 gradi di latitudine = 11,1 km)" || ko "distanza sulla pagina pubblica: $PD"
+check "$D/ref.out" "distanza IK5DIS dal nodo IU5HJU: 11.1 km" "il registro dice la distanza di ogni trasmissione"
+check "$D/ref.out" "distanza IZ5IOF: la stazione non manda la posizione" "il registro dice perche' la distanza manca (stazione senza posizione)"
+echo "$PD" | grep -q '"callsign":"IZ5IOF","agoS":[0-9]*,"durationS":[0-9]*,"distanceKm":null,"distanceWhy":"station"' && ok "la pagina pubblica dice cosa manca (la stazione)" || ko "distanceWhy"
 echo "$PD" | grep -q '"callsign":"IK5XXX","agoS":[0-9]*,"durationS":[0-9]*,"distanceKm":0.0,' && ok "una stazione nello stesso punto del nodo: distanza 0,0 km" || ko "distanza zero"
 echo "$PD" | grep -q '"callsign":"IZ5IOF","agoS":[0-9]*,"durationS":[0-9]*,"distanceKm":null,' && ok "una stazione che non trasmette la posizione: nessuna distanza" || ko "distanza senza posizione"
 api "http://127.0.0.1:$WEB/api/status" | grep -q '"callsign":"IK5DIS","agoMs":[0-9]*,"durationMs":[0-9]*,"packets":[0-9]*,"distanceKm":11.1,' && ok "anche la pagina di amministrazione ha la distanza" || ko "distanza in amministrazione"
@@ -160,7 +163,7 @@ wait $QP
 sleep 4
 build/vlnode --id 2 --peer-id 1000 --key $KEYA --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 20 --duration 20 > "$D/q3.out" 2>&1 &
 QP=$!
-poll '"recent":\[{"client":"nodoA","callsign":"IZ5IOF","agoMs":[0-9]*,"durationMs":[0-9]*,"packets":[0-9]*,"distanceKm":[0-9.a-z]*,"session":[0-9]*,"mode":"Range 1200","net":{[^}]*},"radio":null,"verdict":"nd","verdictText":"n.d."' 45 && ok "qualita': senza rapporto del nodo il giudizio e' n.d." || ko "qualita': senza rapporto ($SQ) | nodo: $(cat "$D/q3.out")"
+poll '"recent":\[{"client":"nodoA","callsign":"IZ5IOF","agoMs":[0-9]*,"durationMs":[0-9]*,"packets":[0-9]*,"distanceKm":[^}]*"session":[0-9]*,"mode":"Range 1200","net":{[^}]*},"radio":null,"verdict":"nd","verdictText":"n.d."' 45 && ok "qualita': senza rapporto del nodo il giudizio e' n.d." || ko "qualita': senza rapporto ($SQ) | nodo: $(cat "$D/q3.out")"
 wait $QP
 
 # password al posto del token: si sceglie con --set-password e si applica con un reload (SIGHUP)

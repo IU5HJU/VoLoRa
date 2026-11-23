@@ -550,6 +550,7 @@ static void testDistance() {
   r.sendPacket(a, s1);
   double km = -1;
   CHECK(!r.core.distanceKm(r.core.recentTalks()[0], km));
+  CHECK(r.core.distanceStatus(r.core.recentTalks()[0], km) == ReflectorCore::DistanceStatus::NodeNotDeclared);  // la stazione c'e', manca il nodo
   // Il nodo A si presenta con una posizione fissa 0,1 gradi a nord della stazione: circa 11,1 km
   sendNodeInfo(r, a, 438696000, 108807000);
   r.run(4000);
@@ -564,6 +565,7 @@ static void testDistance() {
   r.run(4000);
   r.sendPacket(a, voicePacket(4, 0x0302, 0, kFlagStart | kFlagEnd, "IK5XXX"));
   CHECK(!r.core.recentTalks()[0].haveStationPos && !r.core.distanceKm(r.core.recentTalks()[0], km));
+  CHECK(r.core.distanceStatus(r.core.recentTalks()[0], km) == ReflectorCore::DistanceStatus::NoStationPosition);  // il nodo c'e', manca la stazione
   // La distanza e' dal nodo da cui passa la trasmissione: il nodo B, che non si e' presentato, non da' distanza; la presentazione di A non conta per lui
   r.run(4000);
   Packet s3 = voicePacket(4, 0x0400, 0, kFlagStart | kFlagEnd, "IW0XYZ");
@@ -575,7 +577,7 @@ static void testDistance() {
   // Posizioni non valide: nessuna distanza (una trasmissione costruita a mano)
   ReflectorCore::Talk bad = r.core.recentTalks()[0];
   bad.stationLatE7 = 900000001;
-  CHECK(!r.core.distanceKm(bad, km));
+  CHECK(!r.core.distanceKm(bad, km) && r.core.distanceStatus(bad, km) == ReflectorCore::DistanceStatus::Invalid);
 }
 
 
