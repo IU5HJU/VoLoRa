@@ -29,6 +29,12 @@ const st = {
 };
 const KEYS = ['callsign', 'freq', 'freqmsg', 'freqrange', 'freqdir', 'power', 'volume', 'micfloor', 'profile', 'pos', 'qth', 'gps', 'role', 'freqout'];
 function handle(line) {
+  const rep = handle0(line);
+  if (/^CFG SET /.test(line) && rep.startsWith('CFG OK')) st.rebootPending = true;   // come la scheda: impostazioni salvate ma non ancora in uso
+  if (line === 'CFG REBOOT') st.rebootPending = false;
+  return rep;
+}
+function handle0(line) {
   st.cmds.push(line);
   if (line === 'CFG GET NODESTAT') return st.nodeStat !== null ? st.nodeStat : 'CFG ERR comando sconosciuto';
   if (line === 'CFG GET MONITOR') return 'CFG MONITOR=' + st.monitor;
@@ -91,7 +97,7 @@ function handle(line) {
   ni = /^CFG SET NODETEXT (.+)$/.exec(line);
   if (ni) { st.nodeinfo.text = ni[1] === 'NONE' ? '' : ni[1]; return 'CFG OK nodetext=' + st.nodeinfo.text; }
   const t = line.split(' ');
-  if (t[1] === 'GET') return 'CFG ' + KEYS.map((k) => k + '=' + st.cfg[k]).join(' ') + ' board=' + st.board + ' reboot=0 test=0';
+  if (t[1] === 'GET') return 'CFG ' + KEYS.map((k) => k + '=' + st.cfg[k]).join(' ') + ' board=' + st.board + ' reboot=' + (st.rebootPending ? 1 : 0) + ' test=0';
   if (t[1] === 'SET') {
     const k = t[2].toLowerCase();
     if (k === 'gps' && st.board !== 'tbeam') return 'CFG ERR gps questa scheda non ha il GPS';
@@ -170,6 +176,7 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   check('sysop salvato (nominativo maiuscolo, modo, chiave)', st.sysop.call === 'IU5HJU' && st.sysop.mode === 'on' && st.sysop.key === 'set' && st.sysop.keyHex === gk2, JSON.stringify(st.sysop));
   check('dopo il salvataggio la chiave non si rilegge', (await p.inputValue('#sysopkey')) === '' && /impostata/.test(await p.textContent('#sysopkeyhint')) && (await p.inputValue('#sysopmode')) === 'on');
   const nk = st.cmds.filter((c) => c.startsWith('CFG SET SYSOPKEY')).length;
+  await p.evaluate(() => { const e = document.getElementById('text5'); e.value = 'Prova'; e.dispatchEvent(new Event('input', { bubbles: true })); });   // senza modifiche Salva e' spento: se ne fa una
   await p.click('#save');
   await p.waitForFunction(() => /Salvato/.test(document.getElementById('st').textContent));
   check('chiave lasciata vuota: non cambia', st.cmds.filter((c) => c.startsWith('CFG SET SYSOPKEY')).length === nk && st.sysop.keyHex === gk2);
@@ -296,6 +303,7 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   // Shift: lettura, ordine dei comandi (SHIFT 0 prima di FREQ), rifiuto fuori banda, firmware senza shift
   st.cfg.freq = '440.000'; st.cfg.freqmsg = '440.000'; st.cfg.freqrange = '440.000'; st.shift = -10000;
   await p.reload();
+  await p.waitForFunction(() => /Nessuna modifica|Modifiche salvate/.test(document.getElementById('state').textContent), null, { timeout: 15000 });   // la pagina ha finito di leggere la scheda: da qui in poi le modifiche contano
   await p.waitForFunction(() => document.getElementById('freq').value === '440.000' && !document.getElementById('shiftdir').disabled);
   check('shift letto: - 10.000 MHz', (await p.inputValue('#shiftdir')) === '-' && (await p.inputValue('#shiftmhz')) === '10.000');
   await p.selectOption('#shiftdir', '0');
@@ -313,6 +321,7 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   // dal bordo basso +10 MHz va bene
   st.cfg.freq = '430.000'; st.cfg.freqmsg = '430.000'; st.cfg.freqrange = '430.000'; st.shift = 0;
   await p.reload();
+  await p.waitForFunction(() => /Nessuna modifica|Modifiche salvate/.test(document.getElementById('state').textContent), null, { timeout: 15000 });   // la pagina ha finito di leggere la scheda: da qui in poi le modifiche contano
   await p.waitForFunction(() => document.getElementById('freq').value === '430.000');
   await p.selectOption('#shiftdir', '+'); await p.fill('#shiftmhz', '10');
   await p.click('#save');
@@ -321,18 +330,22 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   // firmware senza shift: campo spento e nessun comando SHIFT
   st.noShift = true; st.cmds.length = 0;
   await p.reload();
+  await p.waitForFunction(() => /Nessuna modifica|Modifiche salvate/.test(document.getElementById('state').textContent), null, { timeout: 15000 });   // la pagina ha finito di leggere la scheda: da qui in poi le modifiche contano
   await p.waitForFunction(() => /letti/.test(document.getElementById('st').textContent), null, { timeout: 15000 });
   check('firmware senza shift: campi spenti', await p.isDisabled('#shiftdir') && await p.isDisabled('#shiftmhz'));
+  { const v = await p.inputValue('#volume'); await p.fill('#volume', v === '7' ? '8' : '7'); }   // senza modifiche Salva e' spento
   await p.click('#save');
   await p.waitForFunction(() => /Salvato|Rifiutato|diversi/.test(document.getElementById('st').textContent));
   check('firmware senza shift: nessun comando SHIFT', !st.cmds.some((c) => c.includes('SHIFT') && c.startsWith('CFG SET')), st.cmds.join('|'));
   st.noShift = false; st.cfg.freq = '433.900'; st.cfg.freqmsg = '433.900'; st.cfg.freqrange = '433.900'; st.shift = 0;
   await p.reload();
+  await p.waitForFunction(() => /Nessuna modifica|Modifiche salvate/.test(document.getElementById('state').textContent), null, { timeout: 15000 });   // la pagina ha finito di leggere la scheda: da qui in poi le modifiche contano
   await p.waitForFunction(() => document.getElementById('freq').value === '433.900');
 
   // Sulla T-Beam il campo GPS compare e il comando parte; il ruolo del ripetitore e' spento (solo T3)
   st.board = 'tbeam';
   await p.reload();
+  await p.waitForFunction(() => /Nessuna modifica|Modifiche salvate/.test(document.getElementById('state').textContent), null, { timeout: 15000 });   // la pagina ha finito di leggere la scheda: da qui in poi le modifiche contano
   await p.waitForFunction(() => !document.getElementById('gpsbox').hidden);
   await p.selectOption('#gps', 'on');
   await p.click('#save');
@@ -377,6 +390,44 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   await q.evaluate(() => nodeStat());
   check('stato del nodo: non compare per una stazione normale', await q.isHidden('#statbox'));
   await q.close();
+
+  // Salva e Riavvia: Salva e' acceso solo se c'e' qualcosa da salvare; Riavvia diventa arancione quando le modifiche salvate aspettano il riavvio
+  st.rebootPending = false;
+  st.cfg.role = 'off';
+  const b = await browser.newPage();
+  await b.goto(url);
+  await b.waitForFunction(() => /Nessuna modifica/.test(document.getElementById('state').textContent), null, { timeout: 15000 });
+  check('pulsanti: appena aperta la pagina Salva e\' spento e dice che non c\'e\' niente da salvare', (await b.isDisabled('#save')) && /nessuna modifica/.test(await b.textContent('#save')) && /Nessuna modifica da salvare/.test(await b.textContent('#state')));
+  check('pulsanti: Riavvia e\' un pulsante normale (non arancione) e sempre attivo', (await b.isEnabled('#reboot')) && !(await b.locator('#reboot').evaluate((e) => e.classList.contains('attn'))) && (await b.textContent('#reboot')) === 'Riavvia la scheda');
+  await b.fill('#volume', '4');
+  check('pulsanti: con una modifica Salva si accende e lo dice', (await b.isEnabled('#save')) && /Salva le modifiche/.test(await b.textContent('#save')) && /modifiche non salvate/.test(await b.textContent('#state')));
+  await b.fill('#volume', st.cfg.volume);
+  check('pulsanti: tornando al valore di prima Salva si spegne', await b.isDisabled('#save'));
+  await b.fill('#volume', '4');
+  await b.click('#save');
+  await b.waitForFunction(() => /Salvato/.test(document.getElementById('st').textContent));
+  check('pulsanti: dopo il salvataggio Salva si spegne e Riavvia diventa arancione e dice di riavviare',
+        (await b.isDisabled('#save')) && (await b.locator('#reboot').evaluate((e) => e.classList.contains('attn'))) && /applicare/.test(await b.textContent('#reboot')) && /riavvia la scheda/i.test(await b.textContent('#state')), await b.textContent('#state'));
+  // con modifiche non salvate, il riavvio chiede conferma: se si rinuncia la scheda non si riavvia
+  await b.fill('#volume', '6');
+  const nb = st.cmds.length;
+  b.once('dialog', (d) => d.dismiss());
+  await b.click('#reboot');
+  await b.waitForTimeout(300);
+  check('pulsanti: riavviare con modifiche non salvate chiede conferma, e rinunciando non riavvia', !st.cmds.slice(nb).includes('CFG REBOOT'));
+  b.once('dialog', (d) => d.accept());
+  await b.click('#reboot');
+  await b.waitForFunction(() => /riavvio/.test(document.getElementById('st').textContent));
+  check('pulsanti: confermando, la scheda si riavvia', st.cmds.slice(nb).includes('CFG REBOOT'));
+  await b.close();
+  // una scheda che ha gia' modifiche salvate in attesa di riavvio (reboot=1): Riavvia e' arancione fin dall'apertura
+  st.rebootPending = true;
+  const b2 = await browser.newPage();
+  await b2.goto(url);
+  await b2.waitForFunction(() => /Modifiche salvate/.test(document.getElementById('state').textContent), null, { timeout: 15000 });
+  check('pulsanti: all\'apertura con modifiche gia\' salvate da applicare Riavvia e\' arancione', (await b2.locator('#reboot').evaluate((e) => e.classList.contains('attn'))) && (await b2.isDisabled('#save')));
+  await b2.close();
+  st.rebootPending = false;
 
   const n = st.cmds.length;
   await p.click('#reboot');

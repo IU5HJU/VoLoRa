@@ -10,7 +10,10 @@ body{font-family:system-ui,sans-serif;max-width:34rem;margin:0 auto;padding:1rem
 label{display:block;margin-top:.8rem;font-weight:600}
 input,select,button{font:inherit;padding:.5rem;width:100%;box-sizing:border-box;margin-top:.2rem}
 button{background:#0b5ed7;color:#fff;border:0;border-radius:.4rem;margin-top:1rem}
-button.sec{background:#e5e7eb;color:#14181f}
+button.sec{background:#fff;color:#0b5ed7;border:2px solid #0b5ed7}
+button.sec.attn{background:#d97706;color:#fff;border-color:#d97706}
+button:disabled{background:#d5d9e0;color:#69707d;border:0;cursor:not-allowed}
+.hint.warn{color:#b45309;font-weight:600}
 .hint{color:#555;font-size:.85rem;margin:.2rem 0 0}
 h2{font-size:1.25rem;margin:2rem 0 .2rem;padding-top:.7rem;border-top:2px solid #cfd4db}
 details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
@@ -18,7 +21,7 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 #st{margin-top:1rem;padding:.6rem;border-radius:.4rem;display:none}
 #st.ok{display:block;background:#d9f2e0;color:#14532d}
 #st.err{display:block;background:#fde2e2;color:#7f1d1d}
-@media(prefers-color-scheme:dark){body{background:#12151a;color:#e8eaed}h2{border-top-color:#3a404a}.hint{color:#aab}button.sec{background:#2b3038;color:#e8eaed}input,select{background:#1d2128;color:#e8eaed;border:1px solid #444}}
+@media(prefers-color-scheme:dark){body{background:#12151a;color:#e8eaed}h2{border-top-color:#3a404a}.hint{color:#aab}button.sec{background:#12151a;color:#8ab4ff;border-color:#8ab4ff}button.sec.attn{background:#d97706;color:#fff;border-color:#d97706}button:disabled{background:#2b3038;color:#7b8494;border:0}.hint.warn{color:#fbbf24}input,select{background:#1d2128;color:#e8eaed;border:1px solid #444}}
 </style></head><body>
 <h1>Configurazione</h1>
 <p class="hint" id="intro">Scheda collegata al suo Wi-Fi. Finché questa pagina è aperta <strong>la trasmissione è disattivata</strong>. Per uscire riavvia la scheda (pulsante in fondo o pressione lunga del volume).</p>
@@ -139,6 +142,7 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <label for="text5">Testo 5</label><input id="text5" maxlength="150">
 </div>
 </div>
+<p class="hint" id="state"></p>
 <button type="submit" id="save">Salva</button>
 <button type="button" class="sec" id="reboot">Riavvia la scheda</button>
 </form>
@@ -151,9 +155,23 @@ function introFor(host,role){if(host==='192.168.4.1'||host==='127.0.0.1')return 
 function st(t,c){const e=$('st');e.textContent=t;e.className=c||'';}
 async function cmd(l){const r=await fetch('/cfg?c='+encodeURIComponent(l));return (await r.text()).trim();}
 function parse(t){const m={};for(const kv of t.replace(/^CFG /,'').split(' ')){const i=kv.indexOf('=');if(i>0)m[kv.slice(0,i)]=kv.slice(i+1);}return m;}
+// Salva e Riavvia dicono sempre cosa si puo' fare: Salva si accende solo se c'e' qualcosa da salvare, Riavvia diventa arancione quando le modifiche salvate aspettano il riavvio
+let cleanSnap='',busy=false,pendingReboot=false;
+function snap(){const o=[];for(const e of $('f').elements){if(!e.id||e.type==='button'||e.type==='submit')continue;o.push(e.id+'='+(e.type==='checkbox'?e.checked:e.value));}return o.join('\u0001');}
+function isDirty(){return snap()!==cleanSnap;}
+function refreshButtons(){
+  const d=isDirty(),s=$('save'),r=$('reboot'),h=$('state'),att=pendingReboot&&!d;
+  s.disabled=busy||!d;s.textContent=busy?'Salvataggio…':d?'Salva le modifiche':'Salva (nessuna modifica)';
+  r.disabled=busy;r.classList.toggle('attn',att);r.textContent=att?'Riavvia la scheda per applicare le modifiche':'Riavvia la scheda';
+  h.textContent=d?'Hai modifiche non salvate: premi «Salva le modifiche».':pendingReboot?'Modifiche salvate. Per applicarle riavvia la scheda.':'Nessuna modifica da salvare.';
+  h.className='hint'+(d?' warn':'');
+}
+function markClean(){cleanSnap=snap();refreshButtons();}
+$('f').addEventListener('input',refreshButtons);$('f').addEventListener('change',refreshButtons);
+window.addEventListener('beforeunload',e=>{if(isDirty()){e.preventDefault();e.returnValue='';}});
 let board='';
 let fp='';
-function fill(m){if(m.board!==undefined){board=m.board;$('gpsbox').hidden=board!=='tbeam';for(const o of $('role').options)if(o.value==='rptrx'||o.value==='rpttx')o.disabled=board==='tbeam';$('rolenote').hidden=board!=='tbeam';}for(const k of ['callsign','profile','freq','freqmsg','freqrange','freqdir','power','volume','micfloor','pos','qth','gps','role','freqout'])if(m[k]!==undefined&&$(k))$(k).value=m[k];if($('freqout').value==='none')$('freqout').value='';fp=$('freq').value.trim();}
+function fill(m){if(m.reboot!==undefined)pendingReboot=m.reboot==='1';if(m.board!==undefined){board=m.board;$('gpsbox').hidden=board!=='tbeam';for(const o of $('role').options)if(o.value==='rptrx'||o.value==='rpttx')o.disabled=board==='tbeam';$('rolenote').hidden=board!=='tbeam';}for(const k of ['callsign','profile','freq','freqmsg','freqrange','freqdir','power','volume','micfloor','pos','qth','gps','role','freqout'])if(m[k]!==undefined&&$(k))$(k).value=m[k];if($('freqout').value==='none')$('freqout').value='';fp=$('freq').value.trim();}
 $('freq').addEventListener('input',()=>{const v=$('freq').value.trim();for(const id of ['freqmsg','freqrange','freqdir'])if($(id).value.trim()===fp)$(id).value=v;fp=v;});   // le frequenze uguali a quella dello Standard la seguono; quelle cambiate a mano restano
 function roleShow(){const r=$('role').value;$('powerlabel').textContent=r==='rptrx'?'Potenza della scheda TX (dBm)':'Potenza (dBm)';const nd=r==='node'||r==='rptrx'||r==='rpttx';for(const o of $('profile').options){o.hidden=nd&&o.value!=='std';o.disabled=nd&&o.value!=='std';}if(nd)$('profile').value='std';   // il nodo lavora solo in Standard: gli altri profili non si scelgono
 $('rxbox').hidden=r!=='rptrx';$('txbox').hidden=r!=='rpttx'&&r!=='rptrx';for(const e of document.querySelectorAll('[data-modes]'))e.classList.toggle('nomode',!e.dataset.modes.split(' ').includes(r));}   // di ogni modalità si vedono solo i suoi campi
@@ -177,8 +195,8 @@ async function saveNet(n){const O=c=>cmd(c).then(r=>{if(!r.startsWith('CFG OK'))
 async function loadIdint(){try{const r=await cmd('CFG GET IDINT');if(r.startsWith('CFG IDINT='))$('idint').value=r.slice(10);}catch(e){}try{const r=await cmd('CFG GET IDMORSE');if(r.startsWith('CFG IDMORSE='))$('idmorse').value=r.slice(12)==='off'?'off':'on';}catch(e){}}
 async function loadSysop(){try{const r=await cmd('CFG GET SYSOP');if(r.startsWith('CFG SYSOP ')){const m=parse(r.slice(10));$('sysop').value=m.call&&m.call!=='none'?m.call:'';$('sysopmode').value=m.mode==='on'?'on':'off';$('sysopkey').value='';$('sysopkeyhint').textContent=m.key==='set'?'Chiave impostata (non si mostra). Lascia vuoto per non cambiarla.':'Chiave non impostata.';sysopShow();}}catch(e){}}
 async function load(){try{const t=await cmd('CFG GET');if(!t.startsWith('CFG '))throw new Error(t);fill(parse(t));await loadSysop();await loadIdint();await loadShift();await loadNode();await loadNodeInfo();await loadRole();{const t=introFor(location.hostname,$('role').value);if(t)$('intro').innerHTML=t;}for(let i=1;i<=5;i++){const r=await cmd('CFG GET TEXT'+i);$('text'+i).value=r.startsWith('CFG TEXT'+i+'=')?r.slice(('CFG TEXT'+i+'=').length):'';}try{const r=await cmd('CFG GET MC');if(r.startsWith('CFG MC ')){const m=parse(r.slice(7));$('mcfreq').value=m.freqmc||'';$('mcssid').value=m.ssid||'';$('mcwindow').value=m.window||'';for(let i=1;i<=5;i++){const d=await cmd('CFG GET MCDEST'+i);$('mcdest'+i).value=d.startsWith('CFG MCDEST'+i+'=')?d.slice(('CFG MCDEST'+i+'=').length):'';}}}catch(e){}st('Valori letti dalla scheda.','ok');}catch(e){st('Lettura non riuscita: '+e.message,'err');}}
-$('f').addEventListener('submit',async ev=>{
-  ev.preventDefault();st('Salvataggio…','');
+async function doSave(){
+  st('Salvataggio…','');
   const want={callsign:$('callsign').value.trim().toUpperCase(),profile:$('profile').value,freq:$('freq').value.trim(),freqmsg:$('freqmsg').value.trim(),freqrange:$('freqrange').value.trim(),freqdir:$('freqdir').value.trim(),power:$('power').value,volume:$('volume').value,micfloor:$('micfloor').value,pos:$('pos').value,qth:$('qth').value.trim()||'none',role:$('role').value};
   if(board==='tbeam')want.gps=$('gps').value;
   if(want.role==='rpttx'||want.role==='rptrx'){const fo=$('freqout').value.trim();const k=Math.round(parseFloat(fo)*1000);if(!/^\d{3}(\.\d{1,3})?$/.test(fo)||!(k>=430000&&k<=440000)){st('La frequenza di uscita deve essere tra 430.000 e 440.000 MHz.','err');return;}want.freqout=fo;}   // la T3 non ha il GPS: il comando non si manda
@@ -206,12 +224,13 @@ $('f').addEventListener('submit',async ev=>{
     const back=parse(await cmd('CFG GET'));const bad=[];
     for(const k of Object.keys(want)){let a=String(back[k]),b=String(want[k]);if(k.startsWith('freq')){a=parseFloat(a);b=parseFloat(b);}else if(k==='qth'&&b!=='none'){const x=b.split(',').map(parseFloat),y=a.split(',').map(parseFloat);if(Math.abs(x[0]-y[0])<2e-5&&Math.abs(x[1]-y[1])<2e-5)continue;}else if(k==='callsign'||k==='profile'||k==='role'){a=a.toLowerCase();b=b.toLowerCase();}else if(!isNaN(a)&&!isNaN(b)){a=Number(a);b=Number(b);}
       if(a!==b)bad.push(k);}
-    fill(back);await loadSysop();await loadIdint();await loadNode();await loadNodeInfo();await loadRole();
+    fill(back);await loadSysop();await loadIdint();await loadNode();await loadNodeInfo();await loadRole();markClean();
     if(bad.length)st('Salvato, ma la scheda riporta valori diversi: '+bad.join(', '),'err');
     else st('Salvato e riletto dalla scheda: tutto coincide. I cambi di profilo, frequenza, potenza e nominativo valgono dal riavvio.','ok');
   }catch(e){st('Errore di comunicazione: '+e.message,'err');}
-});
-$('reboot').addEventListener('click',async()=>{try{await cmd('CFG REBOOT');}catch(e){}st('Scheda in riavvio: puoi chiudere la pagina.','ok');});
+}
+$('f').addEventListener('submit',async ev=>{ev.preventDefault();if($('save').disabled)return;busy=true;refreshButtons();try{await doSave();}finally{busy=false;refreshButtons();}});
+$('reboot').addEventListener('click',async()=>{if(isDirty()&&!confirm('Hai modifiche non salvate: se riavvii adesso andranno perse. Riavviare lo stesso?'))return;busy=true;refreshButtons();try{await cmd('CFG REBOOT');}catch(e){}st('Scheda in riavvio: puoi chiudere la pagina.','ok');});
 // Stato del nodo e qualita' dell'ultima trasmissione (solo dalla rete di casa; con ?stato=1 anche altrove, per le prove)
 const LANPAGE=()=>!['192.168.4.1','127.0.0.1','localhost'].includes(location.hostname)||/[?&]stato=1/.test(location.search);
 const ago=s=>s<60?s+' s fa':s<3600?Math.round(s/60)+' min fa':Math.round(s/3600)+' h fa';
@@ -236,6 +255,6 @@ async function nodeStat(){
 $('role').addEventListener('change',nodeStat);
 setInterval(nodeStat,3000);
 
-load().then(nodeStat);
+load().then(()=>{markClean();nodeStat();});
 </script></body></html>
 )HTML";
