@@ -959,3 +959,10 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
   - una trasmissione «**Problemi di rete**»: SNR 10,0 dB (margine +17,5), RSSI -31 dBm, persi in radio 0 su 25, **persi in rete 1 su 25 (4,0%)**, pausa piu' lunga 0,8 s, distanza dal nodo 0,1 km.
 - **Esito (riferito): «La visualizzazione dei difetti di rete funziona».** Si vedono il totale e la percentuale dei datagrammi persi in rete, la pausa piu' lunga fra due pacchetti e la distanza dal nodo (qui la stazione e' accanto al nodo).
 - **Nota:** in queste due trasmissioni, con RSSI intorno a -30 dBm, **nessun pacchetto perso in radio** (0 su 29 e 0 su 25): non conferma ne' smentisce la saturazione ipotizzata prima (la potenza impostata per queste prove era **17 dBm**, riferita dall'operatore, cioe' non al minimo). Restano da fare le prove con la potenza al minimo.
+
+### 24/11/2026, QSO in mobilita' su rete LTE (auto e autostrada, riferito)
+
+- **Prova (riferita dall'operatore, senza foto ne' registro):** QSO di **oltre un'ora** con il nodo mobile in auto, collegato a Internet da una rete **LTE** in mobilita', anche in autostrada.
+- **Esito (riferito):** «va molto bene». Sono comparsi **solo piccoli tratti di buco**, di **qualche secondo**, soprattutto **in galleria**, dove la copertura LTE fatica, su piu' di un'ora di QSO.
+- **Cosa dice:** il trasporto in rete regge la mobilita' su LTE; i buchi coincidono con i punti in cui manca la copertura, non con difetti del reflector o del protocollo. Non ci sono ancora numeri: la pagina pubblica ora mostra per ogni nodo da quanto e' collegato, le interruzioni del collegamento e i datagrammi persi in rete su quanti sono arrivati ([reflector.md](reflector.md)).
+- **Da riportare, per avere i numeri:** una foto della scheda del nodo mobile sulla pagina pubblica a fine QSO («Collegato da...», «interruzioni del collegamento: N», «Persi in rete: X su Y (Z%)»), e se il firmware del nodo era quello con la riconnessione automatica del Wi-Fi ([banco-nodo.md](banco-nodo.md)): senza, un buco piu' lungo con l'hotspot del telefono poteva non recuperarsi.
