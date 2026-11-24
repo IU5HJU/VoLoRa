@@ -143,6 +143,13 @@ Come per le altre reti, chiunque può guardare chi è collegato e chi trasmette.
 
 In HTTP semplice si attiva aggiungendo `--public-web 8081` all'`ExecStart` e inoltrando nel router la porta TCP 8081 (la sola porta della pagina pubblica: **mai la 8080 di amministrazione**); l'indirizzo da dare ai colleghi è `http://indirizzo-del-server:8081/`. **Meglio in HTTPS**, come descritto qui sotto: l'indirizzo diventa per esempio `https://reflector.example.org/` e la porta 8081 non serve più.
 
+### Chi riceve e chi trasmette: RX, TX e il nodo di ingresso
+
+Sulla pagina pubblica, mentre qualcuno trasmette (aggiunto il 24/11/2026):
+- Nel riquadro **In trasmissione** compare anche **«Entra in rete dal nodo IK5PWR (MONTELUPO)»**: il nominativo (e il nome) del nodo che ha ricevuto il segnale radio e lo manda in rete, accanto alla durata e alla distanza dal nodo.
+- Sulla scheda di ogni stazione collegata compare un riquadro **RX** (verde) sul nodo da cui la voce **entra in rete**, cioè quello che sta ricevendo il segnale radio, e un riquadro **TX** (rosso) su **tutti gli altri nodi collegati**, ai quali il reflector sta mandando la voce da trasmettere in radio. Spariscono con la fine della trasmissione. Il **TX** dice che al nodo *arriva* la voce da trasmettere: il reflector non può sapere se poi la scheda la trasmetta davvero (per esempio un nodo con il nominativo `N0CALL` non trasmette).
+- Anche sotto ogni **ultima trasmissione** c'è **«Dal nodo IK5PWR (MONTELUPO)»**, il nodo da cui era entrata in rete.
+
 ### Difetti della rete, in chiaro
 
 Sulla pagina pubblica i problemi del collegamento Internet dei nodi si vedono in tre posti (aggiunto il 23/11/2026 dopo un QSO con un nodo su rete LTE, dove la rete perdeva fino al 15% dei datagrammi mentre la radio era perfetta):

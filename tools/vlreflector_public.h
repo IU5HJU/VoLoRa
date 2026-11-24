@@ -24,6 +24,9 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
   .small { font-size:.95rem; }
   .call { font-size:2rem; font-weight:900; line-height:1.1; letter-spacing:.03em; }
   .row { margin-top:4px; }
+  .badge { display:inline-block; font-size:.75rem; font-weight:800; letter-spacing:.06em; color:#fff; border-radius:7px; padding:.1em .5em; margin-left:.5em; vertical-align:middle; }
+  .badge.rx { background:var(--ok); }
+  .badge.tx { background:var(--live); }
   .dot { display:inline-block; width:.65em; height:.65em; border-radius:50%; background:var(--ok); margin-right:.45em; }
   #now { text-align:center; padding:18px 12px; }
   #now .call { font-size:2.6rem; }
@@ -74,6 +77,7 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
       now.appendChild(el("div", "In trasmissione", "lab"));
       now.appendChild(el("div", d.talking.callsign, "call"));
       now.appendChild(el("div", dur(d.talking.durationS), "small"));
+      if (d.talking.node) now.appendChild(el("div", "Entra in rete dal nodo " + d.talking.node + (d.talking.nodeLabel ? " (" + d.talking.nodeLabel + ")" : ""), "small"));
       if (d.talking.distanceKm !== null && d.talking.distanceKm !== undefined) now.appendChild(el("div", "Distanza dal nodo: " + km(d.talking.distanceKm), "small"));
     } else { now.className = "card"; now.appendChild(el("div", "Silenzio", "call muted")); }
     $("count").textContent = "(" + d.clients.length + ")";
@@ -81,7 +85,10 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
     if (!d.clients.length) c.appendChild(el("p", "Nessuna stazione collegata.", "muted"));
     d.clients.forEach(function (x) {
       var b = el("div", undefined, "card");
-      var t = el("div", undefined, "call"); t.appendChild(el("span", "", "dot")); t.appendChild(document.createTextNode(x.call)); b.appendChild(t);
+      var t = el("div", undefined, "call"); t.appendChild(el("span", "", "dot")); t.appendChild(document.createTextNode(x.call));
+      if (x.rx) t.appendChild(el("span", "RX", "badge rx"));
+      if (x.tx) t.appendChild(el("span", "TX", "badge tx"));
+      b.appendChild(t);
       if (x.label) b.appendChild(el("div", x.label, "row"));
       b.appendChild(el("div", "Ultimo contatto " + x.seenS + " s fa", "muted small row"));
       b.appendChild(el("div", "Collegato da " + dur(x.upS) + (x.downs ? " - interruzioni del collegamento: " + x.downs : ""), "muted small"));
@@ -106,6 +113,7 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
         var b = el("div", undefined, "card");
         b.appendChild(el("div", x.callsign, "call"));
         b.appendChild(el("div", ago(x.agoS) + " - durata " + dur(x.durationS), "row"));
+        if (x.node) b.appendChild(el("div", "Dal nodo " + x.node + (x.nodeLabel ? " (" + x.nodeLabel + ")" : ""), "small"));
         b.appendChild(el("div", "Qualità collegamento", "lab"));
         b.appendChild(el("div", text, "verdict v-" + cls));
         if (q) {

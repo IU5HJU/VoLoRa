@@ -402,6 +402,14 @@ struct Admin {
     return b;
   }
 
+  // Il nodo da cui una trasmissione entra in rete (quello che ha ricevuto il segnale radio), come pezzo di JSON: ,"node":"IK5PWR","nodeLabel":"MONTELUPO"
+  std::string nodeJson(const ReflectorCore::Talk& t) const {
+    const int ei = findEntryById(entries, t.clientId);
+    const std::string call = ei >= 0 ? entries[static_cast<size_t>(ei)].name : t.client;
+    const std::string label = ei >= 0 ? entries[static_cast<size_t>(ei)].label : std::string();
+    return ",\"node\":\"" + jsonEscape(call) + "\",\"nodeLabel\":\"" + jsonEscape(label) + "\"";
+  }
+
   std::string statusJson(uint32_t now) const {
     std::ostringstream o;
     o << "{\"reflector\":{\"id\":" << reflectorId << ",\"voiceMode\":" << voiceMode << ",\"port\":" << port << ",\"uptimeS\":" << (now - startMs) / 1000
@@ -442,7 +450,8 @@ struct Admin {
     o << "{\"reflector\":{\"name\":\"" << jsonEscape(publicName) << "\",\"mode\":\"" << (voiceMode == 4 ? "standard" : "range") << "\",\"uptimeS\":" << (now - startMs) / 1000
       << "},";
     const ReflectorCore::Talk t = core->currentTalk(now);
-    if (t.active && core->talker(now) != 0) o << "\"talking\":{\"callsign\":\"" << jsonEscape(t.callsign) << "\",\"durationS\":" << (t.lastMs - t.startMs) / 1000 << distanceJson(t) << "},";
+    const bool talk = t.active && core->talker(now) != 0;
+    if (talk) o << "\"talking\":{\"callsign\":\"" << jsonEscape(t.callsign) << "\",\"durationS\":" << (t.lastMs - t.startMs) / 1000 << distanceJson(t) << nodeJson(t) << "},";
     else o << "\"talking\":null,";
     o << "\"clients\":[";
     bool first = true;
@@ -451,7 +460,9 @@ struct Admin {
       const int ei = findEntryById(entries, c.id);
       o << (first ? "" : ",") << "{\"call\":\"" << jsonEscape(ei >= 0 ? entries[static_cast<size_t>(ei)].name : c.name) << "\",\"label\":\""
         << jsonEscape(ei >= 0 ? entries[static_cast<size_t>(ei)].label : "") << "\",\"seenS\":" << (now - c.lastSeenMs) / 1000 << ",\"upS\":" << (now - c.upSinceMs) / 1000
-        << ",\"lostDg\":" << c.lostDatagrams << ",\"rxDg\":" << c.rxDatagrams << ",\"downs\":" << c.downs << "}";
+        << ",\"lostDg\":" << c.lostDatagrams << ",\"rxDg\":" << c.rxDatagrams << ",\"downs\":" << c.downs
+        // durante una trasmissione: RX = il nodo da cui la voce entra in rete (riceve il segnale radio), TX = gli altri nodi collegati, a cui il reflector manda la voce da trasmettere
+        << ",\"rx\":" << (talk && c.id == t.clientId ? "true" : "false") << ",\"tx\":" << (talk && c.id != t.clientId ? "true" : "false") << "}";
       first = false;
     }
     o << "],\"recent\":[";
@@ -460,7 +471,7 @@ struct Admin {
     for (const auto& r : core->recentTalks()) {
       if (n++ >= 10) break;
       o << (first ? "" : ",") << "{\"callsign\":\"" << jsonEscape(r.callsign) << "\",\"agoS\":" << (now - r.lastMs) / 1000 << ",\"durationS\":" << (r.lastMs - r.startMs) / 1000
-        << distanceJson(r) << publicQualityJson(r) << "}";
+        << distanceJson(r) << nodeJson(r) << publicQualityJson(r) << "}";
       first = false;
     }
     o << "]" << (listen ? listen->publicStatusPart(now) : std::string()) << "}";
