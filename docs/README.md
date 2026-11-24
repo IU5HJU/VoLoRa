@@ -27,6 +27,8 @@
 | [roadmap.md](roadmap.md) | Decisioni e prossimi lavori |
 | [ripetitore.md](ripetitore.md) | **Riepilogo del ripetitore**: com'è fatto, collegamento a quattro fili, configurazione, funzioni, cosa è provato e cosa no |
 | [banco-ripetitore.md](banco-ripetitore.md) | Prova a banco del ripetitore con due T3: cablaggio, seriale, display, altoparlante |
+| [standard-rete.md](standard-rete.md) | **La regola dello Standard, da rileggere sempre**: nodi, ripetitori e reflector fanno viaggiare solo SF7/250 kHz/Codec2 3200; Range, Messaggio (125 kHz) e Diretta non entrano mai in rete |
+| [traffico-rete.md](traffico-rete.md) | Traffico di rete di una trasmissione (megabit, megabyte al mese) per scegliere una SIM, e tempo in aria dei vari modi |
 | [reflector.md](reflector.md) | **Il reflector VoLoRa**: server a cui si collegano nodi e ripetitori **senza aprire porte sul router**; file dei client, pagina di amministrazione (password), pagina pubblica (anche in HTTPS), ascolto dal web con QRZ.com, APRS, qualità dei collegamenti, IP del nodo, impostazioni dei nodi e della scheda RX del ripetitore, prova sul PC |
 | [../tools/README.md](../tools/README.md) | **Gli strumenti del progetto** (`tools/`): ricevitore SDR in tempo reale, confronto del Codec2, reflector, pubblicazione, documentazione generata e le icone del desktop |
 | [studio-reflector.md](studio-reflector.md) | Studio: come funziona il reflector YSF (letto dal sorgente) e cosa abbiamo preso e cambiato |
