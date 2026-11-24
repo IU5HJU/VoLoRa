@@ -154,9 +154,11 @@ wait $QP
 check "$D/q1.out" "mandato il rapporto di ricezione: RSSI -92 dBm, SNR 4.5 dB" "qualita': il nodo manda il rapporto di ricezione"
 check "$D/ref.out" "qualita' IZ5IOF via .*: rete; radio SNR 4.5 dB" "qualita': una riga di registro con il giudizio"
 # Poi una trasmissione con la rete in ordine ma il segnale debole e pacchetti persi in radio: il giudizio dice "radio"
+# Una pausa dopo il nodo di prima (stesso id): sul runner di GitHub, lento, il nodo nuovo si collegava a volte troppo tardi (Build #550)
+sleep 4
 build/vlnode --id 2 --peer-id 1000 --key $KEYA --listen 0 --peer 127.0.0.1:$PORT --send-voice IZ5IOF --frames 40 --quality -120 -9 3 1 --duration 25 > "$D/q2.out" 2>&1 &
 QP=$!
-poll '"verdict":"radio","verdictText":"radio"' 25 && echo "$SQ" | grep -q '"missing":3,"crc":1' && ok "qualita': segnale debole e pacchetti persi in radio danno il giudizio \"radio\"" || ko "qualita': giudizio radio ($SQ) | nodo: $(cat "$D/q2.out")"
+poll '"verdict":"radio","verdictText":"radio"' 45 && echo "$SQ" | grep -q '"missing":3,"crc":1' && ok "qualita': segnale debole e pacchetti persi in radio danno il giudizio \"radio\"" || ko "qualita': giudizio radio ($SQ) | nodo: $(cat "$D/q2.out")"
 echo "$SQ" | grep -q '"lostDg":[1-9]' && ok "qualita': i datagrammi persi si contano anche per il nodo collegato" || ko "qualita': datagrammi persi del client ($SQ)"
 # La stessa trasmissione sulla pagina pubblica: segnale e giudizio sì, contatori, indirizzi e id no
 PS=$(curl -s -m 5 $P/status.json)
