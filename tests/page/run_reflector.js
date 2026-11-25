@@ -78,6 +78,26 @@ function mk(n) {
     await serve(q); await q.goto('http://x.test/'); await q.waitForTimeout(200);
     check('schermo acceso: senza Wake Lock la pagina funziona lo stesso', e2.length === 0);
   }
+  // tasto chiaro/scuro: segue il telefono, un tocco passa all'altro e lo ricorda
+  {
+    const serve = (pg) => pg.route('**/*', (r) => { const u = r.request().url().endsWith('/'); r.fulfill({ contentType: u ? 'text/html' : 'application/json', body: u ? PUB : '{}' }); });
+    const bg = (pg) => pg.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    const ctx = await b.newContext({ colorScheme: 'light' });
+    const p = await ctx.newPage(); await serve(p); await p.goto('http://x.test/');
+    check('tema: con il telefono chiaro la pagina e\' chiara e il tasto offre il modo scuro', (await bg(p)) === 'rgb(243, 247, 251)' && (await p.textContent('#theme')).includes('Modo scuro'));
+    await p.click('#theme');
+    check('tema: un tocco passa allo scuro e il tasto offre il modo chiaro', (await bg(p)) === 'rgb(7, 17, 31)' && (await p.textContent('#theme')).includes('Modo chiaro'));
+    await p.reload();
+    check('tema: dopo aver ricaricato la scelta resta (scuro)', (await bg(p)) === 'rgb(7, 17, 31)');
+    await p.click('#theme');
+    check('tema: un altro tocco torna al chiaro', (await bg(p)) === 'rgb(243, 247, 251)');
+    const dctx = await b.newContext({ colorScheme: 'dark' });
+    const q = await dctx.newPage(); await serve(q); await q.goto('http://x.test/');
+    check('tema: con il telefono scuro la pagina parte scura e il tasto offre il modo chiaro', (await bg(q)) === 'rgb(7, 17, 31)' && (await q.textContent('#theme')).includes('Modo chiaro'));
+    await q.click('#theme');
+    check('tema: dal telefono scuro un tocco la fa chiara', (await bg(q)) === 'rgb(243, 247, 251)');
+    await p.screenshot({ path: '/tmp/tema.png' });
+  }
   await b.close();
   process.exit(bad ? 1 : 0);
 })();

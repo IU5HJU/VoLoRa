@@ -12,7 +12,10 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
 <title>Reflector VoLoRa</title>
 <style>
   :root { --bg:#f3f7fb; --card:#ffffff; --fg:#18283a; --muted:#5b6f84; --line:rgba(35,60,90,.16); --ok:#16865a; --bad:#c83c4d; --warn:#b56b12; --cyan:#087ca7; --live:#c83c4d; }
-  @media (prefers-color-scheme: dark) { :root { --bg:#07111f; --card:#0d1a2b; --fg:#edf5ff; --muted:#9db2c9; --line:rgba(116,151,190,.22); --ok:#4de39a; --bad:#ff5f6d; --warn:#ffb24d; --cyan:#35c8ff; --live:#ff5f6d; } }
+  /* scuro: segue il telefono, a meno che il tasto in alto non abbia scelto (ricordato nel browser) */
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#07111f; --card:#0d1a2b; --fg:#edf5ff; --muted:#9db2c9; --line:rgba(116,151,190,.22); --ok:#4de39a; --bad:#ff5f6d; --warn:#ffb24d; --cyan:#35c8ff; --live:#ff5f6d; color-scheme:dark; } }
+  :root[data-theme="dark"] { --bg:#07111f; --card:#0d1a2b; --fg:#edf5ff; --muted:#9db2c9; --line:rgba(116,151,190,.22); --ok:#4de39a; --bad:#ff5f6d; --warn:#ffb24d; --cyan:#35c8ff; --live:#ff5f6d; color-scheme:dark; }
+  .theme { float:right; background:transparent; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:4px 12px; font:inherit; font-size:.85rem; font-weight:700; cursor:pointer; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--fg); font:18px/1.4 system-ui, sans-serif; }
   main { max-width:720px; margin:0 auto; padding:10px; }
@@ -54,6 +57,7 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
 <body>
 <main>
   <div class="card">
+    <button class="theme" id="theme" type="button"></button>
     <div class="eyebrow">Reflector</div>
     <h1>VoLoRa</h1>
     <div class="muted small" id="info">Carico...</div>
@@ -190,6 +194,18 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
   }
   // Lo schermo del telefono non si spegne mentre la pagina e' aperta (Screen Wake Lock, come nella vista di SVX Guardian). Serve una pagina sicura (HTTPS):
   // senza, o su un browser che non lo ha, la pagina funziona lo stesso. Il blocco cade quando la pagina passa in secondo piano: si richiede al ritorno.
+  // Tasto chiaro/scuro: all'inizio vale quello del telefono; un tocco passa all'altro e lo ricorda (se il browser lo permette)
+  var root = document.documentElement;
+  function isDark() { var f = root.getAttribute("data-theme"); return f ? f === "dark" : !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches); }
+  function themeLabel() { $("theme").textContent = isDark() ? "☀ Modo chiaro" : "☾ Modo scuro"; }
+  try { var saved = localStorage.getItem("vl-theme"); if (saved === "dark" || saved === "light") root.setAttribute("data-theme", saved); } catch (e) {}
+  $("theme").onclick = function () {
+    var next = isDark() ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("vl-theme", next); } catch (e) {}
+    themeLabel();
+  };
+  themeLabel();
   var wake = null;
   function keepAwake() {
     if (!("wakeLock" in navigator) || document.visibilityState !== "visible" || wake) return;

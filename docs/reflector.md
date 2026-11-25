@@ -176,6 +176,10 @@ Provato sul PC (test del reflector e prova con socket veri, compreso il controll
 
 Finché la pagina pubblica è aperta, il telefono **non spegne lo schermo** (Screen Wake Lock del browser, lo stesso accorgimento della vista di SVX Guardian): comoda per tenerla sul tavolo a guardare la rete. Se la pagina passa in secondo piano il blocco cade, e si ripete da solo quando ci torni. **Serve una pagina sicura (HTTPS)**: sulla pagina pubblica in HTTPS funziona; su un indirizzo `http://` della rete di casa (come la pagina del sysop) il browser lo rifiuta e la pagina funziona lo stesso. Un browser senza questa funzione non la usa. Provato sul PC con un Wake Lock finto (`tests/page/run_reflector.js`); **da provare sul telefono** (Chrome su Android; Safari su iPhone dalla versione 16.4).
 
+### Modo chiaro e modo scuro
+
+In alto a destra della pagina pubblica c'è un tasto **«☾ Modo scuro» / «☀ Modo chiaro»**. All'inizio la pagina segue il telefono (chiara o scura come le impostazioni del sistema); un tocco passa all'altro modo e **la scelta resta nel browser** per le volte dopo (se il browser non lo permette, vale finché la pagina è aperta). Provato sul PC in un browser vero con il telefono finto chiaro e scuro (`tests/page/run_reflector.js`); **da vedere sul telefono**. La pagina del sysop e quella di ascolto restano com'erano (seguono solo il sistema).
+
 ### Le stazioni collegate crescono: la pagina pubblica si restringe
 
 Sulla pagina pubblica l'elenco delle stazioni collegate si adatta da solo al numero:
