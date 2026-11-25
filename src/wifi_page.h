@@ -112,14 +112,14 @@ details{margin-top:.8rem}summary{font-weight:600;cursor:pointer}
 <h2>Comandi del sysop via radio</h2>
 <p class="hint" data-modes="node">Il nodo si comanda via radio come un ripetitore (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA): nominativo del sysop (chi trasmette i comandi) e chiave, uguali sulla scheda del sysop. La chiave non si rilegge mai.</p>
 <p class="hint" data-modes="rptrx">La RX verifica i comandi firmati del sysop (nominativo e chiave) e li gira alla TX; la chiave arriva alla TX dalla RX insieme al resto della configurazione. Il <strong>modo Sysop</strong> (menu &quot;Comandi Sysop&quot;) si accende solo sulla scheda del sysop. Il nominativo e la chiave vanno uguali sulla RX e sulla scheda del sysop; la chiave non si rilegge mai.</p>
-<p class="hint" data-modes="off">Per chi gestisce un ripetitore. Con il <strong>modo Sysop</strong> acceso il menu della scheda (volume lungo) mostra <strong>Comandi Sysop</strong> al posto di Invia testo: scegli il comando (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA) e la scheda lo trasmette firmato al ripetitore. Resta acceso finché non lo spegni. Il nominativo e la chiave vanno impostati uguali sul ripetitore (schede RX e TX) e sulla scheda del sysop; la chiave non si rilegge mai.</p>
+<p class="hint" data-modes="off">Per chi gestisce un ripetitore. Con il <strong>modo Sysop</strong> acceso il menu della scheda (volume lungo) mostra <strong>Comandi Sysop</strong> <strong>in più</strong> di Invia testo (i testi predefiniti restano): scegli il comando (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA) e la scheda lo trasmette firmato al ripetitore. Resta acceso finché non lo spegni. Il nominativo e la chiave vanno impostati uguali sul ripetitore (schede RX e TX) e sulla scheda del sysop; la chiave non si rilegge mai.</p>
 <div data-modes="off"><label for="sysopmode">Modo Sysop</label><select id="sysopmode"><option value="off">Spento</option><option value="on">Acceso</option></select></div>
 <label for="sysop">Nominativo del sysop</label><input id="sysop" maxlength="8" placeholder="IU5HJU">
 <p class="hint" style="margin-top:.9rem">Firma i comandi che il sysop trasmette via radio al ripetitore o al nodo: va uguale sulla scheda del sysop e su questa. <strong>Non è la chiave di collegamento al reflector.</strong></p>
 <label for="sysopkey">Chiave del sysop, per i comandi via radio (32 cifre esadecimali)</label><input id="sysopkey" maxlength="32" autocomplete="off" spellcheck="false">
 <p class="hint" id="sysopkeyhint">Chiave non impostata.</p>
 <button type="button" class="sec" id="genkey">Genera una chiave nuova</button>
-<div id="sysopbox" data-modes="off" hidden><h2>Comandi Sysop</h2><p class="hint">L'elenco che compare sulla scheda al posto dei testi predefiniti.</p><ol id="sysoplist"><li>STATO</li><li>SPEGNI</li><li>SPEGNI 15 MIN</li><li>SPEGNI 60 MIN</li><li>RIACCENDI</li><li>RIAVVIA</li><li>IDENTIFICA</li><li>POTENZA 17 dBm</li><li>POTENZA 14 dBm</li><li>POTENZA 10 dBm</li></ol></div>
+<div id="sysopbox" data-modes="off" hidden><h2>Comandi Sysop</h2><p class="hint">L'elenco che compare sulla scheda alla voce Comandi Sysop del menu, oltre ai testi predefiniti (qui sotto).</p><ol id="sysoplist"><li>STATO</li><li>SPEGNI</li><li>SPEGNI 15 MIN</li><li>SPEGNI 60 MIN</li><li>RIACCENDI</li><li>RIAVVIA</li><li>IDENTIFICA</li><li>POTENZA 17 dBm</li><li>POTENZA 14 dBm</li><li>POTENZA 10 dBm</li></ol></div>
 </div>
 <div data-modes="off">
 <h2>MeshCom: avvisi e accordi</h2>
@@ -177,7 +177,7 @@ function roleShow(){const r=$('role').value;$('powerlabel').textContent=r==='rpt
 $('rxbox').hidden=r!=='rptrx';$('txbox').hidden=r!=='rpttx'&&r!=='rptrx';for(const e of document.querySelectorAll('[data-modes]'))e.classList.toggle('nomode',!e.dataset.modes.split(' ').includes(r));}   // di ogni modalità si vedono solo i suoi campi
 $('role').addEventListener('change',roleShow);
 async function loadRole(){try{const r=await cmd('CFG GET MONITOR');if(r.startsWith('CFG MONITOR='))$('monitor').value=r.slice(12)==='on'?'on':'off';}catch(e){}roleShow();}
-function sysopShow(){const on=$('sysopmode').value==='on';$('sysopbox').hidden=!on;$('textsbox').hidden=on;}
+function sysopShow(){const on=$('sysopmode').value==='on';$('sysopbox').hidden=!on;$('textsbox').hidden=false;}   // i testi predefiniti restano anche nel modo Sysop
 $('sysopmode').addEventListener('change',sysopShow);
 $('genkey').addEventListener('click',()=>{const b=new Uint8Array(16);crypto.getRandomValues(b);$('sysopkey').value=Array.from(b,x=>x.toString(16).padStart(2,'0')).join('');$('sysopkeyhint').textContent='Copia questa chiave adesso: dopo il salvataggio non si rilegge. Va impostata uguale sulle due schede del ripetitore e su questa.';});
 function shiftOff(on){$('shiftdir').disabled=$('shiftmhz').disabled=!on;}

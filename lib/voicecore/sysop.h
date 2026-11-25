@@ -33,7 +33,7 @@ enum SysopCode : uint8_t {
 };
 constexpr uint16_t kSysopMaxOffMinutes = 1440;
 
-// Voci del modo Sysop (elenco al posto dei testi predefiniti, sulla scheda e nella pagina web).
+// Voci del modo Sysop (elenco dei comandi, sulla scheda e nella pagina web; i testi predefiniti restano).
 struct SysopMenuEntry {
   const char* label;
   uint8_t code;

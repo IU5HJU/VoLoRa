@@ -805,7 +805,7 @@ static void mcOpenText(uint32_t now) {
   if (!mcPicker.open(mcItems, n, now)) mcStage = McStage::None;
 }
 
-// Modo Sysop: l'elenco dei comandi al posto dei testi predefiniti
+// Modo Sysop: l'elenco dei comandi (si aggiunge ai testi predefiniti, che restano)
 static void sysopOpenList(uint32_t now) {
   size_t n = 0;
   const lcr::SysopMenuEntry* e = lcr::sysopMenuEntries(n);

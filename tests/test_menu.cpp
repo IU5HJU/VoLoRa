@@ -55,6 +55,27 @@ static void testMenu() {
   CHECK(strcmp(items[2].label, "Modo Messaggio") == 0 && items[2].id == 1);
   CHECK(strcmp(items[3].label, "Modo Diretta") == 0 && items[3].id == 3);  // Diretta (14/11/2026): come lo Standard, ma frequenza propria e senza shift
   for (size_t i = 0; i < n; i++) CHECK(strlen(items[i].label) <= 16);  // entrano nelle righe del menu (21 caratteri con "* ")
+  // Modo Sysop (25/11/2026): "Comandi Sysop" si AGGIUNGE a "Invia testo", che non si perde piu'
+  {
+    size_t ns = 0;
+    const MenuItem* sy = defaultMenuItems(ns, true);
+    CHECK(ns == n + 1);
+    bool text = false, sysop = false, mesh = false, wifi = false;
+    for (size_t i = 0; i < ns; i++) {
+      CHECK(strlen(sy[i].label) <= 16 && sy[i].enabled);
+      if (sy[i].id == kMenuTextId) text = true;
+      if (sy[i].id == kMenuSysopId) sysop = true;
+      if (sy[i].id == kMenuMeshId) mesh = true;
+      if (sy[i].id == kMenuWifiId) wifi = true;
+    }
+    CHECK(text && sysop && mesh && wifi);                                               // i testi restano, i comandi si aggiungono
+    CHECK(sy[4].id == kMenuTextId && sy[5].id == kMenuSysopId);                         // "Invia testo" e subito dopo "Comandi Sysop"
+    for (size_t i = 0; i < 4; i++) CHECK(sy[i].id == items[i].id);                      // i profili sono gli stessi di prima
+    bool normalSysop = false;
+    for (size_t i = 0; i < n; i++)
+      if (items[i].id == kMenuSysopId) normalSysop = true;
+    CHECK(!normalSysop);                                                                // senza modo Sysop non c'e' "Comandi Sysop"
+  }
   Menu m(items, n);
   CHECK(!m.isOpen());
 

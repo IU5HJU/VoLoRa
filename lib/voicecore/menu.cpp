@@ -15,17 +15,19 @@ const MenuItem* defaultMenuItems(size_t& count, bool sysopMode) {
       {"MeshCom ascolto", kMenuMeshListenId, true},
       {"Wi-Fi", kMenuWifiId, true},
   };
+  // Modo Sysop: "Comandi Sysop" si AGGIUNGE a "Invia testo" (i testi predefiniti restano: il sysop e' anche un operatore che manda messaggi)
   static const MenuItem kSysopItems[] = {
       {"Modo Standard", 2, true},
       {"Modo Range", 0, true},
       {"Modo Messaggio", 1, true},
       {"Modo Diretta", 3, true},
+      {"Invia testo", kMenuTextId, true},
       {"Comandi Sysop", kMenuSysopId, true},
       {"MeshCom", kMenuMeshId, true},
       {"MeshCom ascolto", kMenuMeshListenId, true},
       {"Wi-Fi", kMenuWifiId, true},
   };
-  count = sizeof(kItems) / sizeof(kItems[0]);
+  count = sysopMode ? sizeof(kSysopItems) / sizeof(kSysopItems[0]) : sizeof(kItems) / sizeof(kItems[0]);
   return sysopMode ? kSysopItems : kItems;
 }
 

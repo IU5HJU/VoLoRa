@@ -36,7 +36,7 @@
 //                                   numerico (22251, 222...), un nominativo-SSID (N0CALL-9) o * per tutti; NONE svuota il posto; valgono subito)
 //   CFG SET SYSOP IU5HJU         -> CFG OK sysop=IU5HJU        (nominativo del sysop: il solo che puo' comandare il ripetitore; NONE lo toglie; vale dal riavvio)
 //   CFG SET SYSOPKEY <32 cifre esadecimali> -> CFG OK sysopkey=set  (chiave condivisa di 16 byte per firmare i comandi; NONE la toglie; mai mostrata)
-//   CFG SET SYSOPMODE ON         -> CFG OK sysopmode=on        (modo Sysop: nel menu "Comandi Sysop" al posto di "Invia testo"; OFF lo spegne; vale dal riavvio)
+//   CFG SET SYSOPMODE ON         -> CFG OK sysopmode=on        (modo Sysop: nel menu "Comandi Sysop" in piu' di "Invia testo"; OFF lo spegne; vale dal riavvio)
 //   CFG SET SHIFT -10000..+10000 -> CFG OK shift=+7600       (stazione: si ascolta su FREQ e si trasmette su FREQ + shift, per operare via ripetitore; 0 = simplex;
 //                                                          la frequenza spostata deve restare in 430-440 MHz; CFG GET SHIFT; vale dal riavvio)
 //   CFG SET IDINT 10             -> CFG OK idint=10            (ripetitore e nodo: ogni quanti minuti, da 1 a 10, la scheda TX manda l'identificativo; di base 10; vale dal riavvio)
@@ -148,7 +148,7 @@ struct Settings {
   char sysopCall[kMaxCallsign + 1] = {0};
   uint8_t sysopKey[16] = {0};
   bool sysopKeySet = false;
-  // Modo Sysop (scheda del sysop): il menu "Invia testo" diventa "Comandi Sysop" (elenco dei comandi al posto dei testi). Resta attivo
+  // Modo Sysop (scheda del sysop): il menu ha anche "Comandi Sysop" (elenco dei comandi), oltre a "Invia testo" che resta. Resta attivo
   // finche' il sysop non lo spegne; vale dal riavvio.
   bool sysopMode = false;
   bool idMorse = true;         // dopo l'identificativo in testo, il nominativo in Morse con tono in FM stretta (docs/studio-identificativo-fm.md); vale dal riavvio

@@ -297,7 +297,7 @@
       <summary>Sysop del ripetitore (nominativo, chiave e modo Sysop)</summary>
       <p class="hint" data-modes="node">Il <strong>nodo</strong> si comanda via radio come un ripetitore (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA): imposta qui il nominativo del sysop (chi trasmette i comandi) e la chiave, uguali sulla scheda del sysop. La chiave non si rilegge mai: copiala quando la generi.</p>
       <p class="hint" data-modes="rptrx">La RX verifica i comandi firmati del sysop (nominativo e chiave) e li gira alla TX; <strong>la chiave arriva alla TX dalla RX</strong> insieme al resto della configurazione. Il <strong>modo Sysop</strong> (menu &ldquo;Comandi Sysop&rdquo;) si accende solo sulla scheda del sysop. Nominativo e chiave vanno <strong>uguali sulla RX e sulla scheda del sysop</strong>; la chiave non si rilegge mai: copiala quando la generi.</p>
-      <p class="hint" id="sysophint" data-modes="off">Per chi gestisce un ripetitore. Con il <strong>modo Sysop</strong> acceso il menu della scheda (volume lungo) mostra <strong>Comandi Sysop</strong> al posto di Invia testo: scegli il comando (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA) e la scheda lo trasmette firmato al ripetitore. Resta acceso finch&eacute; non lo spegni. Nominativo e chiave vanno impostati uguali sul ripetitore (schede RX e TX) e sulla scheda del sysop; la chiave non si rilegge mai.</p>
+      <p class="hint" id="sysophint" data-modes="off">Per chi gestisce un ripetitore. Con il <strong>modo Sysop</strong> acceso il menu della scheda (volume lungo) mostra <strong>Comandi Sysop</strong> <strong>in pi&ugrave;</strong> di Invia testo (i testi predefiniti restano): scegli il comando (STATO, SPEGNI, RIACCENDI, RIAVVIA, IDENTIFICA, POTENZA) e la scheda lo trasmette firmato al ripetitore. Resta acceso finch&eacute; non lo spegni. Nominativo e chiave vanno impostati uguali sul ripetitore (schede RX e TX) e sulla scheda del sysop; la chiave non si rilegge mai.</p>
       <div data-modes="off">
       <label for="sysopmode">Modo Sysop</label>
       <select id="sysopmode" disabled><option value="off">Spento</option><option value="on">Acceso</option></select>
@@ -308,7 +308,7 @@
       <button id="genkey" type="button" class="secondary" disabled>Genera una chiave nuova</button>
       <div id="sysopbox" data-modes="off" hidden>
         <h3>Comandi Sysop</h3>
-        <p class="hint">L'elenco che compare sulla scheda al posto dei testi predefiniti.</p>
+        <p class="hint">L'elenco che compare sulla scheda alla voce Comandi Sysop del menu, oltre ai testi predefiniti (qui sotto).</p>
         <ol id="sysoplist"><li>STATO</li><li>SPEGNI</li><li>SPEGNI 15 MIN</li><li>SPEGNI 60 MIN</li><li>RIACCENDI</li><li>RIAVVIA</li><li>IDENTIFICA</li><li>POTENZA 17 dBm</li><li>POTENZA 14 dBm</li><li>POTENZA 10 dBm</li></ol>
       </div>
 
@@ -624,7 +624,7 @@
     for (const id of NET_IDS) $(id).disabled = !port || !nodeSeen;
   }
   let sysopSeen = false;     // la scheda risponde a CFG GET SYSOP (firmware piu' vecchi: no)
-  function sysopShow() { const on = $('sysopmode').value === 'on'; $('sysopbox').hidden = !on; $('textsbox').hidden = on; }
+  function sysopShow() { const on = $('sysopmode').value === 'on'; $('sysopbox').hidden = !on; $('textsbox').hidden = false; }  // i testi predefiniti restano anche nel modo Sysop
   function updateSysopControls(on) { for (const id of ['sysopmode', 'sysop', 'sysopkey', 'genkey']) $(id).disabled = !on || !sysopSeen; }
   async function readSysop() {
     try {

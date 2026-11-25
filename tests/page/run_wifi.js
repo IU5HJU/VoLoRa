@@ -164,7 +164,7 @@ function check(name, cond, extra) { checks++; if (!cond) { failures++; console.l
   check('seconda chiave diversa', (await p.inputValue('#sysopkey')) !== gk);
   const gk2 = await p.inputValue('#sysopkey');
   await p.selectOption('#sysopmode', 'on');
-  check('sysop acceso: elenco comandi visibile e testi nascosti', (await p.isVisible('#sysopbox')) && (await p.isHidden('#textsbox')) && (await p.locator('#sysoplist li').count()) === 10);
+  check('sysop acceso: elenco comandi visibile e i testi predefiniti restano', (await p.isVisible('#sysopbox')) && (await p.isVisible('#textsbox')) && (await p.locator('#sysoplist li').count()) === 10);
   await p.fill('#sysop', 'iu5hju');
   await p.fill('#sysopkey', 'abc');
   await p.click('#save');

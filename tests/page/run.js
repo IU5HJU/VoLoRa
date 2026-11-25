@@ -468,7 +468,7 @@ async function scenario(name, fn, opts = {}) {
     const gk = await p.inputValue('#sysopkey');
     check('chiave generata: 32 cifre esadecimali', /^[0-9a-f]{32}$/.test(gk));
     await p.selectOption('#sysopmode', 'on');
-    check('acceso: elenco comandi visibile, testi nascosti', (await p.isVisible('#sysopbox')) && (await p.isHidden('#textsbox')) && (await p.locator('#sysoplist li').count()) === 10);
+    check('acceso: elenco comandi visibile, e i testi predefiniti restano', (await p.isVisible('#sysopbox')) && (await p.isVisible('#textsbox')) && (await p.locator('#sysoplist li').count()) === 10);
     await p.fill('#callsign', 'IU5HJU');
     await p.fill('#sysop', 'iu5hju');
     await p.click('#save');
