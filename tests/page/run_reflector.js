@@ -16,7 +16,7 @@ function mk(n) {
     messages: [{ callsign: 'IZ5IOF', agoS: 100, node: 'IK5PWR', nodeLabel: '' }] };
 }
 (async () => {
-  const b = await chromium.launch();
+  const b = await chromium.launch(process.env.PW_CHANNEL ? { channel: process.env.PW_CHANNEL } : {});
   let bad = 0; const check = (n, c) => { console.log((c ? 'ok    ' : 'KO    ') + n); if (!c) bad++; };
   for (const n of [2, 6, 12]) {
     const p = await b.newPage({ viewport: { width: 400, height: 900 } });
