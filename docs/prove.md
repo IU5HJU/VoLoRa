@@ -979,3 +979,10 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - Richiesta dell'operatore: i testi non comparivano come trasmissioni nel reflector; si vogliono vedere sulla pagina pubblica senza contenuto e sulla pagina del sysop con il contenuto.
 - **Provato sul PC:** test del core (`tests/test_reflector_core.cpp`: registrazione, seconda copia contata una volta, identificativi periodici esclusi, inoltro invariato: 133 controlli, 0 falliti) e prova con socket veri (`make reflector-smoke`): il sysop vede il testo, la pagina pubblica ha mittente e nodo e **il testo non compare nel JSON pubblico**.
 - **Non provato su scheda:** serve un testo vero mandato da una scheda in Standard attraverso un nodo; da guardare sulle due pagine.
+
+### 25/11/2026, T-Beam di IK5PWR con GPS NEO-M8N: il fix non viene visto (riferito, registro seriale)
+
+- Scheda: T-Beam V1.2 AXP2101, radio SX1262, GPS u-blox NEO-M8N (foto). Riferito dall'operatore: la spia del GPS segnala il fix.
+- Registro: `[gps] nessun fix (satelliti 0, frasi lette 0, errori 0)` per tutto il tempo, batteria assente, USB sì. Arrivano byte ma nessuna frase NMEA (né valida né con checksum errato): velocità della seriale diversa da 9600 o modulo in solo UBX. Causa **non confermata**.
+- Risposta nel codice: diagnosi e ricerca automatica della velocità, con il comando UBX per riattivare NMEA ([tbeam-sx1262.md](tbeam-sx1262.md)). **Solo sul PC** la logica; **da provare sulla scheda**.
+

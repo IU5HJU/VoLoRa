@@ -18,6 +18,7 @@ void Gps::begin(bool enabled, Pmu& pmu) {
   Serial1.begin(9600, SERIAL_8N1, pins::kGpsRx, pins::kGpsTx);
   active_ = true;
   lastLogMs_ = millis();
+  probeSinceMs_ = millis();
   Serial.printf("[gps] acceso: seriale a 9600 baud su GPIO%d, in attesa dei satelliti\n", pins::kGpsRx);
 }
 
@@ -26,11 +27,13 @@ void Gps::loop(uint32_t nowMs) {
   while (Serial1.available() > 0) {
     const char c = static_cast<char>(Serial1.read());
     charsRead_++;
+    probe_.feed(static_cast<uint8_t>(c));
     if (parser_.feed(c) && parser_.fix().valid) {
       lastFixMs_ = nowMs;
       everFixed_ = true;
     }
   }
+  probeStep(nowMs);
   const bool fix = hasFix(nowMs);
   if (fix != lastHadFix_) {  // fix ottenuto o perso: una riga subito
     lastHadFix_ = fix;
@@ -54,6 +57,37 @@ void Gps::loop(uint32_t nowMs) {
                     static_cast<unsigned>(parser_.fix().sats), static_cast<unsigned>(parser_.sentences()),
                     static_cast<unsigned>(parser_.checksumErrors()));
     }
+  }
+}
+
+// Ogni 6 s: se arrivano byte ma nessuna frase NMEA valida (e nessun errore di checksum), si dice cosa arriva e si prova a rimediare: se il modulo parla in
+// UBX gli si chiede (solo in RAM) di mandare anche NMEA, altrimenti si prova un'altra velocita' della seriale. Quando compare una frase valida si smette.
+void Gps::probeStep(uint32_t nowMs) {
+  if (baudFound_) return;
+  if (parser_.sentences() > 0) {
+    baudFound_ = true;
+    Serial.printf("[gps] frasi NMEA valide a %lu baud\n", static_cast<unsigned long>(lcr::GpsProbe::baud(baudIdx_)));
+    return;
+  }
+  if (nowMs - probeSinceMs_ < 6000) return;
+  probeSinceMs_ = nowMs;
+  if (probe_.bytes() == 0) return;  // niente byte: lo dice gia' il registro dello stato (alimentazione o cavo)
+  Serial.printf("[gps] arrivano byte (%lu, '$' %lu, UBX %s) ma nessuna frase valida a %lu baud; primi byte: %s\n", static_cast<unsigned long>(probe_.bytes()),
+                static_cast<unsigned long>(probe_.dollars()), probe_.sawUbx() ? "si" : "no", static_cast<unsigned long>(lcr::GpsProbe::baud(baudIdx_)), probe_.firstBytesHex());
+  const lcr::GpsProbe::Action a = probe_.decide(parser_.sentences(), parser_.checksumErrors(), ubxTried_);
+  if (a == lcr::GpsProbe::Action::SendUbxEnableNmea) {
+    ubxTried_ = true;
+    uint8_t cmd[32];
+    const size_t n = lcr::buildUbxCfgPrt(lcr::GpsProbe::baud(baudIdx_), cmd);
+    Serial1.write(cmd, n);
+    Serial.println("[gps] il modulo parla in UBX: gli chiedo di mandare anche le frasi NMEA (solo in RAM, non si salva)");
+    probe_.reset();
+  } else if (a == lcr::GpsProbe::Action::NextBaud) {
+    baudIdx_ = (baudIdx_ + 1) % lcr::GpsProbe::kBauds;
+    ubxTried_ = false;
+    Serial1.updateBaudRate(lcr::GpsProbe::baud(baudIdx_));
+    Serial.printf("[gps] provo %lu baud\n", static_cast<unsigned long>(lcr::GpsProbe::baud(baudIdx_)));
+    probe_.reset();
   }
 }
 

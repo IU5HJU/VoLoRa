@@ -5,6 +5,7 @@
 
 #include <Arduino.h>
 
+#include "gps_probe.h"
 #include "nmea.h"
 #include "pmu.h"
 
@@ -29,4 +30,11 @@ class Gps {
   bool lastHadFix_ = false;
   uint32_t lastLogMs_ = 0;
   uint32_t charsRead_ = 0;
+  // Diagnosi della seriale (lib/voicecore/gps_probe.h): byte che arrivano ma nessuna frase valida = velocita' sbagliata o modulo in solo UBX
+  lcr::GpsProbe probe_;
+  size_t baudIdx_ = 0;
+  uint32_t probeSinceMs_ = 0;
+  bool ubxTried_ = false;
+  bool baudFound_ = false;
+  void probeStep(uint32_t nowMs);
 };

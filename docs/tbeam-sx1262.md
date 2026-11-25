@@ -42,3 +42,14 @@ Non ho confrontato sensibilità e consumo dei due chip: non sono nelle fonti let
 ## Come si installa
 
 Dalla pagina [iu5hju.github.io/VoLoRa](https://iu5hju.github.io/VoLoRa/): scheda **"T-Beam V1.2 (AXP2101) con radio SX1262"**. Il firmware per questa scheda esiste **solo nelle versioni di sviluppo (main) e in quelle uscite dopo il 13/11/2026**: per le release precedenti la pagina passa da sola a una versione che c'è, o nasconde il pulsante di installazione se non ce ne sono. **Non installare il firmware SX1278 su questa scheda (e viceversa)**: la radio non parte.
+
+## GPS che segnala il fix ma il software no (25/11/2026, T-Beam di IK5PWR con NEO-M8N)
+
+**Segnalazione dell'operatore:** sulla T-Beam V1.2 AXP2101 con radio SX1262 e GPS NEO-M8N di IK5PWR la spia del modulo indica il fix, ma la seriale della scheda continua a dire ricerca dei satelliti.
+
+**Cosa dice il registro (riferito, `lora-codec2-seriale-25-11-2026_08-51-54.txt`):** `[gps] nessun fix (satelliti 0, frasi lette 0, errori 0)` ogni 10 secondi, batteria assente, USB presente. Si legge in questo modo: il messaggio «nessun dato dalla seriale» **non** compare, quindi dal GPS **arrivano dei byte**; ma **non una sola frase NMEA** è valida e **nemmeno una con checksum errato** (il lettore conta un errore solo dopo aver visto un `$`). Quindi il problema non è il fix né l'alimentazione (ALDO3): sulla seriale non passa NMEA a 9600 baud. Le spiegazioni possibili, **non verificate**: il modulo è configurato a un'altra velocità, oppure parla solo in UBX (binario), per esempio dopo essere stato usato con un altro firmware che lo riconfigura.
+
+**Cosa fa il firmware dal 25/11/2026** (`lib/voicecore/gps_probe.*`, `src/gps.cpp`): se arrivano byte ma nessuna frase valida, ogni 6 secondi scrive quanti byte, quanti `$`, se ha visto UBX e **i primi byte in esadecimale**; se vede UBX chiede al modulo (solo in RAM, senza salvare) di mandare anche NMEA (UBX-CFG-PRT, comando verificato sul PC contro quello della documentazione u-blox); altrimenti prova un'altra velocità (38400, 115200, 57600, 19200, 4800) e, appena arriva una frase valida, scrive `frasi NMEA valide a N baud` e si ferma. Logica provata sul PC (`tests/test_gps_probe.cpp`); **la parte della scheda (seriale, cambio di velocità) non è stata provata né compilata in locale**: la compila la CI.
+
+**Da fare sulla scheda di IK5PWR:** caricare il firmware nuovo con GPS acceso (`CFG SET GPS ON`), aspettare un minuto all'aperto e mandare il registro seriale: le righe `[gps] arrivano byte...` dicono cosa parla il modulo.
+
