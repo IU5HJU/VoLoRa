@@ -64,6 +64,20 @@ function mk(n) {
     check('sysop: cronologia unita, il messaggio con il testo in cima e la voce sotto', rows.length === 2 && rows[0].includes('IZ5IOF') && rows[0].includes('Ciao QRV') && rows[0].includes('Testo') && rows[1].includes('IU5HJU'));
     check('sysop: niente sezione separata dei messaggi e nessun errore JS', (await p.$('#msgs')) === null && errs.length === 0);
   }
+  // schermo del telefono acceso (Screen Wake Lock): richiesto all'apertura e di nuovo dopo che il blocco cade e la pagina torna in primo piano; senza, nessun errore
+  {
+    const serve = (pg) => pg.route('**/*', (r) => { const u = r.request().url().endsWith('/'); r.fulfill({ contentType: u ? 'text/html' : 'application/json', body: u ? PUB : '{}' }); });
+    const p = await b.newPage();
+    await p.addInitScript(() => { window.__req = 0; window.__rel = null; Object.defineProperty(navigator, 'wakeLock', { value: { request: async () => { window.__req++; const l = new EventTarget(); window.__rel = () => l.dispatchEvent(new Event('release')); return l; } } }); });
+    await serve(p); await p.goto('http://x.test/'); await p.waitForTimeout(300);
+    check('schermo acceso: richiesto all\'apertura', (await p.evaluate(() => window.__req)) === 1);
+    await p.evaluate(() => window.__rel()); await p.evaluate(() => document.dispatchEvent(new Event('visibilitychange'))); await p.waitForTimeout(200);
+    check('schermo acceso: richiesto di nuovo dopo il rilascio e il ritorno in primo piano', (await p.evaluate(() => window.__req)) === 2);
+    const q = await b.newPage(); const e2 = []; q.on('pageerror', (e) => e2.push(String(e)));
+    await q.addInitScript(() => { delete Navigator.prototype.wakeLock; });
+    await serve(q); await q.goto('http://x.test/'); await q.waitForTimeout(200);
+    check('schermo acceso: senza Wake Lock la pagina funziona lo stesso', e2.length === 0);
+  }
   await b.close();
   process.exit(bad ? 1 : 0);
 })();

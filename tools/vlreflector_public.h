@@ -188,6 +188,18 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
     x.onerror = x.ontimeout = function () { $("err").textContent = "Reflector non raggiungibile: riprovo."; };
     x.send();
   }
+  // Lo schermo del telefono non si spegne mentre la pagina e' aperta (Screen Wake Lock, come nella vista di SVX Guardian). Serve una pagina sicura (HTTPS):
+  // senza, o su un browser che non lo ha, la pagina funziona lo stesso. Il blocco cade quando la pagina passa in secondo piano: si richiede al ritorno.
+  var wake = null;
+  function keepAwake() {
+    if (!("wakeLock" in navigator) || document.visibilityState !== "visible" || wake) return;
+    navigator.wakeLock.request("screen").then(function (l) {
+      wake = l;
+      l.addEventListener("release", function () { wake = null; });
+    }, function () {});
+  }
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") keepAwake(); });
+  keepAwake();
   poll();
   setInterval(poll, 3000);
 })();

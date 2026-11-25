@@ -172,6 +172,10 @@ I messaggi di testo (modo 7, un pacchetto solo, stessi parametri radio dello Sta
 
 Provato sul PC (test del reflector e prova con socket veri, compreso il controllo che il testo non compaia nel JSON pubblico) e **il 25/11/2026 sulla pagina pubblica con una scheda vera** (foto dell'operatore: mittente, nodo e tempo, senza contenuto). **Anche la tabella del sysop con il testo è stata vista con una scheda vera** (foto del 25/11/2026).
 
+### Lo schermo del telefono resta acceso
+
+Finché la pagina pubblica è aperta, il telefono **non spegne lo schermo** (Screen Wake Lock del browser, lo stesso accorgimento della vista di SVX Guardian): comoda per tenerla sul tavolo a guardare la rete. Se la pagina passa in secondo piano il blocco cade, e si ripete da solo quando ci torni. **Serve una pagina sicura (HTTPS)**: sulla pagina pubblica in HTTPS funziona; su un indirizzo `http://` della rete di casa (come la pagina del sysop) il browser lo rifiuta e la pagina funziona lo stesso. Un browser senza questa funzione non la usa. Provato sul PC con un Wake Lock finto (`tests/page/run_reflector.js`); **da provare sul telefono** (Chrome su Android; Safari su iPhone dalla versione 16.4).
+
 ### Le stazioni collegate crescono: la pagina pubblica si restringe
 
 Sulla pagina pubblica l'elenco delle stazioni collegate si adatta da solo al numero:
