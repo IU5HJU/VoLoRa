@@ -7,6 +7,8 @@
 #pragma once
 
 #include <condition_variable>
+#include <sys/stat.h>
+
 #include <cstdio>
 #include <ctime>
 #include <deque>
@@ -146,6 +148,11 @@ class ListenService {
   }
   // Lo storico degli ascolti finiti: in memoria gli ultimi 100 (per la pagina di amministrazione) e, se c'e' il file, una riga per ascolto
   // ("2026-11-22 20:31:07;IU5HJU;125 s;chiuso dal browser o dalla rete"). Nessun indirizzo di rete, nessuna email.
+  // Il file dello storico non cresce senza fine: oltre questa dimensione diventa <file>.1 (quello di prima si butta) e se ne comincia uno nuovo: al massimo 2 file.
+  void setHistoryMaxBytes(size_t n) {
+    std::lock_guard<std::mutex> l(m_);
+    historyMaxBytes_ = n;
+  }
   void setHistoryFile(const std::string& path) {
     std::lock_guard<std::mutex> l(m_);
     historyPath_ = path;
@@ -221,6 +228,13 @@ class ListenService {
       path = historyPath_;
     }
     if (!path.empty()) {
+      size_t maxBytes;
+      {
+        std::lock_guard<std::mutex> l(m_);
+        maxBytes = historyMaxBytes_;
+      }
+      struct stat sb;
+      if (maxBytes && stat(path.c_str(), &sb) == 0 && static_cast<size_t>(sb.st_size) >= maxBytes) rename(path.c_str(), (path + ".1").c_str());
       FILE* f = fopen(path.c_str(), "a");
       if (f) {
         fprintf(f, "%s;%s;%u s;%s\n", ts, call.c_str(), static_cast<unsigned>(secs), why.c_str());
@@ -292,6 +306,7 @@ class ListenService {
   std::deque<Job> jobs_;
   std::deque<HistoryItem> history_;
   std::string historyPath_;
+  size_t historyMaxBytes_ = 256 * 1024;
   ListenConfig cfg_;
   std::string last_;
   bool stop_ = false;

@@ -380,6 +380,56 @@ build/vlnode --id 3 --peer-id 1000 --key <chiave> --listen 0 --peer localhost:54
 
 Con `vlnode` si possono anche mandare una posizione (`--position`), un rapporto di qualità (`--quality`), perdere pacchetti (`--drop`) e presentarsi come un nodo per APRS (`--info SSID LAT,LON FREQ_KHZ MODO "testo"`).
 
+## Registri e spazio sul disco
+
+Su un server con poco spazio (una scheda SD, un disco piccolo) conviene sapere cosa scrive il reflector e metterci un tetto. Controllato il 25/11/2026:
+
+- **Il registro del reflector va solo sullo standard output**, cioè nel registro di sistema (`journald`) quando gira come servizio: il programma **non scrive file di registro suoi**, quindi non ha niente da ruotare da sé. Lo spazio lo governa `journald`. A conti fatti il reflector scrive poco: una riga di stato ogni 5 minuti, una riga per ogni invio ad APRS (ogni 10 minuti per nodo) e qualche riga per trasmissione (chi parla, qualità, distanza, fine): nell'ordine di **200-300 kB al giorno**, qualche MB al mese con un reflector animato.
+- **`journald` ha però un limite suo, di base molto largo** (fino al 10% del disco, al massimo 4 GB), e il registro è di **tutto** il sistema, non solo del reflector. Su un disco piccolo conviene metterne uno stretto:
+  ```
+  sudo mkdir -p /etc/systemd/journald.conf.d
+  printf '[Journal]\nSystemMaxUse=100M\nMaxRetentionSec=1month\n' | sudo tee /etc/systemd/journald.conf.d/limite.conf
+  sudo systemctl restart systemd-journald
+  journalctl --disk-usage
+  ```
+  (`SystemMaxUse=100M`: al massimo 100 MB su disco; `MaxRetentionSec=1month`: niente più vecchio di un mese.) Per non scrivere affatto sul disco (una SD che si consuma) si può usare `Storage=volatile` con `RuntimeMaxUse=30M`: il registro sta in memoria e si perde a ogni riavvio.
+- **Gli altri file del reflector sono piccoli e non crescono**: `reflector.conf`, `aprs.conf`, `ascolto.conf`, `admin.token` (poche righe), `nodi.cache` (una riga per nodo, si riscrive solo quando qualcosa cambia) e il certificato in `ssl/`.
+- **L'unico file che cresce è `ascolto-storico.log`** (chi ha ascoltato dal web, una riga di circa 70 byte per ascolto). **Si ruota da solo**: oltre **256 kB** diventa `ascolto-storico.log.1` (quello di prima si butta) e se ne comincia uno nuovo, quindi **non supera circa mezzo MB** in tutto (provato con `tests/listen_smoke.sh`). Non serve `logrotate`.
+
+## Copia di sicurezza settimanale
+
+`tools/backup-reflector.sh` salva su un disco esterno (una chiavetta o un disco USB) tutto quello che serve a rimettere in piedi il reflector su un'altra macchina, e niente di grosso: `/var/lib/vlreflector` (file dei client, configurazioni di APRS e dell'ascolto, password, certificato e chiave HTTPS, presentazioni dei nodi, storico degli ascolti), il file del servizio (`vlreflector.service` e la sua cartella `.d`), `/etc/letsencrypt` (l'account e i rinnovi) e i limiti di `journald`. Ci stanno in meno di un megabyte.
+
+```
+sudo tools/backup-reflector.sh --destinazione /mnt/backup/vlreflector --prova     # elenca cosa salverebbe, senza scrivere
+sudo tools/backup-reflector.sh --destinazione /mnt/backup/vlreflector            # lo fa
+```
+
+- **Non scrive se il disco non è montato**: la destinazione deve stare su un disco montato, altrimenti il programma si ferma con un errore (se scrivesse sul punto di montaggio vuoto riempirebbe il disco del server).
+- Fa **un archivio con la data** (`vlreflector-AAAA-MM-GG_HHMMSS.tar.gz`), con permessi **600**: dentro ci sono password e chiavi, quindi il disco di backup va tenuto al sicuro (e un disco con sistema di file Linux, non FAT, per i permessi).
+- **Tiene gli ultimi 8** archivi (due mesi di copie settimanali; con `--tieni N` si cambia) e toglie i più vecchi solo dopo aver controllato che il nuovo si rilegge. Controlla anche lo spazio libero.
+- **Ogni settimana**, con un timer di `systemd` (da adattare: il percorso del disco e dello script):
+  ```
+  # /etc/systemd/system/vlreflector-backup.service
+  [Unit]
+  Description=Copia di sicurezza del reflector VoLoRa
+  [Service]
+  Type=oneshot
+  ExecStart=/home/UTENTE/VoLoRa/tools/backup-reflector.sh --destinazione /mnt/backup/vlreflector
+
+  # /etc/systemd/system/vlreflector-backup.timer
+  [Unit]
+  Description=Copia di sicurezza settimanale del reflector
+  [Timer]
+  OnCalendar=Sun 03:30
+  Persistent=true
+  [Install]
+  WantedBy=timers.target
+  ```
+  poi `sudo systemctl daemon-reload && sudo systemctl enable --now vlreflector-backup.timer`, e `systemctl list-timers vlreflector-backup.timer` mostra la prossima esecuzione. Il registro dell'ultima copia: `journalctl -u vlreflector-backup`.
+- **Rimettere tutto a posto** su un'altra macchina: `sudo tar -C / -xzf vlreflector-....tar.gz`, poi `sudo systemctl daemon-reload && sudo systemctl restart vlreflector`.
+- **Provata sul PC** (`--prova`, rifiuto se il disco non è montato, rotazione degli archivi, permessi 600, contenuto dell'archivio); **non ancora provata sul server** né con il disco di backup vero.
+
 ## Limiti noti
 
 - Un reflector è **un salone**: tutti i client si sentono. I canali (il campo `canale` dell'intestazione) non sono usati.

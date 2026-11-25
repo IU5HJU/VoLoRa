@@ -784,6 +784,7 @@ int main(int argc, char** argv) {
   std::string webBind = "127.0.0.1", pubBind = "0.0.0.0", tlsCert, tlsKey;
   bool setPassword = false;
   int listenCooldownS = 60;
+  long listenHistoryMax = 256 * 1024;
   for (int i = 1; i < argc; i++) {
     const std::string a = argv[i];
     auto next = [&]() -> const char* { return i + 1 < argc ? argv[++i] : ""; };
@@ -808,6 +809,7 @@ int main(int argc, char** argv) {
     else if (a == "--public-name") adm.publicName = next();
     else if (a == "--aprs-file") adm.aprsPath = next();
     else if (a == "--listen-file") adm.listenPath = next();
+    else if (a == "--listen-history-max") listenHistoryMax = atol(next());  // per le prove: dimensione oltre la quale lo storico degli ascolti si ruota (di base 262144 byte)
     else if (a == "--listen-cooldown") listenCooldownS = atoi(next());  // per le prove: secondi fra due richieste dello stesso nominativo o indirizzo (di base 60)
     else {
       fprintf(stderr, "parametro sconosciuto: %s (vedi l'inizio di tools/vlreflector.cpp)\n", a.c_str());
@@ -868,6 +870,7 @@ int main(int argc, char** argv) {
   adm.listen = &listenSvc;
   if (adm.listenPath.empty()) adm.listenPath = dirOf(adm.configPath) + "/ascolto.conf";
   listenSvc.setHistoryFile(dirOf(adm.listenPath) + "/ascolto-storico.log");
+  listenSvc.setHistoryMaxBytes(listenHistoryMax < 0 ? 0 : static_cast<size_t>(listenHistoryMax));
   {
     std::string lerr;
     if (!adm.reloadListen(lerr)) logLine("[ascolto] " + adm.listenPath + ": " + lerr + " (l'ascolto resta spento finche' non lo correggi dalla pagina di amministrazione)");

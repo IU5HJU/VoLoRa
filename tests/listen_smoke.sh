@@ -23,7 +23,7 @@ EOM
 chmod +x "$D/fakemail.sh"
 
 python3 tests/fake_qrz_server.py $QRZ "$D/qrz.req" 120 &
-build/vlreflector --config "$D/ref.conf" --port $PORT --id 1000 --voice-mode 1 --web $WEB --public-web $PUB --public-bind 127.0.0.1 --public-name prova.example:$PORT --listen-cooldown 1 --duration 110 > "$D/ref.out" 2>&1 &
+build/vlreflector --config "$D/ref.conf" --port $PORT --id 1000 --voice-mode 1 --web $WEB --public-web $PUB --public-bind 127.0.0.1 --public-name prova.example:$PORT --listen-cooldown 1 --listen-history-max 100 --duration 110 > "$D/ref.out" 2>&1 &
 sleep 1
 TOKEN=$(tr -d '\n' < "$D/admin.token")
 api() { curl -s -m 8 -H "X-Token: $TOKEN" "$@"; }
@@ -129,6 +129,12 @@ n = len(d) // 2
 s = struct.unpack("<%dh" % n, d[:n * 2])
 assert n > 6400 and any(abs(x) > 50 for x in s)
 EOP
+
+# lo storico non cresce senza fine: oltre la dimensione massima (qui 100 byte) il file diventa .1 e se ne comincia uno nuovo
+for i in 1 2 3; do curl -s -m 2 -H "X-Ascolto: $TICKET" -o /dev/null $P/ascolto/audio; sleep 0.6; done
+waitfor "$D/ascolto-storico.log.1" "IU5HJU" 8 && ok "lo storico oltre la dimensione massima si ruota (ascolto-storico.log.1)" || ko "rotazione dello storico: $(ls -la "$D" | grep storico)"
+[ "$(stat -c %s "$D/ascolto-storico.log")" -lt 300 ] && ok "il file dello storico resta piccolo" || ko "storico grande: $(stat -c %s "$D/ascolto-storico.log")"
+[ ! -e "$D/ascolto-storico.log.2" ] && ok "al massimo due file di storico (nessun .2)" || ko "ci sono piu' di due file di storico"
 
 # il sysop toglie un ascoltatore
 sleep 1
