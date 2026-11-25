@@ -89,6 +89,16 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     </section>
 
     <section>
+      <h2>Messaggi di testo</h2>
+      <div class="tw"><table>
+        <thead><tr><th>Quando</th><th>Da</th><th class="hm">Nodo</th><th class="hm" title="A quanti altri nodi collegati e' stato inoltrato">Inoltrato a</th><th>Testo</th></tr></thead>
+        <tbody id="msgs"></tbody>
+      </table></div>
+      <p class="muted" id="msgsEmpty">Ancora nessuno.</p>
+      <p class="muted">Il contenuto dei messaggi si vede solo qui: la pagina pubblica mostra soltanto chi li ha mandati e da quale nodo. Gli identificativi periodici dei nodi non sono messaggi e non compaiono.</p>
+    </section>
+
+    <section>
       <h2>Server APRS</h2>
       <p class="muted">Il reflector può mandare sul server APRS-IS la posizione delle stazioni che trasmettono, quando la loro scheda la manda via radio (impostazione <code>pos</code>). Serve un nominativo con cui il reflector si presenta al server (il tuo, con un SSID, per esempio <code>N0CALL-10</code>) e la password APRS-IS di quel nominativo. Ogni stazione è mandata al massimo una volta ogni intervallo.</p>
       <div id="aprsState" class="msg" hidden></div>
@@ -237,6 +247,13 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
       rb.appendChild(tr);
     }
     $('recentEmpty').hidden = s.recent.length > 0;
+    const mb = $('msgs'); mb.innerHTML = '';
+    for (const m of (s.messages || [])) {
+      const tr = document.createElement('tr');
+      cell(tr, fmtAgo(m.agoMs)); cell(tr, m.callsign); cellx(tr, m.client, 'hm'); cellx(tr, m.reached, 'hm'); cell(tr, m.text);
+      mb.appendChild(tr);
+    }
+    $('msgsEmpty').hidden = (s.messages || []).length > 0;
     refreshAprs();
     refreshListen();
   }

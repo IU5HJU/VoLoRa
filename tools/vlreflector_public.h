@@ -56,6 +56,9 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
   <p class="muted small" id="listenlink" hidden><a href="ascolto">Ascolta dal web</a> (per radioamatori senza una radio VoLoRa: serve l'email di QRZ.com)</p>
   <h2>Ultime trasmissioni</h2>
   <div id="recent"></div>
+  <h2 id="mhead" hidden>Messaggi di testo</h2>
+  <div id="msgs"></div>
+  <p class="muted small" id="mlegend" hidden>Dei messaggi di testo si vede solo chi li ha mandati e da quale nodo, non il contenuto.</p>
   <p class="muted small" id="legend"></p>
   <p class="muted small" id="err"></p>
 </main>
@@ -130,6 +133,16 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
       });
       $("legend").textContent = "Margine: SNR sopra il limite del modo. Persi in radio: pacchetti non ricevuti dal nodo; persi in rete: pacchetti non arrivati dal nodo al reflector.";
     }
+    var mz = d.messages || [];
+    $("mhead").hidden = !mz.length; $("mlegend").hidden = !mz.length;
+    var mc = $("msgs"); mc.textContent = "";
+    mz.forEach(function (x) {
+      var b = el("div", undefined, "card");
+      b.appendChild(el("div", x.callsign, "call"));
+      b.appendChild(el("div", "Messaggio di testo - " + ago(x.agoS), "row"));
+      if (x.node) b.appendChild(el("div", "Dal nodo " + x.node + (x.nodeLabel ? " (" + x.nodeLabel + ")" : ""), "small"));
+      mc.appendChild(b);
+    });
     $("err").textContent = "";
   }
   function poll() {

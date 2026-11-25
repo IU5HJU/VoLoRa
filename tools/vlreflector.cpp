@@ -439,6 +439,14 @@ struct Admin {
       first = false;
     }
     const ReflectorCore::Stats& s = core->stats();
+    // I messaggi di testo, con il contenuto: solo qui (la pagina del sysop), mai sulla pagina pubblica
+    o << "],\"messages\":[";
+    first = true;
+    for (const auto& m : core->recentTexts()) {
+      o << (first ? "" : ",") << "{\"callsign\":\"" << jsonEscape(m.callsign) << "\",\"client\":\"" << jsonEscape(m.client) << "\",\"agoMs\":" << (now - m.atMs)
+        << ",\"reached\":" << static_cast<unsigned>(m.reached) << ",\"text\":\"" << jsonEscape(m.text) << "\"}";
+      first = false;
+    }
     o << "],\"stats\":{\"datagrams\":" << s.datagrams << ",\"unknown\":" << s.unknownClient << ",\"badSignature\":" << s.badSignature << ",\"voiceBlocked\":" << s.voiceBlocked
       << ",\"talks\":" << s.talks << "}}";
     return o.str();
@@ -472,6 +480,17 @@ struct Admin {
       if (n++ >= 10) break;
       o << (first ? "" : ",") << "{\"callsign\":\"" << jsonEscape(r.callsign) << "\",\"agoS\":" << (now - r.lastMs) / 1000 << ",\"durationS\":" << (r.lastMs - r.startMs) / 1000
         << distanceJson(r) << nodeJson(r) << publicQualityJson(r) << "}";
+      first = false;
+    }
+    // I messaggi di testo: chi li ha mandati e da quale nodo, MAI il contenuto
+    o << "],\"messages\":[";
+    first = true;
+    n = 0;
+    for (const auto& m : core->recentTexts()) {
+      if (n++ >= 10) break;
+      const int ei = findEntryById(entries, m.clientId);
+      o << (first ? "" : ",") << "{\"callsign\":\"" << jsonEscape(m.callsign) << "\",\"agoS\":" << (now - m.atMs) / 1000 << ",\"node\":\""
+        << jsonEscape(ei >= 0 ? entries[static_cast<size_t>(ei)].name : m.client) << "\",\"nodeLabel\":\"" << jsonEscape(ei >= 0 ? entries[static_cast<size_t>(ei)].label : "") << "\"}";
       first = false;
     }
     o << "]" << (listen ? listen->publicStatusPart(now) : std::string()) << "}";

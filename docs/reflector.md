@@ -159,6 +159,18 @@ Sulla pagina pubblica i problemi del collegamento Internet dei nodi si vedono in
 
 I conteggi ripartono da zero quando il reflector si riavvia. Un nodo che cade e torna (hotspot spento, copertura LTE persa) fa salire le interruzioni e ripartire «Collegato da».
 
+### I messaggi di testo
+
+I messaggi di testo (modo 7, un pacchetto solo, stessi parametri radio dello Standard) passano dal reflector come la voce, e dal 25/11/2026 **compaiono anche come traffico**, non solo come contatore:
+
+- **Pagina pubblica:** un riquadro «Messaggi di testo» con, per ognuno, il nominativo del mittente, da quanto tempo e il **nodo da cui è entrato in rete**. **Il contenuto non si vede mai.**
+- **Pagina del sysop:** la tabella «Messaggi di testo» con quando, mittente, nodo, a quanti altri nodi è stato inoltrato e **il testo**. Il registro dice soltanto `messaggio di CALL dal nodo NODO (N caratteri)`, senza il testo.
+- Si tengono gli ultimi 20 (10 sulla pagina pubblica), in memoria: un riavvio del reflector li azzera.
+- La **seconda copia** che il mittente può mandare a distanza di un secondo conta una volta sola (si inoltra comunque). Gli **identificativi periodici** dei nodi e dei ripetitori non sono messaggi e non compaiono.
+- Solo lo Standard: un testo mandato da una scheda in un altro profilo (per esempio Messaggio, 125 kHz) non entra in rete ([standard-rete.md](standard-rete.md)).
+
+Provato sul PC (test del reflector e prova con socket veri, compreso il controllo che il testo non compaia nel JSON pubblico); **da provare con schede vere**.
+
 ### La distanza dal nodo
 
 Su ogni trasmissione, sia nella pagina pubblica sia in quella di amministrazione (in trasmissione adesso e fra le ultime), si vede la **distanza in chilometri fra la stazione che trasmette e il nodo da cui passa**, calcolata sulla sfera terrestre (un decimale sotto i 100 km, per esempio `11,1 km`). Nella pagina pubblica sta sotto il nominativo, insieme alla qualità del collegamento.

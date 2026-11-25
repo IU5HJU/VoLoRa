@@ -174,6 +174,30 @@ static void testTextAndRelayed() {
   CHECK(a.received.size() == 2 && a.received.back().mode == kModeText);
 }
 
+static void testTextMessagesRecorded() {
+  Rig r;
+  Client& a = r.add(1, 0xA1, 5001);
+  Client& b = r.add(2, 0xB2, 5002);
+  r.add(3, 0xC3, 5003);
+  r.run(4000);
+  CHECK(r.core.recentTexts().empty());
+  r.sendPacket(a, textPacket("IU5HJU", "ciao a tutti"));
+  CHECK(r.core.recentTexts().size() == 1 && r.core.stats().textMessages == 1);
+  const auto& m = r.core.recentTexts()[0];
+  CHECK(m.callsign == "IU5HJU" && m.text == "ciao a tutti" && m.clientId == 1 && m.reached == 2);
+  // la seconda copia (stessa sessione e testo) non e' un altro messaggio, ma si inoltra
+  r.sendPacket(a, textPacket("IU5HJU", "ciao a tutti"));
+  CHECK(r.core.recentTexts().size() == 1 && r.core.stats().textMessages == 1 && b.received.size() == 2);
+  // un testo diverso si', il piu' recente per primo
+  r.sendPacket(b, textPacket("IZ0ABC", "altro"));
+  CHECK(r.core.recentTexts().size() == 2 && r.core.recentTexts()[0].callsign == "IZ0ABC");
+  // l'identificativo periodico non e' un messaggio
+  Packet beacon = textPacket("IK5PWR", "Nodo VoLoRa");
+  beacon.seq = kTextSeqBeacon;
+  r.sendPacket(a, beacon);
+  CHECK(r.core.recentTexts().size() == 2 && r.core.stats().textMessages == 2);
+}
+
 static void testVoiceLockAndRelease() {
   Rig r;
   Client& a = r.add(1, 0xA1, 5001);
@@ -779,6 +803,7 @@ static void testQualityReportWhileActive() {
 int main() {
   testHandshake();
   testTextAndRelayed();
+  testTextMessagesRecorded();
   testVoiceLockAndRelease();
   testModesFiltered();
   testUnknownAndBadKey();

@@ -54,6 +54,7 @@ class ReflectorCore {
     uint32_t replays = 0;
     uint32_t voiceForwarded = 0;  // pacchetti di voce inoltrati (uno per client di destinazione)
     uint32_t textForwarded = 0;
+    uint32_t textMessages = 0;    // messaggi di testo (senza gli identificativi periodici) arrivati da un nodo
     uint32_t voiceBlocked = 0;    // voce di un altro client mentre uno parlava
     uint32_t badMode = 0;         // modo non inoltrato
     uint32_t badPacket = 0;       // non e' un pacchetto radio valido
@@ -93,6 +94,20 @@ class ReflectorCore {
   // Il giudizio (radio o rete) di una trasmissione, dal rapporto del nodo e da quello che ha visto il reflector.
   static Judgement judge(const Talk& t) { return judgeTransmission(t.haveReport ? &t.report : nullptr, t.netPackets, t.netGaps); }
   static constexpr size_t kRecentTalks = 20;
+
+  // Un messaggio di testo che e' passato dal reflector (modo 7, un solo pacchetto). Il contenuto lo vede solo il sysop: la pagina pubblica mostra chi e da dove.
+  // Gli identificativi periodici dei nodi e dei ripetitori (seq = kTextSeqBeacon) non sono messaggi e non si registrano.
+  struct TextMsg {
+    uint32_t clientId = 0;
+    std::string client;    // il nodo da cui il messaggio entra in rete
+    std::string callsign;  // il mittente ("-" se manca)
+    std::string text;
+    uint32_t atMs = 0;
+    uint16_t session = 0;
+    uint8_t seq = 0;
+    uint8_t reached = 0;   // a quanti altri nodi collegati e' stato inoltrato
+  };
+  static constexpr size_t kRecentTexts = 20;
 
   struct ClientInfo {
     uint32_t id = 0;
@@ -143,6 +158,8 @@ class ReflectorCore {
   // La trasmissione in corso (active) e le ultime finite, la piu' recente per prima, al massimo kRecentTalks.
   Talk currentTalk(uint32_t nowMs) const;
   const std::vector<Talk>& recentTalks() const { return recent_; }
+  // Gli ultimi messaggi di testo, il piu' recente per primo, al massimo kRecentTexts.
+  const std::vector<TextMsg>& recentTexts() const { return texts_; }
   // Registro (facoltativo): una riga per evento (client collegato, trasmissione iniziata e finita, ...).
   void setLog(std::function<void(const std::string&)> f) { log_ = f; }
   // Facoltativo: chiamato una volta per ogni trasmissione di voce che porta un nominativo (con la posizione, o con pos.valid = false se la stazione
@@ -190,6 +207,7 @@ class ReflectorCore {
   uint32_t talkLastMs_ = 0;
   Talk cur_;
   std::vector<Talk> recent_;
+  std::vector<TextMsg> texts_;
   std::function<void(const std::string&)> log_;
   std::function<void(const std::string&, const Position&, uint32_t, uint32_t, uint8_t)> onPosition_;
   std::function<void(uint32_t, const NodeInfo&, uint32_t)> onNodeInfo_;

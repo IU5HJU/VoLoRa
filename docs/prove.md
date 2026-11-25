@@ -973,3 +973,9 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Segnalazione (riferita):** abilitando i comandi del sysop (`SYSOPMODE ON`) in modalita' normale, **si perdeva la possibilita' di inviare i testi predefiniti**.
 - **Causa:** nel modo Sysop la voce di menu «Comandi Sysop» **prendeva il posto** di «Invia testo» (e la pagina nascondeva anche i campi dei testi), invece di aggiungersi.
 - **Correzione (stesso giorno):** nel modo Sysop il menu ha **anche** «Comandi Sysop», dopo «Invia testo», che resta; nella pagina (della scheda e del sito) i testi predefiniti restano visibili e modificabili. Provato **sul PC**: `tests/test_menu.cpp` (109 controlli: le voci, l'ordine, nessun «Comandi Sysop» senza il modo Sysop) e le due prove della pagina (`tests/page/run.js` e `run_wifi.js`). **Non ancora provato su scheda**: dal menu (volume lungo) devono comparire «Invia testo» e «Comandi Sysop».
+
+### 25/11/2026, reflector: i messaggi di testo come traffico (solo sul PC)
+
+- Richiesta dell'operatore: i testi non comparivano come trasmissioni nel reflector; si vogliono vedere sulla pagina pubblica senza contenuto e sulla pagina del sysop con il contenuto.
+- **Provato sul PC:** test del core (`tests/test_reflector_core.cpp`: registrazione, seconda copia contata una volta, identificativi periodici esclusi, inoltro invariato: 133 controlli, 0 falliti) e prova con socket veri (`make reflector-smoke`): il sysop vede il testo, la pagina pubblica ha mittente e nodo e **il testo non compare nel JSON pubblico**.
+- **Non provato su scheda:** serve un testo vero mandato da una scheda in Standard attraverso un nodo; da guardare sulle due pagine.

@@ -302,13 +302,40 @@ void ReflectorCore::onDatagram(Endpoint from, const uint8_t* d, size_t n, uint32
     if (tk) trackVoicePacket(*tk, *c, p, nowMs);
   }
   p.flags = static_cast<uint8_t>(p.flags | kFlagRelayed);
+  bool newText = false;
+  if (!voice && p.seq != kTextSeqBeacon) {
+    // la seconda copia che il mittente manda a distanza di un secondo non e' un altro messaggio: si registra una volta (si inoltra comunque, come prima)
+    const std::string body(reinterpret_cast<const char*>(p.payload), p.payloadLen);
+    bool dup = false;
+    for (const auto& m : texts_)
+      if (m.clientId == c->id && m.session == p.session && m.seq == p.seq && m.text == body && nowMs - m.atMs < 15000) dup = true;
+    if (!dup) {
+      TextMsg m;
+      m.clientId = c->id;
+      m.client = c->name;
+      m.callsign = p.hasCallsign() ? p.callsign : "-";
+      m.text = body;
+      m.atMs = nowMs;
+      m.session = p.session;
+      m.seq = p.seq;
+      texts_.insert(texts_.begin(), m);
+      if (texts_.size() > kRecentTexts) texts_.resize(kRecentTexts);
+      stats_.textMessages++;
+      newText = true;
+      char b[160];
+      snprintf(b, sizeof(b), "messaggio di %s dal nodo %s (%u caratteri)", m.callsign.c_str(), c->name.c_str(), static_cast<unsigned>(body.size()));
+      say(b);
+    }
+  }
   uint8_t wire[kMaxWireBytes];
   const size_t m = encodePacket(p, wire, sizeof(wire));
   if (m == 0) {
     stats_.badPacket++;
     return;
   }
+  const uint32_t before = stats_.textForwarded;
   forward(*c, wire, m, voice, nowMs);
+  if (newText && !texts_.empty()) texts_[0].reached = static_cast<uint8_t>(stats_.textForwarded - before > 255 ? 255 : stats_.textForwarded - before);
   if (voice && onVoice_) onVoice_(wire, m, nowMs);
   if (voice && (p.flags & kFlagEnd) && !p.isParity()) {  // fine della trasmissione: il canale si libera subito
     talking_ = false;
