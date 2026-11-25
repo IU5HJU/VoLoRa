@@ -169,7 +169,7 @@ I messaggi di testo (modo 7, un pacchetto solo, stessi parametri radio dello Sta
 - La **seconda copia** che il mittente può mandare a distanza di un secondo conta una volta sola (si inoltra comunque). Gli **identificativi periodici** dei nodi e dei ripetitori non sono messaggi e non compaiono.
 - Solo lo Standard: un testo mandato da una scheda in un altro profilo (per esempio Messaggio, 125 kHz) non entra in rete ([standard-rete.md](standard-rete.md)).
 
-Provato sul PC (test del reflector e prova con socket veri, compreso il controllo che il testo non compaia nel JSON pubblico); **da provare con schede vere**.
+Provato sul PC (test del reflector e prova con socket veri, compreso il controllo che il testo non compaia nel JSON pubblico) e **il 25/11/2026 sulla pagina pubblica con una scheda vera** (foto dell'operatore: mittente, nodo e tempo, senza contenuto). **Da vedere ancora** la tabella del sysop con il testo.
 
 ### La distanza dal nodo
 

@@ -986,3 +986,10 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - Registro: `[gps] nessun fix (satelliti 0, frasi lette 0, errori 0)` per tutto il tempo, batteria assente, USB sì. Arrivano byte ma nessuna frase NMEA (né valida né con checksum errato): velocità della seriale diversa da 9600 o modulo in solo UBX. Causa **non confermata**.
 - Risposta nel codice: diagnosi e ricerca automatica della velocità, con il comando UBX per riattivare NMEA ([tbeam-sx1262.md](tbeam-sx1262.md)). **Solo sul PC** la logica; **da provare sulla scheda**.
 - **Esito (riferito da IK5PWR tramite l'operatore, 25/11/2026):** con il firmware nuovo «il GPS funziona a dovere». **Non ho il registro seriale**, quindi non si sa **quale** ipotesi fosse giusta (velocità diversa o modulo in solo UBX) né a quale velocità; resta da recuperare la riga `[gps] frasi NMEA valide a N baud` o `[gps] il modulo parla in UBX`.
+
+### 25/11/2026, pagina pubblica del reflector: i messaggi di testo (foto dell'operatore, 18:55)
+
+- Reflector aggiornato con il commit dei messaggi di testo; testo mandato da una scheda dal nodo `IU5HJU (NODO_MOBILE)`.
+- **Provato sul server con una scheda vera (foto):** sulla pagina pubblica, sul telefono, compare il riquadro «Messaggi di testo» con il mittente (`IU5HJU`), «Messaggio di testo - 2 min fa» e «Dal nodo IU5HJU (NODO_MOBILE)», e sotto la scritta che il contenuto non si vede. **Il testo non compare**, come voluto. Sopra, nella stessa schermata, una trasmissione vocale con qualità «Buono», SNR 10,2 dB, RSSI -40 dBm, 0 su 10 persi in radio e in rete, distanza dal nodo 0,1 km.
+- **Non ancora visto:** la tabella «Messaggi di testo» con il contenuto sulla **pagina del sysop** (non c'è nella foto), né più messaggi di mittenti diversi.
+
