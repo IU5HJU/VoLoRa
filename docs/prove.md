@@ -991,5 +991,6 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 
 - Reflector aggiornato con il commit dei messaggi di testo; testo mandato da una scheda dal nodo `IU5HJU (NODO_MOBILE)`.
 - **Provato sul server con una scheda vera (foto):** sulla pagina pubblica, sul telefono, compare il riquadro «Messaggi di testo» con il mittente (`IU5HJU`), «Messaggio di testo - 2 min fa» e «Dal nodo IU5HJU (NODO_MOBILE)», e sotto la scritta che il contenuto non si vede. **Il testo non compare**, come voluto. Sopra, nella stessa schermata, una trasmissione vocale con qualità «Buono», SNR 10,2 dB, RSSI -40 dBm, 0 su 10 persi in radio e in rete, distanza dal nodo 0,1 km.
-- **Non ancora visto:** la tabella «Messaggi di testo» con il contenuto sulla **pagina del sysop** (non c'è nella foto), né più messaggi di mittenti diversi.
+- **Non ancora visto:** più messaggi di mittenti diversi.
+- **Pagina del sysop (foto dell'operatore, 20:22, dalla rete di casa):** la tabella «Messaggi di testo» mostra «1 h fa», mittente `IU5HJU` e **il contenuto** («IU5HJU QRV su VoLoRa modo S 433.475», il primo testo di esempio con i segnaposto già sostituiti), con sotto la scritta che il contenuto si vede solo lì. La riga non mostra le colonne «Nodo» e «Inoltrato a» perché sul telefono sono nascoste (classe `hm`). **Provato su un server vero con una scheda vera.**
 
