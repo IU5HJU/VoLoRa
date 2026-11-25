@@ -53,3 +53,5 @@ Dalla pagina [iu5hju.github.io/VoLoRa](https://iu5hju.github.io/VoLoRa/): scheda
 
 **Da fare sulla scheda di IK5PWR:** caricare il firmware nuovo con GPS acceso (`CFG SET GPS ON`), aspettare un minuto all'aperto e mandare il registro seriale: le righe `[gps] arrivano byte...` dicono cosa parla il modulo.
 
+**Esito (25/11/2026, riferito):** sulla scheda di IK5PWR, con il firmware nuovo, il GPS funziona. La parte di diagnosi e ricerca della velocità è quindi **provata su scheda a livello di risultato, riferito dall'operatore**; manca il registro che dica la causa.
+
