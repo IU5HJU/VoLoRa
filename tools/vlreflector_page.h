@@ -79,23 +79,13 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     </section>
 
     <section>
-      <h2>Ultime trasmissioni</h2>
+      <h2>Cronologia: voce e messaggi di testo</h2>
       <div class="tw"><table>
         <thead><tr><th>Quando</th><th>Nominativo</th><th title="Distanza fra la stazione e il nodo da cui passa: posizione trasmessa dalla stazione (pos acceso) e posizione fissa dichiarata dal nodo (NODESSID e QTH).">Distanza</th><th class="hm">Da</th><th class="hm">Modo</th><th class="hm">Durata</th><th class="hm">Pacchetti</th><th title="Con che segnale il nodo ha ricevuto l'utente in radio: SNR (medio e minimo) e RSSI. Lo dice il nodo con il rapporto di ricezione a fine trasmissione (firmware del nodo aggiornato).">Segnale al nodo</th><th title="Pacchetti radio che il nodo non ha ricevuto (buchi nella sequenza) su quelli che dovevano arrivare, e errori CRC visti">Persi in radio</th><th title="Pacchetti che il nodo ha mandato e al reflector non sono arrivati, e datagrammi persi fra nodo e reflector mentre la trasmissione passava">Persi in rete</th><th title="radio: segnale al limite o pacchetti persi in radio; rete: pacchetti persi fra nodo e reflector; buona: niente di rilevante; n.d.: il nodo non manda il rapporto">Giudizio</th></tr></thead>
         <tbody id="recent"></tbody>
       </table></div>
       <p class="muted" id="recentEmpty">Ancora nessuna.</p>
-      <p class="muted">Per ogni trasmissione si vede <strong>con che qualita' il nodo ha ricevuto l'utente in radio</strong> (SNR e RSSI) e se i pacchetti si sono persi <strong>in radio</strong> o <strong>fra il nodo e il reflector</strong>. Il segnale lo dice il nodo (firmware aggiornato); i buchi di rete li misura il reflector. Un nodo che non manda il rapporto compare con «n.d.», ma i buchi di rete si vedono lo stesso.</p>
-    </section>
-
-    <section>
-      <h2>Messaggi di testo</h2>
-      <div class="tw"><table>
-        <thead><tr><th>Quando</th><th>Da</th><th class="hm">Nodo</th><th class="hm" title="A quanti altri nodi collegati e' stato inoltrato">Inoltrato a</th><th>Testo</th></tr></thead>
-        <tbody id="msgs"></tbody>
-      </table></div>
-      <p class="muted" id="msgsEmpty">Ancora nessuno.</p>
-      <p class="muted">Il contenuto dei messaggi si vede solo qui: la pagina pubblica mostra soltanto chi li ha mandati e da quale nodo. Gli identificativi periodici dei nodi non sono messaggi e non compaiono.</p>
+      <p class="muted">Per ogni trasmissione si vede <strong>con che qualita' il nodo ha ricevuto l'utente in radio</strong> (SNR e RSSI) e se i pacchetti si sono persi <strong>in radio</strong> o <strong>fra il nodo e il reflector</strong>. Il segnale lo dice il nodo (firmware aggiornato); i buchi di rete li misura il reflector. Un nodo che non manda il rapporto compare con «n.d.», ma i buchi di rete si vedono lo stesso. I messaggi di testo (modo «Testo») stanno nello stesso elenco, con il contenuto: la pagina pubblica mostra solo chi li ha mandati e da quale nodo.</p>
     </section>
 
     <section>
@@ -229,7 +219,17 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
     }
     $('clientsEmpty').hidden = s.clients.length > 0;
     const rb = $('recent'); rb.innerHTML = '';
-    for (const t of s.recent) {
+    // voce e messaggi di testo nello stesso elenco, dal piu' recente
+    const items = s.recent.map((t) => ({ ago: t.agoMs, t })).concat((s.messages || []).map((m) => ({ ago: m.agoMs, m }))).sort((a, b) => a.ago - b.ago);
+    for (const it of items) {
+      if (it.m) {  // messaggio di testo: mittente, nodo, a quanti e' stato inoltrato e il testo (solo qui)
+        const m = it.m, tr = document.createElement('tr');
+        cell(tr, fmtAgo(m.agoMs)); cell(tr, m.callsign); cellx(tr, '-', 'v-nd'); cellx(tr, m.client, 'hm'); cellx(tr, 'Testo', 'hm');
+        const td = document.createElement('td'); td.colSpan = 6; td.textContent = m.text + '  (inoltrato a ' + m.reached + ')'; tr.appendChild(td);
+        rb.appendChild(tr);
+        continue;
+      }
+      const t = it.t;
       const tr = document.createElement('tr');
       cell(tr, fmtAgo(t.agoMs)); cell(tr, t.callsign); cellx(tr, fmtKm(t.distanceKm), t.distanceKm === null ? 'v-nd' : '', t.distanceKm === null ? (t.distanceWhy === 'station' ? 'La stazione non ha mandato la posizione (sulla scheda servono pos acceso e QTH o GPS).' : 'Il nodo non ha dichiarato la sua posizione (servono NODESSID e QTH sul nodo).') : '');
       cellx(tr, t.client, 'hm');
@@ -246,15 +246,8 @@ static const char kAdminPage[] = R"HTML(<!doctype html>
       cellx(tr, t.verdictText, 'v-' + t.verdict);
       rb.appendChild(tr);
     }
-    $('recentEmpty').hidden = s.recent.length > 0;
-    const mb = $('msgs'); mb.innerHTML = '';
-    for (const m of (s.messages || [])) {
-      const tr = document.createElement('tr');
-      cell(tr, fmtAgo(m.agoMs)); cell(tr, m.callsign); cellx(tr, m.client, 'hm'); cellx(tr, m.reached, 'hm'); cell(tr, m.text);
-      mb.appendChild(tr);
-    }
-    $('msgsEmpty').hidden = (s.messages || []).length > 0;
-    refreshAprs();
+    $('recentEmpty').hidden = items.length > 0;
+        refreshAprs();
     refreshListen();
   }
   // Server APRS: i campi si riempiono la prima volta (e dopo un salvataggio); poi si aggiorna solo lo stato, senza toccare quello che stai scrivendo

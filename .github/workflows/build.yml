@@ -55,6 +55,7 @@ jobs:
           test -x /opt/google/chrome/chrome || { echo "Chrome non trovato sul runner"; exit 1; }
           node tests/page/run.js
           node tests/page/run_wifi.js
+          node tests/page/run_reflector.js
 
   firmware:
     name: Firmware ${{ matrix.board }}

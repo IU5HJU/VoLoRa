@@ -163,13 +163,26 @@ I conteggi ripartono da zero quando il reflector si riavvia. Un nodo che cade e 
 
 I messaggi di testo (modo 7, un pacchetto solo, stessi parametri radio dello Standard) passano dal reflector come la voce, e dal 25/11/2026 **compaiono anche come traffico**, non solo come contatore:
 
-- **Pagina pubblica:** un riquadro «Messaggi di testo» con, per ognuno, il nominativo del mittente, da quanto tempo e il **nodo da cui è entrato in rete**. **Il contenuto non si vede mai.**
-- **Pagina del sysop:** la tabella «Messaggi di testo» con quando, mittente, nodo, a quanti altri nodi è stato inoltrato e **il testo**. Il registro dice soltanto `messaggio di CALL dal nodo NODO (N caratteri)`, senza il testo.
+- **Cronologia unica (dal 25/11/2026):** i messaggi non hanno una sezione a parte in fondo: stanno **nello stesso elenco delle trasmissioni vocali**, in ordine di tempo (la più recente per prima), così si vede a colpo d'occhio tutto quello che è transitato dal reflector. Sulla pagina pubblica la scheda del messaggio ha il distintivo **TESTO**.
+- **Pagina pubblica:** per ogni messaggio il nominativo del mittente, da quanto tempo e il **nodo da cui è entrato in rete**. **Il contenuto non si vede mai.**
+- **Pagina del sysop:** nella stessa tabella della cronologia, riga con modo «Testo», mittente, nodo, **il testo** e a quanti altri nodi è stato inoltrato. Il registro dice soltanto `messaggio di CALL dal nodo NODO (N caratteri)`, senza il testo.
 - Si tengono gli ultimi 20 (10 sulla pagina pubblica), in memoria: un riavvio del reflector li azzera.
 - La **seconda copia** che il mittente può mandare a distanza di un secondo conta una volta sola (si inoltra comunque). Gli **identificativi periodici** dei nodi e dei ripetitori non sono messaggi e non compaiono.
 - Solo lo Standard: un testo mandato da una scheda in un altro profilo (per esempio Messaggio, 125 kHz) non entra in rete ([standard-rete.md](standard-rete.md)).
 
 Provato sul PC (test del reflector e prova con socket veri, compreso il controllo che il testo non compaia nel JSON pubblico) e **il 25/11/2026 sulla pagina pubblica con una scheda vera** (foto dell'operatore: mittente, nodo e tempo, senza contenuto). **Anche la tabella del sysop con il testo è stata vista con una scheda vera** (foto del 25/11/2026).
+
+### Le stazioni collegate crescono: la pagina pubblica si restringe
+
+Sulla pagina pubblica l'elenco delle stazioni collegate si adatta da solo al numero:
+
+| Stazioni collegate | Come compaiono |
+|---|---|
+| fino a 3 | scheda completa (ultimo contatto, da quanto è collegata, pacchetti persi in rete) |
+| da 4 a 8 | **una riga** ciascuna: pallino verde, nominativo, RX/TX ed etichetta |
+| 9 o più | **pastiglie** compatte: solo pallino verde, nominativo e RX/TX |
+
+**Un tocco sul nominativo** apre la scheda completa di quella stazione (con «Tocca per richiudere»); resta aperta anche quando la pagina si aggiorna, finché non la richiudi. Provato sul PC in un browser vero con 2, 6 e 12 stazioni finte (`tests/page/run_reflector.js`); **da vedere con più nodi veri**.
 
 ### La distanza dal nodo
 

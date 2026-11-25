@@ -39,6 +39,16 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
   .v-limit { color:var(--warn); }
   .v-nd { color:var(--muted); }
   .dt { font-size:1rem; margin-top:2px; }
+  /* stazioni collegate: a mano a mano che aumentano la scheda si restringe (riga, poi solo pallino e nominativo); un tocco sul nominativo la riapre */
+  .st { cursor:pointer; }
+  .st.line { display:flex; flex-wrap:wrap; align-items:center; gap:.2em .6em; padding:8px 14px; margin-bottom:6px; }
+  .st.line .call { font-size:1.25rem; }
+  .st.line .lbl { color:var(--muted); font-size:.9rem; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; }
+  .chip { background:var(--card); border:1px solid var(--line); border-radius:999px; padding:3px 12px; font-size:1rem; font-weight:800; cursor:pointer; }
+  .chip .badge { margin-left:.35em; font-size:.65rem; }
+  .st.open { border-color:var(--cyan); }
+  .kind { display:inline-block; font-size:.75rem; font-weight:800; letter-spacing:.06em; color:#fff; background:var(--cyan); border-radius:7px; padding:.1em .5em; margin-left:.5em; vertical-align:middle; }
 </style>
 </head>
 <body>
@@ -54,11 +64,8 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
   <h2 id="lhead" hidden>In ascolto dal web <span id="lcount"></span></h2>
   <div id="listeners"></div>
   <p class="muted small" id="listenlink" hidden><a href="ascolto">Ascolta dal web</a> (per radioamatori senza una radio VoLoRa: serve l'email di QRZ.com)</p>
-  <h2>Ultime trasmissioni</h2>
+  <h2>Cronologia: voce e messaggi</h2>
   <div id="recent"></div>
-  <h2 id="mhead" hidden>Messaggi di testo</h2>
-  <div id="msgs"></div>
-  <p class="muted small" id="mlegend" hidden>Dei messaggi di testo si vede solo chi li ha mandati e da quale nodo, non il contenuto.</p>
   <p class="muted small" id="legend"></p>
   <p class="muted small" id="err"></p>
 </main>
@@ -70,7 +77,9 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
   function dur(s) { return s < 60 ? s + " s" : Math.floor(s / 60) + " min " + (s % 60) + " s"; }
   function n1(v) { return v.toFixed(1).replace(".", ","); }
   function km(v) { return v === null || v === undefined ? "" : v < 0.1 ? "meno di 0,1 km" : v < 100 ? n1(v) + " km" : Math.round(v) + " km"; }
+  var opened = {}, last = null;
   function show(d) {
+    last = d;
     var r = d.reflector;
     $("info").textContent = (r.name ? r.name + " - " : "") + "modo " + (r.mode === "standard" ? "Standard (voce Codec2 3200)" : "Range (voce Codec2 1200)") + " - acceso da " + dur(r.uptimeS);
     var now = $("now");
@@ -86,17 +95,39 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
     $("count").textContent = "(" + d.clients.length + ")";
     var c = $("clients"); c.textContent = "";
     if (!d.clients.length) c.appendChild(el("p", "Nessuna stazione collegata.", "muted"));
+    // Poche stazioni: schede complete. Da 4: una riga ciascuna. Da 9: solo pallino, nominativo e RX/TX. Un tocco sul nominativo apre la scheda completa (resta aperta).
+    var n = d.clients.length, level = n <= 3 ? 0 : n <= 8 ? 1 : 2, chips = null;
     d.clients.forEach(function (x) {
-      var b = el("div", undefined, "card");
-      var t = el("div", undefined, "call"); t.appendChild(el("span", "", "dot")); t.appendChild(document.createTextNode(x.call));
-      if (x.rx) t.appendChild(el("span", "RX", "badge rx"));
-      if (x.tx) t.appendChild(el("span", "TX", "badge tx"));
+      var open = level === 0 || opened[x.call];
+      var toggle = function () { if (level === 0) return; if (opened[x.call]) delete opened[x.call]; else opened[x.call] = true; show(last); };
+      var badges = function (parent, cls) { if (x.rx) parent.appendChild(el("span", "RX", "badge rx")); if (x.tx) parent.appendChild(el("span", "TX", "badge tx")); };
+      if (!open && level === 2) {
+        if (!chips) { chips = el("div", undefined, "chips"); c.appendChild(chips); }
+        var ch = el("span", undefined, "chip"); ch.setAttribute("role", "button"); ch.tabIndex = 0;
+        ch.appendChild(el("span", "", "dot")); ch.appendChild(document.createTextNode(x.call)); badges(ch);
+        ch.onclick = toggle; ch.onkeydown = function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } };
+        chips.appendChild(ch);
+        return;
+      }
+      chips = null;
+      if (!open) {  // una riga
+        var l = el("div", undefined, "card st line"); l.setAttribute("role", "button"); l.tabIndex = 0;
+        l.appendChild(el("span", "", "dot")); l.appendChild(el("span", x.call, "call")); badges(l);
+        if (x.label) l.appendChild(el("span", x.label, "lbl"));
+        l.onclick = toggle; l.onkeydown = function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } };
+        c.appendChild(l);
+        return;
+      }
+      var b = el("div", undefined, "card" + (level ? " st open" : ""));
+      var t = el("div", undefined, "call"); t.appendChild(el("span", "", "dot")); t.appendChild(document.createTextNode(x.call)); badges(t);
+      if (level) { b.setAttribute("role", "button"); b.tabIndex = 0; b.onclick = toggle; b.onkeydown = function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } }; }
       b.appendChild(t);
       if (x.label) b.appendChild(el("div", x.label, "row"));
       b.appendChild(el("div", "Ultimo contatto " + x.seenS + " s fa", "muted small row"));
       b.appendChild(el("div", "Collegato da " + dur(x.upS) + (x.downs ? " - interruzioni del collegamento: " + x.downs : ""), "muted small"));
       var tot = x.rxDg + x.lostDg;
       if (tot) b.appendChild(el("div", "Persi in rete: " + x.lostDg + " su " + tot + (x.lostDg ? " (" + n1(100 * x.lostDg / tot) + "%)" : ""), "muted small" + (x.lostDg && x.lostDg * 20 > tot ? " v-net" : "")));
+      if (level) b.appendChild(el("div", "Tocca per richiudere", "muted small row"));
       c.appendChild(b);
     });
     var lz = (d.listen && d.listen.listeners) || [];
@@ -105,9 +136,23 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
     lz.forEach(function (z) { var b = el("div", undefined, "card"); b.appendChild(el("div", z.call, "call")); lb.appendChild(b); });
     $("listenlink").hidden = !(d.listen && d.listen.enabled);
     var rc = $("recent"); rc.textContent = "";
-    if (!d.recent.length) rc.appendChild(el("p", "Ancora nessuna trasmissione.", "muted"));
+    // Tutto quello che e' passato dal reflector, dal piu' recente: trasmissioni vocali e messaggi di testo (di questi si vede solo chi e da dove, non il contenuto)
+    var items = [];
+    d.recent.forEach(function (x) { items.push({ voice: true, ago: x.agoS, x: x }); });
+    (d.messages || []).forEach(function (x) { items.push({ voice: false, ago: x.agoS, x: x }); });
+    items.sort(function (a, b) { return a.ago - b.ago; });
+    if (!items.length) rc.appendChild(el("p", "Ancora nessuna trasmissione.", "muted"));
     else {
-      d.recent.forEach(function (x) {
+      items.forEach(function (it) {
+        var x = it.x;
+        if (!it.voice) {
+          var m = el("div", undefined, "card");
+          var h = el("div", undefined, "call"); h.appendChild(document.createTextNode(x.callsign)); h.appendChild(el("span", "TESTO", "kind")); m.appendChild(h);
+          m.appendChild(el("div", "Messaggio di testo - " + ago(x.agoS), "row"));
+          if (x.node) m.appendChild(el("div", "Dal nodo " + x.node + (x.nodeLabel ? " (" + x.nodeLabel + ")" : ""), "small"));
+          rc.appendChild(m);
+          return;
+        }
         var q = x.quality;
         var radio = x.radioLevel === 2 ? "Segnale radio debole" : x.radioLevel === 1 ? "Segnale radio al limite" : "";
         var net = x.netLost > 0 ? "Problemi di rete" : "";
@@ -131,18 +176,8 @@ static const char kPublicPage[] = R"HTML(<!doctype html>
         else b.appendChild(el("div", x.distanceWhy === "node" ? "Non disponibile: il nodo non ha dichiarato la sua posizione" : "Non disponibile: la stazione non trasmette la posizione", "dt muted"));
         rc.appendChild(b);
       });
-      $("legend").textContent = "Margine: SNR sopra il limite del modo. Persi in radio: pacchetti non ricevuti dal nodo; persi in rete: pacchetti non arrivati dal nodo al reflector.";
+      $("legend").textContent = "Margine: SNR sopra il limite del modo. Persi in radio: pacchetti non ricevuti dal nodo; persi in rete: pacchetti non arrivati dal nodo al reflector." + " I messaggi di testo (TESTO) mostrano solo chi li ha mandati e da quale nodo, non il contenuto.";
     }
-    var mz = d.messages || [];
-    $("mhead").hidden = !mz.length; $("mlegend").hidden = !mz.length;
-    var mc = $("msgs"); mc.textContent = "";
-    mz.forEach(function (x) {
-      var b = el("div", undefined, "card");
-      b.appendChild(el("div", x.callsign, "call"));
-      b.appendChild(el("div", "Messaggio di testo - " + ago(x.agoS), "row"));
-      if (x.node) b.appendChild(el("div", "Dal nodo " + x.node + (x.nodeLabel ? " (" + x.nodeLabel + ")" : ""), "small"));
-      mc.appendChild(b);
-    });
     $("err").textContent = "";
   }
   function poll() {

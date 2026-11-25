@@ -62,6 +62,7 @@ pdf:
 test-page:
 	node tests/page/run.js
 	node tests/page/run_wifi.js
+	node tests/page/run_reflector.js
 
 # Decodificatore offline dei pacchetti catturati con un SDR (tools/lcr_decode.cpp): build/lcr_decode
 lcr_decode: build/lcr_decode
