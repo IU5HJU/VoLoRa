@@ -133,3 +133,5 @@ Le impostazioni del nodo (e della RX del ripetitore) si danno in **tre modi equi
 
 Provato sul PC (test della pagina di installazione con la scheda finta: `tests/page/run.js`); **da provare con una scheda vera**.
 
+**Verifica dell'hardware audio (26/11/2026):** il passo 3 della pagina di installazione (prova del microfono e dei toni) **non compare** per il nodo Internet e per la TX del ripetitore, che non hanno microfono né altoparlante da controllare; resta per la stazione normale e per la RX (altoparlante di monitor).
+

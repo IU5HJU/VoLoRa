@@ -932,6 +932,11 @@ async function scenario(name, fn, opts = {}) {
     v = await vis(all);
     check('nodo: identificativo e posizione fissa (mappa APRS); niente uscita, monitor, volume, microfono, GPS, MeshCom, testi, sysop, frequenze degli altri profili',
           v.callsign && v.profile && v.freq && v.power && v.idint && v.idmorse && v.qthlat && !v.freqout && !v.monitor && !v.volume && !v.micfloor && !v.gps && !v.mcdest1 && !v.sysopmode && !v.text1 && !v.freqmsg, JSON.stringify(v));
+    check('nodo: la verifica dell\'hardware audio (microfono, toni) non c\'e\'', await p.isHidden('#hw'));
+    await p.selectOption('#role', 'rpttx');
+    check('TX: nemmeno', await p.isHidden('#hw'));
+    await p.selectOption('#role', 'rptrx');
+    check('RX: c\'e\' (l\'altoparlante di monitor)', await p.isVisible('#hw'));
     await p.selectOption('#role', 'off');
     v = await vis(all);
     check('di nuovo stazione: tutto torna', v.volume && v.micfloor && v.qthlat && v.mcdest1 && v.sysopmode && v.text1 && !v.idint, JSON.stringify(v));
