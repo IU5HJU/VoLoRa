@@ -115,3 +115,21 @@ Quando il nodo è collegato al Wi-Fi di casa serve **la stessa pagina di configu
 
 
 **Indirizzo e password sul display del nodo (18/11/2026).** Appena il nodo si collega al Wi-Fi di casa il display mostra per **25 secondi** `GESTIONE WI-FI`, l'indirizzo IP, `utente volora` e `pass <password>` (come sulla RX del ripetitore); poi torna la schermata normale, che ha già l'indirizzo sulla seconda riga (`WiFi 192.168.1.x`). Per rivedere la password basta riavviare il nodo. La stessa riga resta sulla seriale.
+
+## Dove si imposta cosa: seriale, pagina della scheda e pagina di installazione (25/11/2026)
+
+Le impostazioni del nodo (e della RX del ripetitore) si danno in **tre modi equivalenti**: i comandi `CFG` da seriale, la **pagina della scheda** (dalla rete di casa o dal Wi-Fi della scheda, `http://192.168.4.1`) e la **pagina di installazione e configurazione** del sito (con il cavo USB). Il 25/11/2026 l'operatore ha notato che la pagina di installazione non aveva i campi della presentazione sulla mappa APRS; **ora le tre vie sono allineate**:
+
+| Impostazione del nodo | Seriale | Pagina della scheda | Pagina di installazione |
+|---|---|---|---|
+| Nominativo, ruolo, frequenza, potenza | `CALLSIGN`, `ROLE`, `FREQ`, `POWER` | sì | sì |
+| Wi-Fi, reflector, id, chiave, porta | `WIFISSID`, `WIFIPASS`, `PEER`, `PEERID`, `NODEID`, `NODEKEY`, `NODEPORT` | sì | sì |
+| Identificativo periodico e Morse | `IDINT`, `IDMORSE` | sì | sì |
+| **SSID e testo del nodo su APRS** | `NODESSID`, `NODETEXT` | sì | **sì (dal 25/11/2026)** |
+| **Posizione fissa del nodo** | `QTH` | sì | **sì anche per nodo e RX (dal 25/11/2026)** |
+| Nominativo e chiave del sysop | `SYSOP`, `SYSOPKEY` | sì | sì |
+| **Stato in tempo reale** (collegamento, ultima stazione, qualità) | `CFG GET NODESTAT` | **solo dalla rete di casa** (riquadro «Stato del nodo») | **no**: è un dato vivo, serve la rete; la pagina lo dice |
+| Nome del nodo per la riga di registrazione | non c'è (non è sulla scheda) | non c'è | solo qui (serve a scrivere la riga per il sysop) |
+
+Provato sul PC (test della pagina di installazione con la scheda finta: `tests/page/run.js`); **da provare con una scheda vera**.
+

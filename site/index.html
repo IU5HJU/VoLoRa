@@ -137,7 +137,7 @@
         <p class="hint">Due schede possono fare da ripetitore: una <strong>RX</strong> ascolta la frequenza di ingresso (quella del profilo, qui sotto) e una <strong>TX</strong> ritrasmette sulla frequenza di uscita. Con un ruolo da ripetitore la scheda non funziona pi&ugrave; da stazione: dopo il riavvio mostra lo stato del ripetitore. <strong>Pagina di gestione:</strong> la <strong>RX</strong> con il Wi-Fi di casa configurato apre una pagina di gestione sulla rete di casa (indirizzo e password sul display e sulla seriale all'avvio); la <strong>TX</strong> non ha pagina e si configura dalla RX. Senza Wi-Fi configurato, per tornare stazione scegli <em>Stazione normale</em> qui, con il cavo USB.</p>
       </div>
       <div id="nodebox" hidden>
-        <p class="hint"><strong>Nodo Internet:</strong> la scheda porta i pacchetti LoRa a un'altra scheda via Wi-Fi (UDP firmato). Solo profilo Standard. Rete, indirizzo dell'altro nodo, id e chiave si impostano da seriale (<code>CFG SET WIFISSID</code>, <code>WIFIPASS</code>, <code>PEER</code>, <code>NODEID</code>, <code>PEERID</code>, <code>NODEKEY</code>: vedi la guida del firmware). Come per il ripetitore, in questo ruolo la scheda non ha il menu: per tornare stazione scegli <em>Stazione normale</em> qui, con il cavo USB.</p>
+        <p class="hint"><strong>Nodo Internet:</strong> la scheda porta i pacchetti LoRa a un'altra scheda via Wi-Fi (UDP firmato). Solo profilo Standard. Rete Wi-Fi, reflector, id e chiave, posizione e presentazione sulla mappa APRS si impostano qui sotto (le stesse impostazioni della pagina della scheda e dei comandi <code>CFG</code> da seriale: vedi la guida del firmware). Lo <strong>stato in tempo reale</strong> (collegamento al reflector, ultima stazione, qualità dell'ultima trasmissione) non si vede da qui: sta sulla pagina della scheda dalla rete di casa e da seriale (<code>CFG GET NODESTAT</code>). Come per il ripetitore, in questo ruolo la scheda non ha il menu: per tornare stazione scegli <em>Stazione normale</em> qui, con il cavo USB.</p>
       </div>
       <div id="netbox" data-modes="rptrx node">
         <h3>Rete e reflector</h3>
@@ -260,6 +260,16 @@
       </select>
       <p class="hint" id="poshint">La posizione viaggia <strong>in chiaro</strong>, come il nominativo, solo nel primo pacchetto di ogni turno (7 byte): chi riceve vede la <strong>distanza in km</strong> sul display. Serve una posizione: il GPS (T-Beam) oppure quella fissa qui sotto.</p>
 
+      </div>
+      <div data-modes="node rptrx">
+      <h3>Il nodo sulla mappa APRS</h3>
+      <p class="hint">Con un SSID da 1 a 15 e la posizione fissa (qui sotto), il reflector pubblica il nodo sulla mappa APRS come NOMINATIVO-SSID, con frequenza e testo. <strong>0 = il nodo non compare</strong> (la posizione è un dato personale). Vale dal riavvio.</p>
+      <label for="nodessid">SSID del nodo su APRS (0-15)</label>
+      <input id="nodessid" type="number" min="0" max="15" step="1" placeholder="0" disabled>
+      <label for="nodetext">Testo del sysop (facoltativo, fino a 40 caratteri)</label>
+      <input id="nodetext" maxlength="40" autocomplete="off" placeholder="Antenna 5/8, 2 dBi" disabled>
+      </div>
+      <div data-modes="off node rptrx">
       <label for="qthlat">Posizione fissa (QTH): latitudine e longitudine</label>
       <div class="qthrow">
         <input id="qthlat" inputmode="decimal" placeholder="43.7696" aria-label="Latitudine in gradi" disabled>
@@ -270,6 +280,8 @@
       <p class="hint" id="qthgeo" hidden></p>
       <p class="hint" id="qthhint">In gradi decimali: positivi a nord e a est, negativi a sud e a ovest (per esempio 43.7696 e 11.2558). Si può scrivere anche con la virgola. Serve <strong>anche senza trasmetterla</strong>, per vedere la distanza dalle stazioni che trasmettono la loro. Lascia vuoti i due campi per non avere nessuna posizione fissa.</p>
 
+      </div>
+      <div data-modes="off">
       <label for="gps">GPS (solo T-Beam)</label>
       <select id="gps" disabled>
         <option value="off">Spento (predefinito)</option>
@@ -623,6 +635,18 @@
     } catch (e) { nodeSeen = false; }
     for (const id of NET_IDS) $(id).disabled = !port || !nodeSeen;
   }
+  let nodeInfoSeen = false;  // la scheda risponde a CFG GET NODEINFO (SSID e testo del nodo per la mappa APRS)
+  async function readNodeInfo() {
+    try {
+      const r = await send('CFG GET NODEINFO', /^CFG NODEINFO /, 2500);
+      const m = /^CFG NODEINFO ssid=(\d+) text=(.*)$/.exec(r);
+      if (!m) throw new Error('formato');
+      $('nodessid').value = m[1];
+      $('nodetext').value = m[2] === 'none' || m[2] === 'NONE' ? '' : m[2];
+      nodeInfoSeen = true;
+    } catch (e) { nodeInfoSeen = false; }
+    for (const id of ['nodessid', 'nodetext']) $(id).disabled = !port || !nodeInfoSeen;
+  }
   let sysopSeen = false;     // la scheda risponde a CFG GET SYSOP (firmware piu' vecchi: no)
   function sysopShow() { const on = $('sysopmode').value === 'on'; $('sysopbox').hidden = !on; $('textsbox').hidden = false; }  // i testi predefiniti restano anche nel modo Sysop
   function updateSysopControls(on) { for (const id of ['sysopmode', 'sysop', 'sysopkey', 'genkey']) $(id).disabled = !on || !sysopSeen; }
@@ -690,9 +714,10 @@
     $('connect').disabled = on;
     $('disconnect').disabled = !on;
     for (const id of ['callsign', 'freq', 'power', 'volume', 'micfloor', 'floorDown', 'floorUp', 'measure', 'save', 'reload', 'reset', 'testOn', 'testOff', 'hwMic', 'hwTones']) $(id).disabled = !on;
-    if (!on) { legacyFw = false; profileSeen = false; freqMsgSeen = false; freqRangeSeen = false; freqDirSeen = false; posSeen = false; gpsSeen = false; textSeen = false; mcSeen = false; sysopSeen = false; idintSeen = false; idmorseSeen = false; shiftSeen = false; nodeSeen = false; roleSeen = false; roleShow(); }
+    if (!on) { legacyFw = false; profileSeen = false; freqMsgSeen = false; freqRangeSeen = false; freqDirSeen = false; posSeen = false; gpsSeen = false; textSeen = false; mcSeen = false; sysopSeen = false; nodeInfoSeen = false; idintSeen = false; idmorseSeen = false; shiftSeen = false; nodeSeen = false; roleSeen = false; roleShow(); }
     $('idint').disabled = !on || !idintSeen;
     for (const id of NET_IDS) $(id).disabled = !on || !nodeSeen;
+    for (const id of ['nodessid', 'nodetext']) $(id).disabled = !on || !nodeInfoSeen;
     $('shiftdir').disabled = $('shiftmhz').disabled = !on || !shiftSeen;
     $('idmorse').disabled = !on || !idmorseSeen;
     updateRoleControls(on);
@@ -833,6 +858,7 @@
         await readIdint();
         await readShift();
         await readNode();
+        await readNodeInfo();
         await readMonitor();
         return true;
       } catch (e) { if (!writer) return false; }
@@ -976,7 +1002,17 @@
         net = { ssid, pass, peer: pm[1] + ':' + (pm[2] !== undefined ? pm[2] : '5400'), peerid: pid === '' ? '0' : String(+pid), nodeid: nid === '' ? '' : String(+nid), key, lport: String(+lport) };
       }
     }
-    return { net, shift, cs, freq: fm, fmsg, frng, fdir, pw, vol, fl, prof, pos, qth, gps, texts, mc, sysop, idint, idmorse, role, freqout, monitor };
+    // Presentazione del nodo sulla mappa APRS (nodo e RX del ripetitore)
+    let nodeInfo = null;
+    if (!$('nodessid').disabled && (role === 'node' || role === 'rptrx')) {
+      const ns = $('nodessid').value.trim();
+      if (!/^\d{1,2}$/.test(ns) || +ns > 15) return { err: "L'SSID del nodo su APRS deve essere un numero da 0 a 15." };
+      const nt = $('nodetext').value.trim();
+      if (nt.length > 40 || (nt !== '' && !/^[\x20-\x7A\x7C\x7E]+$/.test(nt))) return { err: 'Il testo del sysop può avere al massimo 40 caratteri ASCII, senza accenti e senza { }.' };
+      if (+ns > 0 && qth === 'none') return { err: 'Per comparire sulla mappa APRS il nodo ha bisogno della posizione fissa (latitudine e longitudine).' };
+      nodeInfo = { ssid: String(+ns), text: nt === '' ? 'NONE' : nt };
+    }
+    return { net, shift, nodeInfo, cs, freq: fm, fmsg, frng, fdir, pw, vol, fl, prof, pos, qth, gps, texts, mc, sysop, idint, idmorse, role, freqout, monitor };
   }
 
   // La scheda stampa la posizione fissa con 5 decimali: si confronta con una tolleranza di circa 2 metri.
@@ -1031,6 +1067,10 @@
           if (v.net.nodeid !== '') replies.push(await send('CFG SET NODEID ' + v.net.nodeid, O));
           if (v.net.key !== '') replies.push(await send('CFG SET NODEKEY ' + v.net.key, O));
         }
+      }
+      if (v.nodeInfo) {
+        replies.push(await send('CFG SET NODESSID ' + v.nodeInfo.ssid, /^CFG (OK|ERR)/));
+        replies.push(await send('CFG SET NODETEXT ' + v.nodeInfo.text, /^CFG (OK|ERR)/));
       }
       if (v.monitor !== null) replies.push(await send('CFG SET MONITOR ' + v.monitor, /^CFG (OK|ERR)/));
       if (v.idint !== null) replies.push(await send('CFG SET IDINT ' + v.idint, /^CFG (OK|ERR)/));

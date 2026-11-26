@@ -994,3 +994,9 @@ La RX del ripetitore (`471ac35`) collegata al Wi-Fi di casa: l'operatore ha rica
 - **Non ancora visto:** più messaggi di mittenti diversi.
 - **Pagina del sysop (foto dell'operatore, 20:22, dalla rete di casa):** la tabella «Messaggi di testo» mostra «1 h fa», mittente `IU5HJU` e **il contenuto** («IU5HJU QRV su VoLoRa modo S 433.475», il primo testo di esempio con i segnaposto già sostituiti), con sotto la scritta che il contenuto si vede solo lì. La riga non mostra le colonne «Nodo» e «Inoltrato a» perché sul telefono sono nascoste (classe `hm`). **Provato su un server vero con una scheda vera.**
 
+### 26/11/2026, pagina di installazione: i campi del nodo per APRS (solo sul PC)
+
+- Segnalazione dell'operatore: in modalità nodo la pagina di installazione non offriva tutto quello che si può fare da seriale e dalla pagina della scheda. Confronto fatto sul codice: mancavano **SSID del nodo su APRS**, **testo del sysop** e la **posizione fissa** (nascosta per nodo e RX).
+- Aggiunti alla pagina (nodo e RX del ripetitore): validazione (SSID 0-15, testo ≤ 40 caratteri ASCII, SSID > 0 solo con la posizione) e invio `NODESSID` / `NODETEXT` / `QTH`. Dopo la modifica, per nodo, RX, TX e stazione non resta nessun campo della pagina della scheda assente dall'altra (a parte il nome del nodo, solo sul sito).
+- **Provato sul PC:** 412 controlli della pagina con la scheda finta, 0 falliti (scenari nuovi per il nodo con APRS e per il firmware vecchio). **Da provare con una scheda vera.**
+

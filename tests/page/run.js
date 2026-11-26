@@ -916,8 +916,8 @@ async function scenario(name, fn, opts = {}) {
           !v.monitor && !v.freqout && !v.idint && !v.idmorse, JSON.stringify(v));
     await p.selectOption('#role', 'rptrx');
     v = await vis(all);
-    check('RX: nominativo, profilo, frequenze, potenza (della TX), volume, monitor, uscita e identificativo (li manda alla TX); niente posizione, MeshCom, testi, sysop, microfono',
-          v.callsign && v.profile && v.freq && v.power && v.volume && v.monitor && v.freqout && v.idint && v.idmorse && !v.micfloor && !v.qthlat && !v.gps && !v.mcdest1 && !v.sysopmode && !v.text1, JSON.stringify(v));
+    check('RX: nominativo, profilo, frequenze, potenza (della TX), volume, monitor, uscita e identificativo (li manda alla TX); niente trasmissione della posizione e GPS, MeshCom, testi, sysop, microfono; la posizione fissa c\'e\' (serve alla mappa APRS)',
+          v.callsign && v.profile && v.freq && v.power && v.volume && v.monitor && v.freqout && v.idint && v.idmorse && v.qthlat && !v.micfloor && !v.gps && !v.mcdest1 && !v.sysopmode && !v.text1, JSON.stringify(v));
     check('RX: solo il profilo Standard selezionabile, niente frequenze degli altri profili', (await p.inputValue('#profile')) === 'std' &&
           await p.$$eval('#profile option', (os) => os.every((o) => o.value === 'std' ? !o.disabled && !o.hidden : o.disabled && o.hidden)) && !(await p.isVisible('#freqmsg')));
     check('RX: la frequenza e\' quella di ingresso e la potenza e\' quella della TX', (await p.textContent('#freqlabel')) === 'Frequenza di ingresso (MHz)' && (await p.textContent('#powerlabel')) === 'Potenza della scheda TX (dBm)');
@@ -930,8 +930,8 @@ async function scenario(name, fn, opts = {}) {
           v.callsign && !v.freq && !v.freqmsg && v.power && v.freqout && v.idint && v.idmorse && !v.volume && !v.monitor && !v.micfloor && !v.qthlat && !v.mcdest1 && !v.sysopmode && !v.text1, JSON.stringify(v));
     await p.selectOption('#role', 'node');
     v = await vis(all);
-    check('nodo: identificativo; niente uscita, monitor, volume, microfono, posizione, MeshCom, testi, sysop, frequenze degli altri profili',
-          v.callsign && v.profile && v.freq && v.power && v.idint && v.idmorse && !v.freqout && !v.monitor && !v.volume && !v.micfloor && !v.qthlat && !v.mcdest1 && !v.sysopmode && !v.text1 && !v.freqmsg, JSON.stringify(v));
+    check('nodo: identificativo e posizione fissa (mappa APRS); niente uscita, monitor, volume, microfono, GPS, MeshCom, testi, sysop, frequenze degli altri profili',
+          v.callsign && v.profile && v.freq && v.power && v.idint && v.idmorse && v.qthlat && !v.freqout && !v.monitor && !v.volume && !v.micfloor && !v.gps && !v.mcdest1 && !v.sysopmode && !v.text1 && !v.freqmsg, JSON.stringify(v));
     await p.selectOption('#role', 'off');
     v = await vis(all);
     check('di nuovo stazione: tutto torna', v.volume && v.micfloor && v.qthlat && v.mcdest1 && v.sysopmode && v.text1 && !v.idint, JSON.stringify(v));
@@ -1116,6 +1116,52 @@ async function scenario(name, fn, opts = {}) {
     await until(p, () => window.__st.cmds.includes('CFG REBOOT'), null, 15000);
     const c3 = await cmds(p);
     check('RX senza rete: Wi-Fi tolto, nessun altro comando di rete', c3.includes('CFG SET WIFISSID NONE') && !c3.some((x) => /^CFG SET (PEER|PEERID|NODEID|NODEKEY|NODEPORT|WIFIPASS)/.test(x)), c3.join(' | '));
+    check('nessun errore JavaScript', p.errors.length === 0);
+  });
+
+  await scenario('nodo: SSID, testo e posizione per la mappa APRS (allineato alla pagina della scheda e alla seriale)', async (p) => {
+    check('campi spenti prima di collegare', await p.isDisabled('#nodessid') && await p.isDisabled('#nodetext'));
+    await connect(p);
+    await until(p, () => !document.getElementById('role').disabled && !document.getElementById('nodessid').disabled);
+    check('stazione normale: SSID e testo del nodo nascosti, posizione fissa visibile', (await p.isHidden('#nodessid')) && (await p.isHidden('#nodetext')) && (await p.isVisible('#qthlat')));
+    await p.selectOption('#role', 'node');
+    check('nodo: SSID, testo e posizione fissa visibili', (await p.isVisible('#nodessid')) && (await p.isVisible('#nodetext')) && (await p.isVisible('#qthlat')) && (await p.isVisible('#qthlon')));
+    check('nodo: il resto della posizione della stazione (trasmissione, GPS) resta nascosto', (await p.isHidden('#pos')) && (await p.isHidden('#gps')));
+    await p.fill('#callsign', 'IU5HJU');
+    await p.fill('#wifissid', 'Casa'); await p.fill('#peer', 'reflector.example.org:5400'); await p.fill('#peerid', '1000'); await p.fill('#nodeid', '2'); await p.fill('#nodeport', '5400');
+    await p.click('#genNodeKey');
+    await p.fill('#nodessid', '11'); await p.fill('#nodetext', 'Antenna 5/8');
+    await p.click('#save');
+    await until(p, () => /posizione/.test(document.getElementById('status').textContent), null, 5000);
+    check('SSID senza posizione: errore e nessun riavvio', /bisogno della posizione/.test(await p.textContent('#status')) && !(await cmds(p)).includes('CFG REBOOT'), await p.textContent('#status'));
+    await p.fill('#nodessid', '16'); await p.click('#save');
+    await until(p, () => /da 0 a 15/.test(document.getElementById('status').textContent), null, 5000);
+    check('SSID fuori campo: errore', /da 0 a 15/.test(await p.textContent('#status')));
+    await p.fill('#nodessid', '11'); await p.fill('#qthlat', '43.7696'); await p.fill('#qthlon', '11.2558');
+    await p.evaluate(() => { window.__st.cmds.length = 0; });
+    await p.click('#save');
+    await until(p, () => window.__st.cmds.includes('CFG REBOOT'), null, 15000);
+    await until(p, () => /Impostazioni lette/.test(document.getElementById('status').textContent), null, 20000);
+    const c = await cmds(p);
+    check('comandi: QTH, NODESSID e NODETEXT inviati', c.includes('CFG SET QTH 43.7696,11.2558') && c.includes('CFG SET NODESSID 11') && c.includes('CFG SET NODETEXT Antenna 5/8'), c.join(' | '));
+    check('la scheda li ha', await p.evaluate(() => window.__st.nodeInfo.ssid === 11 && window.__st.nodeInfo.text === 'Antenna 5/8'));
+    await p.fill('#nodetext', ''); await p.fill('#nodessid', '3');   // si sporcano i campi: la rilettura li deve riportare ai valori della scheda
+    await p.click('#reload');
+    await until(p, () => document.getElementById('nodetext').value === 'Antenna 5/8');
+    check('riletti nei campi: SSID, testo e posizione',(await p.inputValue('#nodessid')) === '11' &&  (await p.inputValue('#nodetext')) === 'Antenna 5/8' && (await p.inputValue('#qthlat')) === '43.76960');
+    await p.fill('#nodetext', ''); await p.evaluate(() => { window.__st.cmds.length = 0; });
+    await p.click('#save');
+    await until(p, () => window.__st.cmds.includes('CFG REBOOT'), null, 15000);
+    check('testo vuoto: NODETEXT NONE', (await cmds(p)).includes('CFG SET NODETEXT NONE'));
+    check('nessun errore JavaScript', p.errors.length === 0);
+  });
+
+  await scenario('nodo: firmware senza presentazione APRS (piu\' vecchio), campi spenti e niente comandi', async (p) => {
+    await p.evaluate(() => { window.__st.noNodeInfo = true; });
+    await connect(p);
+    await until(p, () => !document.getElementById('role').disabled);
+    await p.selectOption('#role', 'node');
+    check('campi spenti', await p.isDisabled('#nodessid') && await p.isDisabled('#nodetext'));
     check('nessun errore JavaScript', p.errors.length === 0);
   });
 

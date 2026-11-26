@@ -17,6 +17,8 @@
     idmorse: 'on',
     noIdmorse: false,
     legacyFw: false,      // firmware precedente al 12/11/2026: nel CFG GET c'e' freqqual= e non freqrange=
+    noNodeInfo: false,    // firmware senza presentazione del nodo su APRS (piu' vecchio): CFG GET NODEINFO e CFG SET NODESSID/NODETEXT sconosciuti
+    nodeInfo: { ssid: 0, text: '' },
     noNode: false,        // firmware senza impostazioni di rete (piu' vecchio): CFG GET NODE sconosciuto
     node: { ssid: 'none', pass: 'none', ip: 'none', port: 5400, listen: 5400, id: 0, peerid: 0, key: 'none', keyHex: '' },
     noShift: false,       // firmware senza shift (piu' vecchio): CFG GET SHIFT e CFG SET SHIFT sconosciuti
@@ -71,6 +73,13 @@
       if (/^CFG\s+GET\s+IDMORSE$/i.test(line.trim())) return out('CFG IDMORSE=' + st.idmorse);
       const dm = /^CFG\s+SET\s+IDMORSE\s+(\S+)$/i.exec(line.trim());
       if (dm) { if (!/^(on|off)$/i.test(dm[1])) return out('CFG ERR idmorse usa ON oppure OFF'); st.idmorse = dm[1].toLowerCase(); return out('CFG OK idmorse=' + st.idmorse); }
+    }
+    if (!st.noNodeInfo) {
+      if (/^CFG\s+GET\s+NODEINFO$/i.test(line.trim())) return out('CFG NODEINFO ssid=' + st.nodeInfo.ssid + ' text=' + st.nodeInfo.text);
+      const ns = /^CFG\s+SET\s+NODESSID\s+(\S+)$/i.exec(line.trim());
+      if (ns) { if (!/^\d+$/.test(ns[1]) || +ns[1] > 15) return out('CFG ERR nodessid da 1 a 15 (0 = il nodo non compare sulla mappa APRS)'); st.nodeInfo.ssid = +ns[1]; return out('CFG OK nodessid=' + ns[1]); }
+      const nt = /^CFG\s+SET\s+NODETEXT\s+(.+)$/i.exec(line.trim());
+      if (nt) { if (nt[1].length > 40) return out('CFG ERR nodetext testo ASCII da 1 a 40 caratteri'); st.nodeInfo.text = nt[1] === 'NONE' ? '' : nt[1]; return out('CFG OK nodetext=' + (nt[1] === 'NONE' ? '' : nt[1])); }
     }
     if (!st.noNode) {
       const n = st.node;
